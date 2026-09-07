@@ -23,6 +23,7 @@ Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integrat
 | **KittyLedger (Creditcoin CC3 Testnet, 102031)** | _deploys with `scripts/deploy.sh`; see [`deployments.json`](deployments.json)_ |
 | **Deployer / operator** | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
 | **Testnet transaction log** | [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md) |
+| **Verify the pipeline yourself** | `pnpm verify:live <anySepoliaTxHash>` — fetches the Proof Builder proof and asks the **live** 0x0FD2 precompile on CC3 Testnet to verify it (view call, no funds), then shows tampered bytes and a wrong chain key being rejected |
 
 ![Circle page — urgency band, attested-height progress, members, rotation, browser proving, proof feed](docs/assets/circle.png)
 
@@ -68,6 +69,8 @@ Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`
 | [`worker/src/chain.ts`](worker/src/chain.ts) | `usc-sdk` `utils.gas.computeGasLimit` (precompile-aware gas fallback); custom-error decoding |
 | [`worker/src/worker.ts`](worker/src/worker.ts) | Readability off-chain worker: watch → wait attestation → batch prove → submit → close → pay out → prove back |
 | [`worker/src/scenarios.ts`](worker/src/scenarios.ts) | Attack scenarios that push bad proofs through the precompile path and assert the ledger's rejection |
+| [`worker/src/verify-live.ts`](worker/src/verify-live.ts) | Real proof → real precompile: `verify` / `calculateTxIndex` on the live 0x0FD2, with tamper and wrong-chain negative checks |
+| [`test/RealProofFixture.t.sol`](test/RealProofFixture.t.sol), [`test/fixtures/`](test/fixtures) | Genuine Proof Builder `txBytes` (verified `true` on-chain) decoded with the ledger's exact `EvmV1Decoder` calls |
 | [`worker/src/config.ts`](worker/src/config.ts) | ChainInfo precompile ABI (`get_latest_attestation_height_and_hash`) |
 | [`web/src/lib/prover.ts`](web/src/lib/prover.ts), [`web/src/components/ProvePanel.tsx`](web/src/components/ProvePanel.tsx) | **Browser-side proving**: calls the Proof Builder (`/api/v1/proof-batch-by-tx/1`) directly and submits `recordContributions` from the member's wallet — the ledger verifies, the submitter is irrelevant |
 | [`web/src/hooks.ts`](web/src/hooks.ts), [`web/src/lib/abi.ts`](web/src/lib/abi.ts) | Dashboard reads the ChainInfo precompile directly for the "Sepolia head → attested" lag indicator |
@@ -76,6 +79,22 @@ Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`
 | [`test/KittyLedger.t.sol`](test/KittyLedger.t.sol), [`test/mocks/`](test/mocks) | Precompiles mocked at their real addresses with `vm.etch`; prover-format `txBytes` fixtures in [`test/TxFixtures.sol`](test/TxFixtures.sol) |
 | [`scripts/local-e2e.sh`](scripts/local-e2e.sh) | Two anvils with the precompiles mocked via `anvil_setCode`; full loop plus replay attack |
 | [`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md) | Step-by-step integration document (required by the submission rules) |
+
+## Verified against the live precompile
+
+Before the Creditcoin-side deployment, the whole proof path was exercised against the real network:
+a Proof Builder proof for a real Sepolia transaction (the FakeVault deployment, block 11,656,295,
+tx index 44) was submitted to the **live** block-prover precompile at `0x0FD2` on CC3 Testnet.
+
+```
+0x0FD2.calculateTxIndex = 44
+0x0FD2.verify(chainKey 1, height 11656295) = true
+0x0FD2.verify(tampered txBytes)  = reverted: "Merkle proof validation failed"
+0x0FD2.verify(wrong chainKey 3)  = reverted: "Continuity proof does not match attestation or checkpoint"
+```
+
+Run it on any Sepolia transaction: `pnpm verify:live <txhash>`. The same bytes are a Foundry
+fixture decoded by the ledger's `EvmV1Decoder` calls.
 
 ## The problem
 

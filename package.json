@@ -15,7 +15,8 @@
     "e2e:lab": "bash scripts/local-lab.sh",
     "lab:api": "tsx worker/src/api.ts",
     "scenario": "tsx worker/src/scenarios.ts",
-    "txlog": "tsx worker/src/txlog.ts"
+    "txlog": "tsx worker/src/txlog.ts",
+    "verify:live": "tsx worker/src/verify-live.ts"
   },
   "keywords": [],
   "author": "",
