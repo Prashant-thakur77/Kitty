@@ -5,6 +5,7 @@ broadcast/
 .env
 .env.*
 !.env.example
+!web/.env.production
 web/dist/
 web/node_modules/
 *.log

@@ -5,8 +5,13 @@ Rule of the road: **take freely from MIT-licensed repos (copy files, keep the he
 from unlicensed repos (design only), never lift a current BUIDL CTC competitor's submission** — the
 rules require original work and clean IP, and that is a disqualification risk, not a style choice.
 
-Current state (8 Sept 2026): contracts + 27 tests, worker, dashboard, docs, local e2e all done and
-committed in `~/projects/kitty`. Testnet deployment waits on faucets for `0xD793169c516c9F9A334218608fbF6E1338b3DE56`.
+Status (8 Sept 2026, evening): **days 1–4 of the plan are built** except the Creditcoin-side deploy —
+65 Foundry tests; KittyLedger + KittyViewer + signed invites + KittyCreditLine + KittyUSD + KittyBadge;
+worker with batch proofs, five attack scenarios and an SSE lab API; dashboard with landing, circles,
+circle (urgency band, block progress, payment modal, browser-side proving), score + badge, borrow,
+attack lab, architecture and presentation mode; README on the winner template with screenshots;
+CI + GitHub Pages workflows. Sepolia contracts are live. The Creditcoin side waits on tCTC for
+`0xD793169c516c9F9A334218608fbF6E1338b3DE56`; then `scripts/deploy.sh` → `pnpm demo …` → `pnpm worker`.
 
 ---
 
