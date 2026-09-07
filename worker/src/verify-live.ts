@@ -8,8 +8,10 @@
 import { ethers } from 'ethers';
 import { cfg, ccProvider, sourceProvider, log } from './config.ts';
 
-const tx = process.argv[2];
-if (!tx || !/^0x[0-9a-fA-F]{64}$/.test(tx)) { console.error('usage: pnpm verify:live <sepoliaTxHash>'); process.exit(1); }
+const hashes = process.argv.slice(2);
+if (hashes.length === 0 || hashes.some((h) => !/^0x[0-9a-fA-F]{64}$/.test(h))) { console.error('usage: pnpm verify:live <sepoliaTxHash> [more hashes → batch mode, ≤10]'); process.exit(1); }
+if (hashes.length > 1) { await batchMode(hashes); process.exit(0); }
+const tx = hashes[0];
 
 const rc = await sourceProvider.getTransactionReceipt(tx);
 if (!rc) throw new Error('tx not found on the source chain');
@@ -39,3 +41,21 @@ log(`0x0FD2.verify(chainKey ${p.chainKey}, height ${p.headerNumber}) = ${await p
 const bad = p.txBytes.slice(0, -2) + (p.txBytes.endsWith('00') ? '01' : '00');
 log(`0x0FD2.verify(tampered txBytes)  = ${await pre.verify(p.chainKey, p.headerNumber, bad, mp, cp).catch(reason)}`);
 log(`0x0FD2.verify(wrong chainKey 3)  = ${await pre.verify(3, p.headerNumber, p.txBytes, mp, cp).catch(reason)}`);
+
+/** Batch mode: one Proof Builder call, one continuity proof, one precompile call for up to 10 txs — exactly what KittyLedger.recordContributions does. */
+async function batchMode(hs: string[]) {
+  const res = await fetch(`${cfg.proofBuilderUrl}/api/v1/proof-batch-by-tx/${cfg.chainKey}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(hs) });
+  if (!res.ok) throw new Error(`proof builder ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const d = await res.json();
+  const entries: { height: number; idx: number; txHash: string; txBytes: string; mp: { root: string; siblings: { hash: string; isLeft: boolean }[] } }[] = [];
+  for (const [h, perIdx] of Object.entries(d.merkleProofs as Record<string, Record<string, { txHash: string; txBytes: string; merkleProof: { root: string; siblings: { hash: string; isLeft: boolean }[] } }>>))
+    for (const [i, e] of Object.entries(perIdx)) entries.push({ height: Number(h), idx: Number(i), txHash: e.txHash, txBytes: e.txBytes, mp: e.merkleProof });
+  const ordered = hs.map((h) => { const e = entries.find((x) => x.txHash.toLowerCase() === h.toLowerCase()); if (!e) throw new Error(`no proof for ${h}`); return e; });
+  log(`batch proof: ${ordered.length} tx over blocks ${d.fromHeader}–${d.toHeader} · ONE continuity proof (${d.continuityProof.roots.length} roots)`);
+  for (const e of ordered) log(`  ${e.txHash.slice(0, 12)}… @ ${e.height}#${e.idx} · ${e.mp.siblings.length} siblings`);
+  const pre = new ethers.Contract('0x0000000000000000000000000000000000000FD2', [
+    'function verify(uint64 chainKey, uint64[] heights, bytes[] encodedTransactions, (bytes32 root, (bytes32 hash, bool isLeft)[] siblings)[] merkleProofs, (bytes32 lowerEndpointDigest, bytes32[] roots) sharedContinuityProof) view returns (bool)',
+  ], ccProvider);
+  const ok = await pre.verify(d.chainKey, ordered.map((e) => e.height), ordered.map((e) => e.txBytes), ordered.map((e) => ({ root: e.mp.root, siblings: e.mp.siblings })), { lowerEndpointDigest: d.continuityProof.lowerEndpointDigest, roots: d.continuityProof.roots });
+  log(`0x0FD2.verify(BATCH of ${ordered.length}, one shared continuity proof) = ${ok}`);
+}

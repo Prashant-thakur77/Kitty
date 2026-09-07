@@ -93,8 +93,16 @@ tx index 44) was submitted to the **live** block-prover precompile at `0x0FD2` o
 0x0FD2.verify(wrong chainKey 3)  = reverted: "Continuity proof does not match attestation or checkpoint"
 ```
 
-Run it on any Sepolia transaction: `pnpm verify:live <txhash>`. The same bytes are a Foundry
-fixture decoded by the ledger's `EvmV1Decoder` calls.
+And the **batch** overload — the call `recordContributions` makes — with three real transactions
+from two different Sepolia blocks under one shared continuity proof:
+
+```
+batch proof: 3 tx over blocks 11656253–11656295 · ONE continuity proof (48 roots)
+0x0FD2.verify(BATCH of 3, one shared continuity proof) = true
+```
+
+Run it on any Sepolia transactions: `pnpm verify:live <txhash> [<txhash> …]` (one hash = single
+proof, several = batch). The same bytes are a Foundry fixture decoded by the ledger's `EvmV1Decoder` calls.
 
 ## The problem
 
