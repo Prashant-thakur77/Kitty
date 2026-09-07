@@ -37,6 +37,7 @@ contract KittyLedgerTest is Test {
         verifier.setAccept(true);
 
         ledger = new KittyLedger(CHAIN_KEY);
+        ledger.setTrustedVault(vault, true);
         address[] memory members = new address[](3);
         members[0] = alice;
         members[1] = bob;
@@ -181,7 +182,7 @@ contract KittyLedgerTest is Test {
         txs[0] = TxFixtures.contribution(mallory, alice, circleId, 0, AMOUNT); // emitter is not the vault
         INativeQueryVerifier.MerkleProof[] memory proofs = new INativeQueryVerifier.MerkleProof[](1);
         proofs[0] = TxFixtures.merkle(1);
-        vm.expectRevert(abi.encodeWithSelector(KittyLedger.WrongEmitter.selector, mallory, vault));
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.WrongEmitter.selector, mallory, address(0)));
         ledger.recordContributions(CHAIN_KEY, _h(1_010), txs, proofs, TxFixtures.continuity());
     }
 
@@ -265,13 +266,17 @@ contract KittyLedgerTest is Test {
     function test_closeRound_blockedUntilDeadlineAttested() public {
         _record(_one(alice), _h(1_010), 0);
         chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS - 1);
-        vm.expectRevert(abi.encodeWithSelector(KittyLedger.RoundStillOpenOnSource.selector, START + ROUND_BLOCKS));
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.RoundStillOpenOnSource.selector, START + ROUND_BLOCKS + 64));
         ledger.closeRound(circleId);
     }
 
     function test_closeRound_afterDeadlineRecordsMissed() public {
         _record(_one(alice), _h(1_010), 0);
-        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS);
+        vm.prank(bob);
+        ledger.acceptMembership(circleId);
+        vm.prank(carol);
+        ledger.acceptMembership(circleId);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64); // deadline + grace
         ledger.closeRound(circleId);
         assertEq(ledger.getRecord(bob).missed, 1);
         assertEq(ledger.getRecord(carol).missed, 1);
@@ -354,11 +359,121 @@ contract KittyLedgerTest is Test {
         assertEq(sa, 515);
         assertEq(sc, 480);
 
-        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS + 64);
         ledger.closeRound(circleId); // round 0 full
         ledger.closeRound(circleId); // round 1: nobody paid → 3 missed
         (uint16 sa2, string memory ta2) = ledger.creditScore(alice);
         assertEq(sa2, 395);
         assertEq(ta2, "D");
+    }
+
+    // ───────────── review fixes: trusted vault, consent, grace, eligibility, emitter filtering ─────────────
+
+    function test_createCircle_rejectsUntrustedVault() public {
+        address[] memory members = _all();
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.VaultNotTrusted.selector, mallory));
+        ledger.createCircle("x", members, AMOUNT, ROUND_BLOCKS, START, mallory);
+    }
+
+    function test_listedButUnconsentedMemberIsNeverPenalised() public {
+        // alice pays (consents); bob and carol never touched this circle → their scores are untouched
+        _record(_one(alice), _h(1_010), 0);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64);
+        ledger.closeRound(circleId);
+        assertEq(ledger.getRecord(bob).missed, 0);
+        assertEq(ledger.getRecord(carol).missed, 0);
+        assertTrue(ledger.accepted(circleId, alice));
+        assertFalse(ledger.accepted(circleId, bob));
+        assertEq(ledger.getMemberCircles(bob).length, 0, "not in bob's dashboard until he opts in");
+        assertEq(ledger.getMemberCircles(alice).length, 1);
+    }
+
+    function test_graceWindow_roundCannotCloseUntilDeadlinePlusGrace() public {
+        _record(_one(alice), _h(1_010), 0);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 63);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.RoundStillOpenOnSource.selector, START + ROUND_BLOCKS + 64));
+        ledger.closeRound(circleId);
+        // a payment mined at the deadline block is still recordable during the grace window, as late? no — on time
+        _record(_one(bob), _h(START + ROUND_BLOCKS), 0);
+        assertTrue(ledger.getContribution(circleId, 0, bob).onTime);
+        assertEq(ledger.closeHeight(circleId, 0), START + ROUND_BLOCKS + 64);
+    }
+
+    function test_fixedRotation_skipsNonPayer_andCarriesPotWhenNobodyEligible() public {
+        // round 0: alice (index 0) does NOT pay, bob and carol do → bob receives, alice gets nothing
+        address[] memory two = new address[](2);
+        two[0] = bob;
+        two[1] = carol;
+        uint64[] memory hs = new uint64[](2);
+        hs[0] = 1_010;
+        hs[1] = 1_011;
+        _record(two, hs, 0);
+        vm.prank(alice);
+        ledger.acceptMembership(circleId);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64);
+        ledger.closeRound(circleId);
+        assertEq(ledger.getRound(circleId, 0).recipient, bob, "first eligible after index 0");
+        assertEq(ledger.getRecord(alice).missed, 1);
+
+        // round 1: nobody pays → no recipient, pot (0 here) carries; round advances
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS + 64);
+        ledger.closeRound(circleId);
+        assertEq(ledger.getRound(circleId, 1).recipient, address(0));
+        assertEq(ledger.getCircle(circleId).currentRound, 2);
+
+        // payout proof for a round without a recipient is refused
+        bytes memory tx_ = TxFixtures.payout(vault, operator, alice, circleId, 1, 0);
+        vm.expectRevert();
+        ledger.confirmPayout(CHAIN_KEY, 1_200, tx_, TxFixtures.merkle(5555), TxFixtures.continuity());
+    }
+
+    function test_potCarriesOverToNextRound() public {
+        // round 0: only alice pays but she already... use ByScore-free path: alice pays, is eligible → receives.
+        // Construct carry-over: round 0 alice pays; then round 1 nobody pays → pot 0 carries (trivial). Use a
+        // 2-member circle where the only payer already received: round 0 alice pays (receives 100); round 1 alice
+        // pays again, bob never → no eligible recipient (alice already received) → 100 carries to round... last round.
+        address[] memory two = new address[](2);
+        two[0] = alice;
+        two[1] = bob;
+        uint256 id = ledger.createCircle("carry", two, AMOUNT, ROUND_BLOCKS, START, vault);
+        bytes[] memory txs = new bytes[](1);
+        txs[0] = TxFixtures.contribution(vault, alice, id, 0, AMOUNT);
+        INativeQueryVerifier.MerkleProof[] memory proofs = new INativeQueryVerifier.MerkleProof[](1);
+        proofs[0] = TxFixtures.merkle(9001);
+        ledger.recordContributions(CHAIN_KEY, _h(1_010), txs, proofs, TxFixtures.continuity());
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64);
+        ledger.closeRound(id);
+        assertEq(ledger.getRound(id, 0).recipient, alice);
+        // round 1 (last): alice pays again, bob never → nobody eligible; last round so pot stays on the round
+        txs[0] = TxFixtures.contribution(vault, alice, id, 1, AMOUNT);
+        proofs[0] = TxFixtures.merkle(9002);
+        ledger.recordContributions(CHAIN_KEY, _h(START + ROUND_BLOCKS + 10), txs, proofs, TxFixtures.continuity());
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS + 64);
+        ledger.closeRound(id);
+        assertEq(ledger.getRound(id, 1).recipient, address(0));
+        assertEq(ledger.getRound(id, 1).pot, AMOUNT, "last round keeps the unassigned pot (escrow stays in the vault)");
+        assertEq(uint8(ledger.getCircle(id).status), uint8(KittyLedger.CircleStatus.Completed));
+    }
+
+    function test_extraContributedLogFromUntrustedEmitterIsIgnored() public {
+        // Same tx carries a look-alike Contributed log from another contract plus the genuine vault log.
+        TxFixtures.VaultEvent[] memory evs = new TxFixtures.VaultEvent[](2);
+        evs[0] = TxFixtures.VaultEvent(TxFixtures.CONTRIBUTED_SIG, mallory, circleId, 0, alice, AMOUNT);
+        evs[1] = TxFixtures.VaultEvent(TxFixtures.CONTRIBUTED_SIG, vault, circleId, 0, alice, AMOUNT);
+        bytes[] memory txs = new bytes[](1);
+        txs[0] = TxFixtures.encode(alice, vault, 1, evs);
+        INativeQueryVerifier.MerkleProof[] memory proofs = new INativeQueryVerifier.MerkleProof[](1);
+        proofs[0] = TxFixtures.merkle(4242);
+        ledger.recordContributions(CHAIN_KEY, _h(1_010), txs, proofs, TxFixtures.continuity());
+        assertTrue(ledger.getContribution(circleId, 0, alice).onTime);
+    }
+
+    function test_onlyUntrustedEmitterLogs_isWrongEmitter() public {
+        bytes[] memory txs = new bytes[](1);
+        txs[0] = TxFixtures.contribution(mallory, alice, circleId, 0, AMOUNT);
+        INativeQueryVerifier.MerkleProof[] memory proofs = new INativeQueryVerifier.MerkleProof[](1);
+        proofs[0] = TxFixtures.merkle(4243);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.WrongEmitter.selector, mallory, address(0)));
+        ledger.recordContributions(CHAIN_KEY, _h(1_010), txs, proofs, TxFixtures.continuity());
     }
 }

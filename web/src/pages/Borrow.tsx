@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useAccount, useReadContract, useSwitchChain, useWriteContract } from 'wagmi'
+import { waitForTransactionReceipt } from 'wagmi/actions'
+import { wagmiConfig } from '../lib/wagmi'
 import { Landmark, Coins } from 'lucide-react'
 import { cfg } from '../config'
 import { creditAbi, kusdAbi } from '../lib/creditAbi'
@@ -26,7 +28,8 @@ export function Borrow() {
   const d = uw.data as readonly [number, string, bigint, string] | undefined
   const limit = d?.[2] ?? 0n
   const available = limit > (owed.data ?? 0n) ? limit - (owed.data ?? 0n) : 0n
-  const amount = BigInt(Math.round(Number(amt || '0') * 1e6))
+  const parsed = Number(amt)
+  const amount = Number.isFinite(parsed) && parsed > 0 ? BigInt(Math.round(parsed * 1e6)) : 0n
   const refetch = () => { uw.refetch(); owed.refetch(); pool.refetch(); bal.refetch(); allowance.refetch() }
   const ensure = async () => { if (chainId !== creditcoinTestnet.id) await switchChainAsync({ chainId: creditcoinTestnet.id }) }
 
@@ -36,7 +39,11 @@ export function Borrow() {
   async function repay() {
     try {
       setMsg(''); await ensure()
-      if ((allowance.data ?? 0n) < amount) { await writeContractAsync({ chainId: creditcoinTestnet.id, address: cfg.kusd, abi: kusdAbi, functionName: 'approve', args: [cfg.credit, 2n ** 256n - 1n] }) }
+      if ((allowance.data ?? 0n) < amount) {
+        setMsg('Approving kUSD…')
+        const a = await writeContractAsync({ chainId: creditcoinTestnet.id, address: cfg.kusd, abi: kusdAbi, functionName: 'approve', args: [cfg.credit, 2n ** 256n - 1n] })
+        await waitForTransactionReceipt(wagmiConfig, { hash: a, chainId: creditcoinTestnet.id })
+      }
       const h = await writeContractAsync({ ...cc, functionName: 'repay', args: [amount] }); setMsg(`Repaid · ${h.slice(0, 12)}…`); setTimeout(refetch, 5000)
     } catch (e) { setMsg((e as Error).message.split('\n')[0]) }
   }

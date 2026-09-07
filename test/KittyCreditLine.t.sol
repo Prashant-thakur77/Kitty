@@ -37,6 +37,7 @@ contract KittyCreditLineTest is Test {
         chainInfo = MockChainInfo(CHAIN_INFO_PRECOMPILE);
 
         ledger = new KittyLedger(CHAIN_KEY);
+        ledger.setTrustedVault(vault, true);
         usd = new KittyUSD();
         credit = new KittyCreditLine(ledger, IERC20(address(usd)));
         assertEq(usd.decimals(), 6);
@@ -146,7 +147,7 @@ contract KittyCreditLineTest is Test {
         _payRound(id, 0, start, AMOUNT, 10);
         ledger.closeRound(id);
         // Round 1: nobody pays; the deadline gets attested on the source chain → 10 missed.
-        chainInfo.setAttestedHeight(CHAIN_KEY, ledger.deadlineHeight(id, 1));
+        chainInfo.setAttestedHeight(CHAIN_KEY, ledger.closeHeight(id, 1));
         ledger.closeRound(id);
 
         KittyLedger.MemberRecord memory r = ledger.getRecord(alice);
@@ -235,13 +236,18 @@ contract KittyCreditLineTest is Test {
         vm.startPrank(lp);
         vm.expectRevert(abi.encodeWithSelector(KittyCreditLine.InsufficientLiquidity.selector, 10e6, 4e6));
         credit.withdraw(10e6);
-        vm.expectRevert(abi.encodeWithSelector(KittyCreditLine.InsufficientDeposit.selector, 11e6, 10e6));
+        // entitlement = share of pool value (idle 4 + owed 6.3 incl. fee) → 10.3, so 11 is too much
+        uint256 ent = credit.entitlement(lp);
+        assertEq(ent, 10.3e6);
+        vm.expectRevert(abi.encodeWithSelector(KittyCreditLine.InsufficientDeposit.selector, 11e6, ent));
         credit.withdraw(11e6);
+        uint256 value = credit.poolValue();
+        uint256 units = (4e6 * credit.totalDeposits() + value - 1) / value; // deposit units burned, rounded up
         vm.expectEmit(true, false, false, true);
         emit KittyCreditLine.Withdrawn(lp, 4e6);
         credit.withdraw(4e6);
-        assertEq(credit.deposits(lp), 6e6);
-        assertEq(credit.totalDeposits(), 6e6);
+        assertEq(credit.deposits(lp), 10e6 - units);
+        assertEq(credit.totalDeposits(), 10e6 - units);
         assertEq(usd.balanceOf(lp), 4e6);
         vm.stopPrank();
 

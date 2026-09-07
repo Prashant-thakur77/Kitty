@@ -28,19 +28,20 @@ export function Lab() {
   const [logs, setLogs] = useState<Record<string, string[]>>({})
   const [results, setResults] = useState<Record<string, Result>>({})
   const [offline, setOffline] = useState(false)
-  const logRef = useRef<HTMLDivElement>(null)
+  const logRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   useEffect(() => {
     fetch(`${cfg.labApi}/scenarios`).then((r) => r.json()).then((s: Scenario[]) => { if (Array.isArray(s) && s.length) setScenarios(s) }).catch(() => setOffline(true))
     fetch(`${cfg.labApi}/status`).then((r) => r.json()).then(setStatus).catch(() => setOffline(true))
   }, [])
-  useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }) }, [logs])
+  useEffect(() => { for (const el of Object.values(logRefs.current)) el?.scrollTo({ top: el.scrollHeight }) }, [logs])
 
   async function run(name: string) {
     if (running) return
     setRunning(name); setLogs((l) => ({ ...l, [name]: [] })); setResults((r) => { const c = { ...r }; delete c[name]; return c })
     try {
       const res = await fetch(`${cfg.labApi}/run/${name}`, { method: 'POST' })
+      if (res.status === 409) { setLogs((l) => ({ ...l, [name]: ['another scenario is still running — wait for it to finish'] })); return }
       if (!res.ok || !res.body) throw new Error(`lab api ${res.status}`)
       const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = ''
       while (true) {
@@ -85,7 +86,7 @@ export function Lab() {
                 <button className="btn" disabled={!!running} onClick={() => run(s.name)}><Play size={14} /> {running === s.name ? 'Running…' : 'Run'}</button>
               </div>
               {(lines.length > 0 || r) && (
-                <div ref={logRef} className="log panel-2 mt-3 max-h-56 overflow-auto p-3">
+                <div ref={(el) => { logRefs.current[s.name] = el }} className="log panel-2 mt-3 max-h-56 overflow-auto p-3">
                   {lines.map((l, i) => <div key={i}>{l}</div>)}
                   {r && <div className="mt-2 flex items-center gap-2" style={{ color: r.ok ? 'var(--mint)' : 'var(--rose)' }}>{r.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {r.ok ? 'ledger rejected/flagged as expected' : 'UNEXPECTED'} · got {r.got}</div>}
                 </div>

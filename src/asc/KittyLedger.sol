@@ -108,6 +108,9 @@ contract KittyLedger is Ownable {
     /// @notice Attestcoin allows up to 10 queries to share one continuity proof.
     uint256 public constant MAX_BATCH = 10;
     uint256 public constant MAX_MEMBERS = 10;
+    /// @notice Source-chain blocks after the deadline during which a payment mined on time can still be
+    ///         proven before the round may close. Covers attestation lag (~36 blocks on testnet) plus proving.
+    uint64 public constant GRACE_BLOCKS = 64;
 
     INativeQueryVerifier public immutable VERIFIER;
     IChainInfo public immutable CHAIN_INFO;
@@ -124,6 +127,13 @@ contract KittyLedger is Ownable {
     /// @notice Has this member already received a pot in this circle (each member receives exactly once).
     mapping(uint256 => mapping(address => bool)) public receivedPot;
     mapping(address => uint256[]) internal _memberCircles;
+    /// @notice Source-chain vaults whose events may feed this ledger (owner-curated: the deployed KittyVault).
+    ///         Without this, anyone could bind a circle to a contract that merely *emits* Contributed and
+    ///         mint "proven volume" out of thin air.
+    mapping(address => bool) public trustedVault;
+    /// @notice A member is only ever penalised for a circle they consented to: they redeemed an invite,
+    ///         organised it, called acceptMembership, or paid into it at least once.
+    mapping(uint256 => mapping(address => bool)) public accepted;
 
     /// @notice Invite replay protection: each (circle, nonce) signed by the organiser is redeemable once.
     mapping(uint256 => mapping(uint256 => bool)) public usedInviteNonces;
@@ -160,6 +170,9 @@ contract KittyLedger is Ownable {
     event PayoutConfirmed(uint256 indexed circleId, uint32 indexed round, address indexed recipient, uint256 amount, bytes32 queryId);
     event InviteRedeemed(uint256 indexed circleId, address indexed member, uint256 nonce);
     event InvitesClosed(uint256 indexed circleId, uint256 memberCount);
+    event VaultTrusted(address indexed vault, bool trusted);
+    event MembershipAccepted(uint256 indexed circleId, address indexed member);
+    event PotCarriedOver(uint256 indexed circleId, uint32 indexed fromRound, uint256 amount);
 
     // ───────────────────────────── Errors ─────────────────────────────
 
@@ -196,6 +209,8 @@ contract KittyLedger is Ownable {
     error AlreadyMember(uint256 circleId, address member);
     error CircleFull(uint256 circleId, uint32 maxMembers);
     error InvitesAlreadyClosed(uint256 circleId);
+    error VaultNotTrusted(address vault);
+    error NoRecipient(uint256 circleId, uint32 round);
 
     // ───────────────────────────── Constructor ─────────────────────────────
 
@@ -223,7 +238,7 @@ contract KittyLedger is Ownable {
         for (uint256 i; i < members.length; ++i) {
             address m = members[i];
             if (m == address(0) || isMember[circleId][m]) revert InvalidCircle("duplicate/zero member");
-            _join(circleId, c, m);
+            _join(circleId, c, m, false); // listed, not yet consented
         }
         emit CircleCreated(circleId, name, members, contribution, roundBlocks, startHeight, sourceVault);
         emit RoundOpened(circleId, 0, deadlineHeight(circleId, 0));
@@ -244,7 +259,7 @@ contract KittyLedger is Ownable {
         circleId = _initCircle(name, contribution, roundBlocks, startHeight, sourceVault, maxMembers);
         Circle storage c = _circles[circleId];
         c.open = true;
-        _join(circleId, c, msg.sender);
+        _join(circleId, c, msg.sender, true);
         address[] memory members = new address[](1);
         members[0] = msg.sender;
         emit CircleCreated(circleId, name, members, contribution, roundBlocks, startHeight, sourceVault);
@@ -266,7 +281,7 @@ contract KittyLedger is Ownable {
         if (signer != c.organiser) revert InvalidInviteSigner(signer, c.organiser);
 
         usedInviteNonces[circleId][nonce] = true;
-        _join(circleId, c, msg.sender);
+        _join(circleId, c, msg.sender, true);
         emit InviteRedeemed(circleId, msg.sender, nonce);
     }
 
@@ -280,6 +295,18 @@ contract KittyLedger is Ownable {
         if (c.currentRound != 0 || _rounds[circleId][0].contributions != 0 || _rounds[circleId][0].status != RoundStatus.Open) revert RotationLocked(circleId);
         c.rotation = mode;
         emit RotationSet(circleId, mode);
+    }
+
+    /// @notice Curate which source-chain vaults may feed the ledger.
+    function setTrustedVault(address vault, bool trusted) external onlyOwner {
+        trustedVault[vault] = trusted;
+        emit VaultTrusted(vault, trusted);
+    }
+
+    /// @notice A member listed by createCircle opts in. Until then the circle cannot hurt their score.
+    function acceptMembership(uint256 circleId) external {
+        if (!isMember[circleId][msg.sender]) revert NotAMember(circleId, msg.sender);
+        _accept(circleId, msg.sender);
     }
 
     function closeInvites(uint256 circleId) external {
@@ -312,25 +339,35 @@ contract KittyLedger is Ownable {
         uint256 n = c.members.length;
         uint64 deadline = deadlineHeight(circleId, r);
         if (rd.contributions < n) {
-            // Attested source-chain time is the only clock.
-            if (!CHAIN_INFO.is_height_attested(SOURCE_CHAIN_KEY, deadline)) revert RoundStillOpenOnSource(deadline);
+            // Attested source-chain time is the only clock. The grace window lets a payment mined
+            // right at the deadline be proven before anyone can close the round on it.
+            uint64 closeAt = deadline + GRACE_BLOCKS;
+            if (!CHAIN_INFO.is_height_attested(SOURCE_CHAIN_KEY, closeAt)) revert RoundStillOpenOnSource(closeAt);
         }
 
         uint32 missed;
         for (uint256 i; i < n; ++i) {
             address m = c.members[i];
-            if (_contributions[circleId][r][m].queryId == bytes32(0)) {
+            // Only members who consented to this circle can be marked as having missed it.
+            if (_contributions[circleId][r][m].queryId == bytes32(0) && accepted[circleId][m]) {
                 _records[m].missed += 1;
                 ++missed;
                 emit ContributionMissed(circleId, r, m, deadline);
             }
         }
 
+        // The pot goes only to someone who paid this round. If nobody eligible, it rolls forward.
         address recipient = _pickRecipient(circleId, c, r);
         rd.status = RoundStatus.Closed;
         rd.recipient = recipient;
-        receivedPot[circleId][recipient] = true;
-        _records[recipient].received += 1;
+        if (recipient != address(0)) {
+            receivedPot[circleId][recipient] = true;
+            _records[recipient].received += 1;
+        } else if (uint256(r) + 1 < n && rd.pot > 0) {
+            _rounds[circleId][r + 1].pot += rd.pot;
+            emit PotCarriedOver(circleId, r, rd.pot);
+            rd.pot = 0;
+        }
         emit RoundClosed(circleId, r, recipient, rd.pot, missed);
 
         if (uint256(r) + 1 == n) {
@@ -410,6 +447,7 @@ contract KittyLedger is Ownable {
         if (log.address_ != c.sourceVault) revert WrongEmitter(log.address_, c.sourceVault);
         Round storage rd = _rounds[circleId][round];
         if (rd.status != RoundStatus.Closed) revert RoundNotClosed(circleId, round);
+        if (rd.recipient == address(0)) revert NoRecipient(circleId, round);
         if (recipient != rd.recipient || amount != rd.pot) revert PayoutMismatch();
 
         rd.status = RoundStatus.Paid;
@@ -448,6 +486,11 @@ contract KittyLedger is Ownable {
 
     /// @notice Kitty Score: a 300–850 style score derived purely from proven behaviour.
     ///         Base 500, +15 per on-time installment, −20 per late, −120 per missed.
+    /// @notice Source-chain block that must be attested before a round with missing payments can close.
+    function closeHeight(uint256 circleId, uint32 round) public view returns (uint64) {
+        return deadlineHeight(circleId, round) + GRACE_BLOCKS;
+    }
+
     function creditScore(address member) public view returns (uint16 score, string memory tier) {
         MemberRecord storage r = _records[member];
         int256 s = 500 + int256(uint256(r.onTime)) * 15 - int256(uint256(r.late)) * 20 - int256(uint256(r.missed)) * 120;
@@ -483,6 +526,7 @@ contract KittyLedger is Ownable {
         if (rd.status != RoundStatus.Open) revert RoundNotOpen(circleId, round);
         if (_contributions[circleId][round][member].queryId != bytes32(0)) revert AlreadyContributed(circleId, round, member);
 
+        _accept(circleId, member); // paying into a circle is consent
         bool onTime = height <= deadlineHeight(circleId, round);
         _contributions[circleId][round][member] = Contribution({height: height, queryId: qid, onTime: onTime});
         rd.contributions += 1;
@@ -497,15 +541,27 @@ contract KittyLedger is Ownable {
     }
 
     /// @dev Decode receipt, require success, require exactly one log with `sig`.
-    function _singleLog(bytes calldata encodedTx, bytes32 sig) internal pure returns (EvmV1Decoder.LogEntry memory) {
+    /// @dev Decode receipt, require success, then require exactly one log with `sig` emitted by a
+    ///      *trusted vault*. Same-shaped events from other contracts in the same tx are ignored, so a
+    ///      token or router that happens to emit `Contributed` cannot block a genuine payment; a tx whose
+    ///      only matching logs come from untrusted emitters is rejected as WrongEmitter.
+    function _singleLog(bytes calldata encodedTx, bytes32 sig) internal view returns (EvmV1Decoder.LogEntry memory chosen) {
         uint8 txType = EvmV1Decoder.getTransactionType(encodedTx);
         if (!EvmV1Decoder.isValidTransactionType(txType)) revert UnsupportedTxType(txType);
         EvmV1Decoder.ReceiptFields memory receipt = EvmV1Decoder.decodeReceiptFields(encodedTx);
         // The precompile proves inclusion, not success — a reverted tx is still "included".
         if (receipt.receiptStatus != 1) revert SourceTxFailed();
         EvmV1Decoder.LogEntry[] memory logs = EvmV1Decoder.getLogsByEventSignature(receipt, sig);
-        if (logs.length != 1) revert ExpectedExactlyOneLog(logs.length);
-        return logs[0];
+        if (logs.length == 0) revert ExpectedExactlyOneLog(0);
+        uint256 found;
+        for (uint256 i; i < logs.length; ++i) {
+            if (trustedVault[logs[i].address_]) {
+                chosen = logs[i];
+                ++found;
+            }
+        }
+        if (found == 0) revert WrongEmitter(logs[0].address_, address(0));
+        if (found != 1) revert ExpectedExactlyOneLog(found);
     }
 
     /// @dev Both vault events share the shape (uint256 indexed, uint32 indexed, address indexed, uint256 data).
@@ -549,7 +605,8 @@ contract KittyLedger is Ownable {
     ) internal returns (uint256 circleId) {
         if (contribution == 0) revert InvalidCircle("contribution");
         if (roundBlocks == 0) revert InvalidCircle("roundBlocks");
-        if (sourceVault == address(0)) revert InvalidCircle("vault");
+        if (sourceVault == address(0) || !trustedVault[sourceVault]) revert VaultNotTrusted(sourceVault);
+        if (startHeight > type(uint64).max / 4 || roundBlocks > (uint64(1) << 40)) revert InvalidCircle("height range");
         circleId = ++circleCount;
         Circle storage c = _circles[circleId];
         c.name = name;
@@ -561,20 +618,34 @@ contract KittyLedger is Ownable {
         c.maxMembers = maxMembers;
     }
 
-    function _join(uint256 circleId, Circle storage c, address m) internal {
+    function _join(uint256 circleId, Circle storage c, address m, bool consent) internal {
         isMember[circleId][m] = true;
         c.members.push(m);
+        if (consent) _accept(circleId, m);
+    }
+
+    function _accept(uint256 circleId, address m) internal {
+        if (accepted[circleId][m]) return;
+        accepted[circleId][m] = true;
         _memberCircles[m].push(circleId);
+        emit MembershipAccepted(circleId, m);
     }
 
     /// @dev Fixed: members[r]. ByScore: best current score among members who have not received a pot.
     function _pickRecipient(uint256 circleId, Circle storage c, uint32 r) internal view returns (address best) {
-        if (c.rotation == Rotation.Fixed) return c.members[r];
-        uint16 bestScore;
         uint256 n = c.members.length;
+        if (c.rotation == Rotation.Fixed) {
+            // classic order, but skip anyone who has already received or did not pay this round
+            for (uint256 k; k < n; ++k) {
+                address m = c.members[(uint256(r) + k) % n];
+                if (!receivedPot[circleId][m] && _contributions[circleId][r][m].queryId != bytes32(0)) return m;
+            }
+            return address(0);
+        }
+        uint16 bestScore;
         for (uint256 i; i < n; ++i) {
             address m = c.members[i];
-            if (receivedPot[circleId][m]) continue;
+            if (receivedPot[circleId][m] || _contributions[circleId][r][m].queryId == bytes32(0)) continue;
             (uint16 sc,) = creditScore(m);
             if (best == address(0) || sc > bestScore) {
                 best = m;

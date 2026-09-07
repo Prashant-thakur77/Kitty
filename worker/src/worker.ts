@@ -11,7 +11,7 @@
  * Nothing here is trusted by the ledger: every effect above is re-verified on-chain.
  */
 import { ethers } from 'ethers';
-import { cfg, contracts, chainInfo, sourceProvider, ccProvider, ccWallet, loadState, saveState, log } from './config.ts';
+import { cfg, contracts, chainInfo, sourceProvider, ccProvider, ccWallet, ccSigner, sourceSigner, loadState, saveState, log } from './config.ts';
 import { buildBatchProof, buildSingleProof } from './proofs.ts';
 import { submitRecordContributions, submitConfirmPayout, revertReason } from './chain.ts';
 
@@ -31,7 +31,7 @@ const pending = new Map<string, Pending[]>(); // `${circleId}:${round}` → txs
 
 async function scanSource() {
   const head = await sourceProvider.getBlockNumber();
-  if (!state.lastSourceBlock) state.lastSourceBlock = cfg.fromBlock ?? Math.max(0, head - 200);
+  if (!state.lastSourceBlock) state.lastSourceBlock = cfg.fromBlock !== undefined ? cfg.fromBlock - 1 : Math.max(0, head - 200);
   let from = state.lastSourceBlock + 1;
   while (from <= head) {
     const to = Math.min(from + MAX_LOG_RANGE - 1, head);
@@ -50,7 +50,9 @@ async function scanSource() {
     }
     from = to + 1;
   }
-  state.lastSourceBlock = head;
+  // Never advance past a payment that is still pending: a restart must rescan it.
+  const oldest = Math.min(...[...pending.values()].flat().map((p) => p.block));
+  state.lastSourceBlock = Number.isFinite(oldest) ? Math.min(head, oldest - 1) : head;
 }
 
 async function flushBatches() {
@@ -76,11 +78,23 @@ async function flushBatches() {
       pending.delete(key);
       continue;
     }
-    const full = fresh.length >= circle.members.length;
-    const oldest = Math.min(...fresh.map((p) => p.seenAt));
+    // One proof per member per round, members only: a duplicate or a stranger's payment would make
+    // the ledger revert the whole batch (AlreadyContributed / NotAMember) and poison every retry.
+    const members = new Set((circle.members as string[]).map((m) => m.toLowerCase()));
+    const byMember = new Map<string, Pending>();
+    for (const p of [...fresh].sort((a, b) => a.block - b.block)) {
+      const k = p.member.toLowerCase();
+      if (!members.has(k)) { state.recorded[p.txHash] = true; log(`ignoring payment from non-member ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
+      if (byMember.has(k)) { state.recorded[p.txHash] = true; log(`ignoring duplicate payment by ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
+      byMember.set(k, p);
+    }
+    const eligible = [...byMember.values()];
+    if (eligible.length === 0) { pending.delete(key); continue; }
+    const full = eligible.length >= circle.members.length;
+    const oldest = Math.min(...eligible.map((p) => p.seenAt));
     if (!full && Date.now() - oldest < cfg.batchWaitMs && !once) continue;
 
-    const batch = fresh.slice(0, 10);
+    const batch = eligible.slice(0, 10);
     try {
       // Normally one proof; the testnet fallback may return several (one per unmergeable height group).
       const proofs = await buildBatchProof(batch.map((p) => p.txHash));
@@ -89,9 +103,10 @@ async function flushBatches() {
         for (const h of proof.txHashes) state.recorded[h] = true;
       }
     } catch (e) {
+      ccSigner.reset(); // a failed send must not leave a nonce gap
       log(`✗ batch for ${key} failed: ${revertReason(e, ledger.interface)}`);
     }
-    pending.set(key, fresh.filter((p) => !state.recorded[p.txHash]));
+    pending.set(key, eligible.filter((p) => !state.recorded[p.txHash]));
   }
 }
 
@@ -104,22 +119,16 @@ async function closeRounds() {
     const rd = await ledger.getRound(id, round);
     if (Number(rd.status) !== 0) continue;
     const full = Number(rd.contributions) >= c.members.length;
-    const deadline = await ledger.deadlineHeight(id, round);
-    const attested: boolean = await chainInfo.is_height_attested(cfg.chainKey, deadline);
+    if (c.open) continue; // invites still open: nothing to close yet
+    const closeAt = await ledger.closeHeight(id, round); // deadline + grace window
+    const attested: boolean = await chainInfo.is_height_attested(cfg.chainKey, closeAt);
     if (!full && !attested) continue;
     try {
-      log(`→ KittyLedger.closeRound(${id}) — ${full ? 'everyone paid' : `deadline block ${deadline} attested`}`);
-      let rc;
-      try {
-        rc = await (await ledger.closeRound(id)).wait();
-      } catch (e) {
-        if (!String((e as Error).message).includes('nonce')) throw e;
-        // fast local chains occasionally hand ethers a stale nonce right after a mined tx; retry once
-        await new Promise((r) => setTimeout(r, 2500));
-        rc = await (await ledger.closeRound(id, { nonce: await ccProvider.getTransactionCount(ccWallet.address, 'pending') })).wait();
-      }
+      log(`→ KittyLedger.closeRound(${id}) — ${full ? 'everyone paid' : `deadline + grace (block ${closeAt}) attested`}`);
+      const rc = await (await ledger.closeRound(id)).wait();
       log(`   ✓ round ${round} closed · cc tx ${rc.hash}`);
     } catch (e) {
+      ccSigner.reset();
       log(`✗ closeRound(${id}) failed: ${revertReason(e, ledger.interface)}`);
     }
   }
@@ -133,6 +142,7 @@ async function payouts() {
     for (let r = 0; r <= last; r++) {
       const rd = await ledger.getRound(id, r);
       if (Number(rd.status) !== 1) continue; // Closed, not yet Paid
+      if (rd.recipient === ethers.ZeroAddress) continue; // nobody eligible this round; pot carried over
       const key = `${id}:${r}`;
       let payoutTx = state.paid[key];
       if (!payoutTx) {
@@ -154,6 +164,7 @@ async function payouts() {
           saveState(state);
           log(`   ✓ paid · sepolia tx ${payoutTx}`);
         } catch (e) {
+          sourceSigner.reset();
           log(`✗ payout ${key} failed: ${revertReason(e, vault.interface)}`);
           continue;
         }
@@ -164,6 +175,7 @@ async function payouts() {
         await submitConfirmPayout(ledger, proof);
         state.confirmed[payoutTx] = true;
       } catch (e) {
+        ccSigner.reset();
         log(`✗ confirmPayout ${key} failed: ${revertReason(e, ledger.interface)}`);
       }
     }
@@ -183,7 +195,11 @@ async function main() {
   log(`kitty worker · mode=${cfg.mode} · source chainId ${src.chainId} (chainKey ${cfg.chainKey}) → creditcoin chainId ${cc.chainId}`);
   log(`vault ${cfg.vault} · ledger ${cfg.ledger} · operator ${ccWallet.address}`);
   let stop = false;
-  process.on('SIGINT', () => (stop = true));
+  process.on('SIGINT', () => {
+    if (stop) process.exit(130);
+    stop = true;
+    log('stopping after this tick (Ctrl-C again to abort now)');
+  });
   do {
     try {
       await tick();

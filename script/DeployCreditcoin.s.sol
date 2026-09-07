@@ -19,6 +19,8 @@ contract DeployCreditcoin is Script {
         uint64 chainKey = uint64(vm.envOr("SOURCE_CHAIN_KEY", uint256(1)));
         vm.startBroadcast(pk);
         KittyLedger ledger = new KittyLedger(chainKey);
+        address vault = vm.envOr("KITTY_VAULT_ADDRESS", address(0));
+        if (vault != address(0)) ledger.setTrustedVault(vault, true); // only events from this vault may feed the ledger
         KittyViewer viewer = new KittyViewer(ledger);
         KittyUSD usd = new KittyUSD();
         KittyCreditLine credit = new KittyCreditLine(ledger, IERC20(address(usd)));

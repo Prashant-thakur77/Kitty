@@ -48,18 +48,23 @@ contract KittyVaultTest is Test {
 
         vm.prank(operator);
         vm.expectRevert(KittyVault.InsufficientPot.selector);
-        vault.payout(1, 0, bob, 101e6);
+        vault.payout(1, 0, alice, 101e6);
+
+        // bob never paid into circle 1 → the operator cannot route the pot to him
+        vm.prank(operator);
+        vm.expectRevert(KittyVault.NotAContributor.selector);
+        vault.payout(1, 0, bob, 100e6);
 
         vm.expectEmit(true, true, true, true);
-        emit PaidOut(1, 0, bob, 100e6);
+        emit PaidOut(1, 0, alice, 100e6);
         vm.prank(operator);
-        vault.payout(1, 0, bob, 100e6);
-        assertEq(usd.balanceOf(bob), 100e6);
+        vault.payout(1, 0, alice, 100e6);
+        assertEq(usd.balanceOf(alice), 1_000e6, "alice paid 100 and got the 100 pot back");
         assertEq(vault.pot(1), 0);
 
         vm.prank(operator);
         vm.expectRevert(KittyVault.AlreadyPaid.selector);
-        vault.payout(1, 0, bob, 1);
+        vault.payout(1, 0, alice, 1);
     }
 
     function test_eventSignaturesMatchLedgerConstants() public pure {

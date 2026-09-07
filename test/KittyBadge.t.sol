@@ -30,6 +30,7 @@ contract KittyBadgeTest is Test {
         vm.etch(CHAIN_INFO_PRECOMPILE, address(new MockChainInfo()).code);
         MockVerifier(VERIFIER_PRECOMPILE).setAccept(true);
         ledger = new KittyLedger(CHAIN_KEY);
+        ledger.setTrustedVault(vault, true);
         badge = new KittyBadge(ledger);
         address[] memory members = new address[](2);
         members[0] = alice;

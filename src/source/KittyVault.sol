@@ -28,6 +28,10 @@ contract KittyVault is Ownable, ReentrancyGuard {
     /// @notice One payout per (circle, round). Guards the operator against double release.
     mapping(uint256 => mapping(uint32 => bool)) public paidOut;
 
+    /// @notice Anyone who ever paid into a circle. Payouts may only go to contributors of that circle,
+    ///         so a misbehaving operator can at worst mis-route inside the group, never outside it.
+    mapping(uint256 => mapping(address => bool)) public contributor;
+
     /// @dev keccak256("Contributed(uint256,uint32,address,uint256)")
     event Contributed(uint256 indexed circleId, uint32 indexed round, address indexed member, uint256 amount);
     /// @dev keccak256("PaidOut(uint256,uint32,address,uint256)")
@@ -38,6 +42,7 @@ contract KittyVault is Ownable, ReentrancyGuard {
     error ZeroAmount();
     error AlreadyPaid();
     error InsufficientPot();
+    error NotAContributor();
 
     constructor(IERC20 token, address operator_) Ownable(msg.sender) {
         TOKEN = token;
@@ -58,6 +63,7 @@ contract KittyVault is Ownable, ReentrancyGuard {
         if (amount == 0) revert ZeroAmount();
         TOKEN.safeTransferFrom(msg.sender, address(this), amount);
         pot[circleId] += amount;
+        contributor[circleId][msg.sender] = true;
         emit Contributed(circleId, round, msg.sender, amount);
     }
 
@@ -68,6 +74,7 @@ contract KittyVault is Ownable, ReentrancyGuard {
         if (paidOut[circleId][round]) revert AlreadyPaid();
         if (amount == 0) revert ZeroAmount();
         if (pot[circleId] < amount) revert InsufficientPot();
+        if (!contributor[circleId][recipient]) revert NotAContributor();
         paidOut[circleId][round] = true;
         pot[circleId] -= amount;
         TOKEN.safeTransfer(recipient, amount);

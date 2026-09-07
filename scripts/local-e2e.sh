@@ -18,7 +18,7 @@ pnpm -s demo status
 
 echo "== round 1 (member 2 misses; deadline passes on the source chain)"
 pnpm -s demo contribute --skip 2
-DL=$(cast call --rpc-url $CREDITCOIN_RPC_URL $LEDGER "deadlineHeight(uint256,uint32)(uint64)" 1 1)
+DL=$(cast call --rpc-url $CREDITCOIN_RPC_URL $LEDGER "closeHeight(uint256,uint32)(uint64)" 1 1)   # deadline + 64-block grace
 cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 "setAttestedHeight(uint64,uint64)" 1 "$DL" >/dev/null
 pnpm -s worker --once
 pnpm -s demo status

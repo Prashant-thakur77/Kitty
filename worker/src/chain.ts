@@ -7,7 +7,10 @@ import type { BatchProof } from './proofs.ts';
 async function gasFor(contract: ethers.Contract, data: string, continuityLen: number): Promise<bigint> {
   if (cfg.mode === 'local') return 6_000_000n;
   type P = Parameters<typeof sdkUtils.gas.computeGasLimit>;
-  return sdkUtils.gas.computeGasLimit(ccProvider as unknown as P[0], contract as unknown as P[1], data, ccWallet.address, Math.max(1, continuityLen));
+  const g = await sdkUtils.gas.computeGasLimit(ccProvider as unknown as P[0], contract as unknown as P[1], data, ccWallet.address, Math.max(1, continuityLen));
+  // The SDK's fallback (21k + 5k/root + 20k) is far below what recordContributions costs when
+  // estimation through the precompile fails; never go below a floor that fits a 10-tx batch.
+  return g < 1_500_000n ? 1_500_000n : g;
 }
 
 export async function submitRecordContributions(ledger: ethers.Contract, p: BatchProof): Promise<ethers.TransactionReceipt> {

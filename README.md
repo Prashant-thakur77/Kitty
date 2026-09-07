@@ -18,7 +18,7 @@ Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integrat
 | **Attack lab** | `/lab` — replay, spoofed emitter, wrong chain key, reverted source tx, late payment, each answered by the ledger's decoded custom error |
 | **Borrow** | `/borrow` — KittyCreditLine underwrites purely from the Kitty Score (tier A 100% of proven volume, B 50%, C 20%, D nothing) |
 | **Prove it yourself** | On any circle page: a member fetches the round's batch proof from the Proof Builder in the browser and submits it from their own wallet, no operator |
-| **KittyVault (Sepolia, chainKey 1)** | [`0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E`](https://sepolia.etherscan.io/address/0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E) |
+| **KittyVault (Sepolia, chainKey 1)** | [`0x1172ABd45724069749E9EB98A0349177435B284E`](https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E) |
 | **TestUSD (Sepolia)** | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
 | **KittyLedger (Creditcoin CC3 Testnet, 102031)** | _deploys with `scripts/deploy.sh`; see [`deployments.json`](deployments.json)_ |
 | **Deployer / operator** | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
@@ -221,19 +221,27 @@ Faucets: Sepolia ETH — https://www.alchemy.com/faucets/ethereum-sepolia · tCT
 
 ## Security model
 
+Reviewed with an adversarial model where the Attestcoin precompiles are trusted and everything else
+(proof submitters, members, organisers, the vault operator, other contracts) is hostile. Fixes from
+that review are in the code and covered by tests.
+
 | Claim | Backed by |
 |---|---|
-| Member X paid round R | Proof verified by 0x0FD2; receipt status 1; log from the registered vault; tx `to` = vault, `from` = member |
+| Member X paid round R | Proof verified by 0x0FD2; receipt status 1; exactly one `Contributed` log from a **trusted vault** (owner-curated allowlist; look-alike logs from other contracts in the same tx are ignored); tx `to` = vault, `from` = member; exact amount; current round |
 | Payment was on time | Proven source block height ≤ deadline height |
-| Member Y missed round R | Deadline height attested (0x0FD3) and no proven payment |
-| Recipient Z was paid | `PaidOut` proven by 0x0FD2 with matching recipient and amount |
-| Same proof can't count twice | Query id (chainKey ‖ height ‖ txIndex) + per-(circle, round, member) guard |
+| Member Y missed round R | Deadline **plus a 64-block grace window** attested (0x0FD3), no proven payment, **and Y consented** to the circle (invite, organiser, `acceptMembership`, or a prior payment). A stranger listed in a circle cannot be penalised |
+| Recipient Z was paid | `PaidOut` proven by 0x0FD2 with matching recipient and amount; the vault only pays contributors of that circle |
+| Recipient Z deserved the pot | Z paid this round and had not received before; otherwise the pot rolls to the next round |
+| Same proof can't count twice | Query id (chainKey ‖ height ‖ txIndex), byte-identical to `ASCBase`, shared by both entry points, in-batch duplicate check, plus a per-(circle, round, member) guard |
 | Proof from another chain can't count | `chainKey` pinned at deployment |
-| Invite is genuine | Organiser's EIP-191 signature over (ledger, chainId, circleId, member, nonce); nonce single-use |
+| Invite is genuine | Organiser's EIP-191 signature over (ledger, chainId, circleId, invitee, nonce); single-use nonces; OpenZeppelin ECDSA (malleability-safe) |
+| Score cannot be minted | Only trusted vaults feed volume; credit limits come from that volume; missed payments require consent |
+| LP fees are not stranded | Withdrawals are pro-rata over pool value (idle + owed) |
 
-The only operated step is *sending* the payout on Ethereum (vault operator key). The ledger never
-trusts that it happened; it waits for the proof. Attestcoin writability is the natural
-replacement once audited; the vault already exposes the exact call.
+Known limits, stated plainly: the vault operator *sends* payouts (Attestcoin writability, once audited,
+replaces this); a payout mis-routed inside the group is not recoverable; loan defaults do not yet
+feed back into the score; members paying through smart-account wallets are not credited because the
+transaction's own `from` must be the member (a safe false negative).
 
 ## Challenges I ran into
 

@@ -38,6 +38,9 @@ export KITTY_USD_ADDRESS=$KUSD KITTY_CREDIT_ADDRESS=$CREDIT KITTY_BADGE_ADDRESS=
 echo "TestUSD $USD · KittyVault $VAULT · FakeVault $FAKE"
 echo "KittyLedger $LEDGER · KittyViewer $VIEWER · KittyUSD $KUSD · KittyCreditLine $CREDIT · KittyBadge $BADGE"
 
+echo "== trust the local vault on the ledger"
+cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY "$LEDGER" "setTrustedVault(address,bool)" "$VAULT" true >/dev/null
+
 echo "== seed the credit pool: 100,000 kUSD minted, 50,000 deposited"
 cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY "$KUSD" "mint(address,uint256)" "$OP" 100000000000 >/dev/null
 cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY "$KUSD" "approve(address,uint256)" "$CREDIT" 50000000000 >/dev/null

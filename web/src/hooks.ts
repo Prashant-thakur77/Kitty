@@ -28,7 +28,8 @@ export function useCircle(id: bigint | undefined) {
   const c = circle.data as Circle | undefined
   const round = useReadContract({ ...cc, address: cfg.ledger, abi: ledgerAbi, functionName: 'getRound', args: [id ?? 0n, c?.currentRound ?? 0], query: { enabled: enabled && !!c } })
   const deadline = useReadContract({ ...cc, address: cfg.ledger, abi: ledgerAbi, functionName: 'deadlineHeight', args: [id ?? 0n, c?.currentRound ?? 0], query: { enabled: enabled && !!c } })
-  return { circle: c, round: round.data as Round | undefined, deadline: deadline.data as bigint | undefined, isLoading: circle.isLoading, error: circle.error, refetch: () => { circle.refetch(); round.refetch() } }
+  const closeAt = useReadContract({ ...cc, address: cfg.ledger, abi: ledgerAbi, functionName: 'closeHeight', args: [id ?? 0n, c?.currentRound ?? 0], query: { enabled: enabled && !!c } })
+  return { circle: c, round: round.data as Round | undefined, deadline: deadline.data as bigint | undefined, closeAt: closeAt.data as bigint | undefined, isLoading: circle.isLoading, error: circle.error, refetch: () => { circle.refetch(); round.refetch() } }
 }
 
 export function useRoundDetail(id: bigint | undefined, round: number | undefined, members: readonly `0x${string}`[] | undefined) {

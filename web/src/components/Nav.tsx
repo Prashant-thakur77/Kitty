@@ -13,7 +13,7 @@ export function Nav() {
     <header className="noprint sticky top-0 z-30 border-b" style={{ background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(10px)', borderColor: 'var(--line)' }}>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 no-underline" style={{ color: 'var(--ink)' }}>
-          <img src="/kitty.svg" alt="" width={28} height={28} />
+          <img src={`${import.meta.env.BASE_URL}kitty.svg`} alt="" width={28} height={28} />
           <span className="display text-xl">Kitty</span>
         </Link>
         <nav className="flex flex-wrap items-center gap-1 sm:ml-4">

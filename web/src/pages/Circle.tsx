@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAccount, useReadContract, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { waitForTransactionReceipt } from 'wagmi/actions'
+import { wagmiConfig } from '../lib/wagmi'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X, ExternalLink } from 'lucide-react'
 import { cfg } from '../config'
@@ -22,7 +24,7 @@ export function CirclePage() {
   const { address, chainId } = useAccount()
   const { switchChainAsync } = useSwitchChain()
   const { head, attested } = useAttestation()
-  const { circle, round, deadline, isLoading, error, refetch } = useCircle(circleId)
+  const { circle, round, deadline, closeAt, isLoading, error, refetch } = useCircle(circleId)
   const detail = useRoundDetail(circleId, circle?.currentRound, circle?.members)
   const rounds = useRounds(circleId, circle?.members.length ?? 0)
   const { items: feed } = useLedgerEvents({ circleId })
@@ -46,11 +48,15 @@ export function CirclePage() {
   const full = !!round && round.contributions >= n
   const start = circle.startHeight + BigInt(circle.currentRound) * circle.roundBlocks
   const dl = deadline ?? start + circle.roundBlocks
+  const closeHeight = closeAt ?? dl + 64n
   const blocksToAttested = attested !== undefined ? Number(dl - attested) : undefined
-  const deadlineAttested = blocksToAttested !== undefined && blocksToAttested <= 0
+  const blocksToClose = attested !== undefined ? Number(closeHeight - attested) : undefined
+  const deadlinePassed = blocksToAttested !== undefined && blocksToAttested <= 0
+  const deadlineAttested = blocksToClose !== undefined && blocksToClose <= 0 // deadline + grace attested → closable
   const mine = myIdx >= 0 ? detail.contributions?.[myIdx] : undefined
   const iProved = isProven(mine)
-  const urgency: Urgency = !active ? 'calm' : iProved ? 'proven' : deadlineAttested || full ? 'urgent' : blocksToAttested !== undefined && blocksToAttested <= 20 ? 'attention' : 'calm'
+  const iPaidOnSepolia = !!address && payments.some((p) => p.member.toLowerCase() === address.toLowerCase())
+  const urgency: Urgency = !active ? 'calm' : iProved || iPaidOnSepolia ? 'proven' : deadlineAttested || full ? 'urgent' : blocksToAttested !== undefined && blocksToAttested <= 20 ? 'attention' : 'calm'
   const byScore = circle.rotation === 1
   // ByScore: the pot goes to the best current score among members who have not received yet (ties → earlier member)
   const recipient = byScore
@@ -68,9 +74,10 @@ export function CirclePage() {
       setMsg('')
       await ensure(sepolia.id)
       if (((allowance.data as bigint | undefined) ?? 0n) < circle!.contribution) {
-        setMsg('Approving tUSD…')
+        setMsg('Approving tUSD… (waiting for it to mine)')
         const h = await writeContractAsync({ chainId: sepolia.id, address: cfg.token, abi: usdAbi, functionName: 'approve', args: [cfg.vault, 2n ** 256n - 1n] })
         setTxHash(h)
+        await waitForTransactionReceipt(wagmiConfig, { hash: h, chainId: sepolia.id })
       }
       setMsg('Confirm the contribution in your wallet…')
       const h = await writeContractAsync({ chainId: sepolia.id, address: cfg.vault, abi: vaultAbi, functionName: 'contribute', args: [circleId, circle!.currentRound, circle!.contribution] })
@@ -84,8 +91,8 @@ export function CirclePage() {
     try { await ensure(creditcoinTestnet.id); const h = await writeContractAsync({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'closeRound', args: [circleId] }); setMsg(`closeRound sent on Creditcoin · ${h.slice(0, 12)}…`); setTimeout(refetch, 5000) } catch (e) { setMsg((e as Error).message.split('\n')[0]) }
   }
 
-  const headline = !active ? 'CIRCLE COMPLETE' : iProved ? `PROVEN · BLOCK ${num(mine!.height)}` : myIdx >= 0 ? `PAY ${usd(circle.contribution)}` : full ? 'EVERYONE PAID' : deadlineAttested ? 'DEADLINE ATTESTED' : `${round?.contributions ?? 0} OF ${n} PROVEN`
-  const sub = !active ? 'Every member has received a pot.' : deadlineAttested ? 'The deadline block is attested on Creditcoin. Anyone can close the round; missing members are recorded.' : blocksToAttested !== undefined ? `${blocksToAttested} Sepolia blocks until the deadline is attested` : 'Waiting for attestation data…'
+  const headline = !active ? 'CIRCLE COMPLETE' : iProved ? `PROVEN · BLOCK ${num(mine!.height)}` : iPaidOnSepolia ? 'PAID · PROOF PENDING' : myIdx >= 0 ? `PAY ${usd(circle.contribution)}` : full ? 'EVERYONE PAID' : deadlineAttested ? 'DEADLINE ATTESTED' : `${round?.contributions ?? 0} OF ${n} PROVEN`
+  const sub = !active ? 'Every member has received a pot.' : deadlineAttested ? 'The deadline plus the 64-block grace window is attested on Creditcoin. Anyone can close the round; missing members are recorded.' : deadlinePassed ? `Deadline passed; payments now count as late. ${blocksToClose} blocks of grace before the round can close.` : blocksToAttested !== undefined ? `${blocksToAttested} Sepolia blocks until the deadline is attested` : 'Waiting for attestation data…'
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
@@ -103,7 +110,7 @@ export function CirclePage() {
             <div className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>{sub}</div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {active && myIdx >= 0 && !iProved && <button className="btn btn-mint" disabled={isPending} onClick={() => setModal('confirm')}>Contribute {usd(circle.contribution)}</button>}
+            {active && myIdx >= 0 && !iProved && !iPaidOnSepolia && <button className="btn btn-mint" disabled={isPending} onClick={() => setModal('confirm')}>Contribute {usd(circle.contribution)}</button>}
             {active && myIdx >= 0 && ((balance.data as bigint | undefined) ?? 0n) < circle.contribution && <button className="btn" onClick={mintDemo}>Get demo tUSD</button>}
             {active && (full || deadlineAttested) && round?.status === 0 && <button className="btn" disabled={isPending} onClick={closeRound}>Close round on Creditcoin</button>}
             {!address && <span className="self-center text-xs" style={{ color: 'var(--muted)' }}>Connect a member wallet to pay.</span>}
@@ -118,7 +125,7 @@ export function CirclePage() {
         <Stat label="Installment" value={usd(circle.contribution)} />
         <Stat label="Pot this round" value={usd(round?.pot)} tone="mint" />
         <Stat label="Proven" value={`${round?.contributions ?? 0} / ${n}`} />
-        <Stat label="Deadline · Sepolia block" value={num(dl)} sub={deadlineAttested ? 'attested — closable' : `attested head ${num(attested)}`} tone="sky" />
+        <Stat label="Deadline · Sepolia block" value={num(dl)} sub={deadlineAttested ? 'grace over — closable' : deadlinePassed ? `late until block ${num(closeHeight)}` : `attested head ${num(attested)}`} tone="sky" />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">

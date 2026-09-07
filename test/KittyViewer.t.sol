@@ -39,6 +39,7 @@ contract KittyViewerTest is Test {
         verifier.setAccept(true);
 
         ledger = new KittyLedger(CHAIN_KEY);
+        ledger.setTrustedVault(vault, true);
         viewer = new KittyViewer(ledger);
         address[] memory members = new address[](3);
         members[0] = alice;
@@ -101,7 +102,9 @@ contract KittyViewerTest is Test {
         assertEq(f.scores[2], 480);
         assertEq(f.tiers[2], "D");
 
-        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS);
+        vm.prank(bob);
+        ledger.acceptMembership(circleId);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64);
         ledger.closeRound(circleId);
 
         f = viewer.getCircleFull(circleId);
@@ -159,6 +162,13 @@ contract KittyViewerTest is Test {
         uint64[] memory hs = new uint64[](1);
         hs[0] = 1_010;
         _record(circleId, who, hs, 0);
+        // listed members appear on their dashboard once they consent (alice consented to circle 1 by paying)
+        vm.prank(alice);
+        ledger.acceptMembership(circleId2);
+        vm.prank(bob);
+        ledger.acceptMembership(circleId);
+        vm.prank(bob);
+        ledger.acceptMembership(circleId2);
 
         KittyViewer.MemberDashboard memory d = viewer.getMemberDashboard(alice);
         assertEq(d.circleIds.length, 2);
@@ -180,7 +190,7 @@ contract KittyViewerTest is Test {
         assertEq(db.myStatus[1], viewer.STATUS_PENDING());
 
         // Complete circle 2 with nobody paying: last round is closed → both Missed, score matches ledger.
-        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS + 64);
         ledger.closeRound(circleId2);
         ledger.closeRound(circleId2);
         d = viewer.getMemberDashboard(alice);

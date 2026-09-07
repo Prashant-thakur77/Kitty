@@ -32,6 +32,7 @@ contract KittyRotationTest is Test {
         chainInfo = MockChainInfo(CHAIN_INFO_PRECOMPILE);
         MockVerifier(VERIFIER_PRECOMPILE).setAccept(true); // etch copies code, not storage
         ledger = new KittyLedger(CHAIN_KEY);
+        ledger.setTrustedVault(vault, true);
         address[] memory members = new address[](3);
         members[0] = alice;
         members[1] = bob;
@@ -40,6 +41,12 @@ contract KittyRotationTest is Test {
         circleId = ledger.createCircle("Score circle", members, AMOUNT, ROUND_BLOCKS, START, vault);
         vm.prank(organiser);
         ledger.setRotation(circleId, KittyLedger.Rotation.ByScore);
+        vm.prank(alice);
+        ledger.acceptMembership(circleId);
+        vm.prank(bob);
+        ledger.acceptMembership(circleId);
+        vm.prank(carol);
+        ledger.acceptMembership(circleId);
     }
 
     function _pay(address[] memory who, uint64[] memory heights, uint32 round) internal {
@@ -77,7 +84,7 @@ contract KittyRotationTest is Test {
         // Round 0: alice and bob pay on time, carol misses → carol's score drops below the others.
         (address[] memory w, uint64[] memory h) = _pair(alice, bob, 1_010, 1_011);
         _pay(w, h, 0);
-        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64);
         ledger.closeRound(circleId);
         // alice and bob tie at 515 → earlier member (alice) receives round 0
         assertEq(ledger.getRound(circleId, 0).recipient, alice);
@@ -86,7 +93,7 @@ contract KittyRotationTest is Test {
         // Round 1: bob pays late, carol pays on time. Scores: bob 515-20=495, carol 500-120+15=395 → bob receives.
         (w, h) = _pair(bob, carol, START + 2 * ROUND_BLOCKS + 1, START + ROUND_BLOCKS + 5);
         _pay(w, h, 1);
-        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS + 64);
         ledger.closeRound(circleId);
         assertEq(ledger.getRound(circleId, 1).recipient, bob);
 
@@ -96,7 +103,7 @@ contract KittyRotationTest is Test {
         uint64[] memory oh = new uint64[](1);
         oh[0] = START + 2 * ROUND_BLOCKS + 5;
         _pay(one, oh, 2);
-        chainInfo.setAttestedHeight(CHAIN_KEY, START + 3 * ROUND_BLOCKS);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 3 * ROUND_BLOCKS + 64);
         ledger.closeRound(circleId);
         assertEq(ledger.getRound(circleId, 2).recipient, carol);
         assertEq(uint8(ledger.getCircle(circleId).status), uint8(KittyLedger.CircleStatus.Completed));

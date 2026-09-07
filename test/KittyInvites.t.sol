@@ -40,6 +40,7 @@ contract KittyInvitesTest is Test {
         mallory = vm.addr(malloryPk);
 
         ledger = new KittyLedger(CHAIN_KEY);
+        ledger.setTrustedVault(vault, true);
         vm.prank(organiser);
         circleId = ledger.createOpenCircle("Open Susu", AMOUNT, ROUND_BLOCKS, START, vault, MAX);
     }
@@ -96,6 +97,10 @@ contract KittyInvitesTest is Test {
         assertEq(c.organiser, mallory);
         assertFalse(c.open);
         assertEq(c.maxMembers, 2);
+        assertTrue(ledger.isMember(id, bob));
+        assertEq(ledger.getMemberCircles(bob).length, 0, "listed, not yet consented: not on bob's dashboard");
+        vm.prank(bob);
+        ledger.acceptMembership(id);
         assertEq(ledger.getMemberCircles(bob).length, 1);
         assertEq(ledger.getMemberCircles(bob)[0], id);
         assertEq(ledger.getMemberCircles(mallory).length, 0, "organiser is not auto-member of a closed circle");

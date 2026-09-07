@@ -64,16 +64,33 @@ contract KittyCreditLine is ReentrancyGuard {
         emit Deposited(msg.sender, amount);
     }
 
+    /// @notice Withdraw up to your pro-rata share of the pool (deposits plus collected fees).
+    ///         Fees repaid by borrowers raise every LP's entitlement instead of being locked in the pool.
     function withdraw(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        uint256 d = deposits[msg.sender];
-        if (amount > d) revert InsufficientDeposit(amount, d);
+        uint256 ent = entitlement(msg.sender);
+        if (amount > ent) revert InsufficientDeposit(amount, ent);
         uint256 liq = liquidity();
         if (amount > liq) revert InsufficientLiquidity(amount, liq);
-        deposits[msg.sender] = d - amount;
-        totalDeposits -= amount;
+        // burn deposit units proportionally (round up so the pool never over-pays)
+        uint256 value = poolValue();
+        uint256 units = (amount * totalDeposits + value - 1) / value;
+        if (units > deposits[msg.sender]) units = deposits[msg.sender];
+        deposits[msg.sender] -= units;
+        totalDeposits -= units;
         ASSET.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
+    }
+
+    /// @notice Total value backing deposit units: idle liquidity plus everything borrowers still owe.
+    function poolValue() public view returns (uint256) {
+        return liquidity() + totalOutstanding;
+    }
+
+    /// @notice What `lp` may withdraw once liquidity allows: their share of poolValue.
+    function entitlement(address lp) public view returns (uint256) {
+        if (totalDeposits == 0) return 0;
+        return deposits[lp] * poolValue() / totalDeposits;
     }
 
     // ───────────────────────────── Borrowers ─────────────────────────────

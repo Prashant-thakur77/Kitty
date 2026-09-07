@@ -152,6 +152,25 @@
   },
   {
     "type": "function",
+    "name": "entitlement",
+    "inputs": [
+      {
+        "name": "lp",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "liquidity",
     "inputs": [],
     "outputs": [
@@ -173,6 +192,19 @@
         "internalType": "address"
       }
     ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "poolValue",
+    "inputs": [],
     "outputs": [
       {
         "name": "",

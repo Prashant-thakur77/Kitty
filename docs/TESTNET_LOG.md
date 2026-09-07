@@ -27,5 +27,5 @@ Actions to expect, in order: `deploy TestUSD` · `deploy KittyVault` · `deploy 
 | date | contract | address |
 |---|---|---|
 | 2026-09-08 | TestUSD | https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE |
-| 2026-09-08 | KittyVault | https://sepolia.etherscan.io/address/0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E |
+| 2026-09-08 | KittyVault (v2, contributor-only payouts; v1 was 0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E) | https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E |
 | 2026-09-08 | FakeVault | https://sepolia.etherscan.io/address/0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb |
