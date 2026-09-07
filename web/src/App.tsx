@@ -1,42 +1,36 @@
-import { useEffect, useState } from 'react'
-import { Header } from './components/Header'
-import { CirclePanel } from './components/CirclePanel'
-import { ProofFeed } from './components/ProofFeed'
-import { useCircleCount } from './hooks'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { Nav } from './components/Nav'
+import { Landing } from './pages/Landing'
+import { Circles } from './pages/Circles'
+import { CirclePage } from './pages/Circle'
+import { ScorePage } from './pages/Score'
+import { Lab } from './pages/Lab'
+import { Architecture } from './pages/Architecture'
+import { Presentation } from './pages/Presentation'
 import { cfg } from './config'
 
 export default function App() {
-  const { data: count } = useCircleCount()
-  const [id, setId] = useState<bigint | undefined>()
-  useEffect(() => { if (count !== undefined && id === undefined && (count as bigint) > 0n) setId(count as bigint) }, [count, id])
-  const n = Number(count ?? 0n)
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-16">
-      <Header />
+    <>
+      <Nav />
       {!cfg.ledger && (
-        <div className="panel p-5 text-sm" style={{ color: 'var(--amber)' }}>
-          No deployment configured. Run <code className="mono">scripts/deploy.sh</code> (writes web/.env) or copy web/.env.example.
+        <div className="mx-auto mt-4 max-w-6xl px-4">
+          <div className="panel p-4 text-sm" style={{ color: 'var(--amber)' }}>
+            KittyLedger is not configured yet: <code className="mono">VITE_KITTY_LEDGER_ADDRESS</code> is empty. Sepolia contracts are set; the Creditcoin side deploys with <code className="mono">scripts/deploy.sh</code> once the deployer holds tCTC.
+          </div>
         </div>
       )}
-      {cfg.ledger && (
-        <>
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--muted)' }}>Circles on Creditcoin:</span>
-            {n === 0 && <span className="text-xs" style={{ color: 'var(--muted)' }}>none yet — run <code className="mono">pnpm demo create</code></span>}
-            {Array.from({ length: n }, (_, i) => BigInt(i + 1)).map((c) => (
-              <button key={String(c)} className="btn" style={id === c ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : {}} onClick={() => setId(c)}>#{String(c)}</button>
-            ))}
-          </div>
-          <div className="grid gap-4">
-            {id !== undefined && <CirclePanel circleId={id} />}
-            <ProofFeed circleId={id} />
-          </div>
-        </>
-      )}
-      <footer className="mt-10 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
-        Money: KittyVault on Ethereum Sepolia (chainKey {cfg.sourceChainKey}). Rules: KittyLedger on Creditcoin CC3 Testnet. Proofs: Attestcoin block-prover
-        precompile 0x0FD2 (batch verify) + ChainInfo precompile 0x0FD3 (attested-height clock). No oracle operator, no bridge, no treasurer.
-      </footer>
-    </div>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/circles" element={<Circles />} />
+        <Route path="/circle/:id" element={<CirclePage />} />
+        <Route path="/score" element={<ScorePage />} />
+        <Route path="/score/:address" element={<ScorePage />} />
+        <Route path="/lab" element={<Lab />} />
+        <Route path="/architecture" element={<Architecture />} />
+        <Route path="/presentation" element={<Presentation />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }

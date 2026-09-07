@@ -91,3 +91,15 @@ quick start (tests, local e2e, testnet deploy, worker, dashboard) · Attestcoin 
 - GitHub: `https://github.com/<you>/kitty` (push this repo)
 - Deck PDF / video: upload to Drive/YouTube, paste links.
 - Team: 1 member — Prashant (name, email, country, bio, role "solo builder").
+
+## Narration text for TTS (feed to voiceover.py, one paragraph per clip)
+
+1. This is Amara's savings circle in Lagos. Ten friends, one hundred dollars a month, one of them takes the pot each month. It works until the treasurer runs, or a member stops paying and nobody outside the circle ever knows. Ten years of perfect payments. Zero credit history.
+2. Kitty keeps the money on Ethereum, where they already hold stablecoins, and puts the rules on Creditcoin. Nobody trusts a treasurer, an oracle operator, or a bridge, because every payment is proven across chains by the Attestcoin Protocol.
+3. Here is the circle on Creditcoin. Three members, one hundred test dollars per round. The deadline is a Sepolia block number, not a timestamp. This indicator shows the latest Sepolia block and the latest block the attestor network has attested on Creditcoin.
+4. A member pays. That is a plain escrow deposit on Sepolia. Nothing else is required from her.
+5. The worker waits for the attestation, then asks the Proof Builder for one batch proof covering every payment in the round. The ledger verifies all of them with a single call to the block prover precompile, decodes each receipt, and binds it to the vault, the member, the amount and the round.
+6. Round closed. Amara receives three hundred. The operator pays out on Sepolia, and that payout is proven back. The round shows Paid only after the ledger has seen the money move.
+7. Round two. One member does not pay. Nothing happens until the deadline block itself is attested on Creditcoin. The ChainInfo precompile is the only clock. Then the round closes, the missed payment is recorded, and the score drops from five fifteen to three ninety five.
+8. Try to cheat it. Replay a proof: rejected, query already processed. A fake vault emitting a perfect event: rejected, wrong emitter. Same proof on another chain key: rejected. A reverted transaction with a valid proof: rejected, the precompile proves inclusion, not success.
+9. Every number in this score is a proven transaction or an attested deadline. That is a credit history a Creditcoin lender can underwrite against, which is the whole point of Creditcoin. Kitty. Savings circles where every payment is proven, not promised.

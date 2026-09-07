@@ -23,9 +23,11 @@ forge build >/dev/null
 USD=$(forge create src/source/TestUSD.sol:TestUSD --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast | grep -oE 'Deployed to: 0x[0-9a-fA-F]+' | cut -d' ' -f3)
 OP=$(cast wallet address --private-key $PRIVATE_KEY)
 VAULT=$(forge create src/source/KittyVault.sol:KittyVault --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast --constructor-args "$USD" "$OP" | grep -oE 'Deployed to: 0x[0-9a-fA-F]+' | cut -d' ' -f3)
+FAKE=$(forge create src/source/FakeVault.sol:FakeVault --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast | grep -oE 'Deployed to: 0x[0-9a-fA-F]+' | cut -d' ' -f3)
 LEDGER=$(forge create src/asc/KittyLedger.sol:KittyLedger --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY --broadcast --constructor-args 1 | grep -oE 'Deployed to: 0x[0-9a-fA-F]+' | cut -d' ' -f3)
-export TEST_USD_ADDRESS=$USD KITTY_VAULT_ADDRESS=$VAULT KITTY_LEDGER_ADDRESS=$LEDGER
-echo "TestUSD $USD · KittyVault $VAULT · KittyLedger $LEDGER"
+VIEWER=$(forge create src/asc/KittyViewer.sol:KittyViewer --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY --broadcast --constructor-args "$LEDGER" | grep -oE 'Deployed to: 0x[0-9a-fA-F]+' | cut -d' ' -f3)
+export TEST_USD_ADDRESS=$USD KITTY_VAULT_ADDRESS=$VAULT FAKE_VAULT_ADDRESS=$FAKE KITTY_LEDGER_ADDRESS=$LEDGER KITTY_VIEWER_ADDRESS=$VIEWER
+echo "TestUSD $USD · KittyVault $VAULT · FakeVault $FAKE · KittyLedger $LEDGER · KittyViewer $VIEWER"
 
 echo "== mock precompiles on the Creditcoin anvil"
 VCODE=$(forge inspect MockVerifier deployedBytecode)

@@ -7,10 +7,9 @@
  * Member keys: local mode uses anvil's default accounts 1..N; testnet mode generates and stores
  * worker/demo-members.local.json (gitignored).
  */
-import fs from 'node:fs';
-import path from 'node:path';
 import { ethers } from 'ethers';
-import { cfg, ROOT, contracts, sourceProvider, ccProvider, sourceWallet, chainInfo, log } from './config.ts';
+import { cfg, contracts, sourceProvider, ccProvider, sourceWallet, chainInfo, log } from './config.ts';
+import { memberWallets } from './members.ts';
 
 const args = process.argv.slice(2);
 const cmd = args[0] ?? 'status';
@@ -18,22 +17,6 @@ const opt = (name: string, def?: string) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : def;
 };
-
-const ANVIL_MNEMONIC = 'test test test test test test test test test test test junk';
-const membersFile = path.join(ROOT, 'worker', 'demo-members.local.json');
-
-function memberWallets(n: number): ethers.Wallet[] {
-  if (cfg.mode === 'local') {
-    return Array.from({ length: n }, (_, i) =>
-      new ethers.Wallet(ethers.HDNodeWallet.fromPhrase(ANVIL_MNEMONIC, undefined, `m/44'/60'/0'/0/${i + 1}`).privateKey, sourceProvider)
-    );
-  }
-  let keys: string[] = [];
-  if (fs.existsSync(membersFile)) keys = JSON.parse(fs.readFileSync(membersFile, 'utf8'));
-  while (keys.length < n) keys.push(ethers.Wallet.createRandom().privateKey);
-  fs.writeFileSync(membersFile, JSON.stringify(keys, null, 2));
-  return keys.slice(0, n).map((k) => new ethers.Wallet(k, sourceProvider));
-}
 
 async function create() {
   const { ledger, vault } = contracts();

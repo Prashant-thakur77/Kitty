@@ -2,6 +2,8 @@
 pragma solidity ^0.8.28;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {EvmV1Decoder} from "@gluwa/asc-contracts/contracts/common/EvmV1Decoder.sol";
 import {
     INativeQueryVerifier,
@@ -56,6 +58,9 @@ contract KittyLedger is Ownable {
         uint32 currentRound;
         address sourceVault; // KittyVault on the source chain — the only accepted emitter
         CircleStatus status;
+        address organiser; // msg.sender of createCircle / createOpenCircle; signs invites
+        bool open; // invites still redeemable; must be closed before any contribution is recorded
+        uint32 maxMembers; // cap for open circles (createOpenCircle); equals members.length otherwise
     }
 
     struct Round {
@@ -105,6 +110,10 @@ contract KittyLedger is Ownable {
     mapping(uint256 => mapping(uint32 => mapping(address => Contribution))) internal _contributions;
     mapping(uint256 => mapping(address => bool)) public isMember;
     mapping(address => MemberRecord) internal _records;
+    mapping(address => uint256[]) internal _memberCircles;
+
+    /// @notice Invite replay protection: each (circle, nonce) signed by the organiser is redeemable once.
+    mapping(uint256 => mapping(uint256 => bool)) public usedInviteNonces;
 
     /// @notice Replay protection: one proof, one effect. Same derivation as ASCBase.
     mapping(bytes32 => bool) public processedQueries;
@@ -135,6 +144,8 @@ contract KittyLedger is Ownable {
     event RoundOpened(uint256 indexed circleId, uint32 indexed round, uint64 deadlineHeight);
     event CircleCompleted(uint256 indexed circleId);
     event PayoutConfirmed(uint256 indexed circleId, uint32 indexed round, address indexed recipient, uint256 amount, bytes32 queryId);
+    event InviteRedeemed(uint256 indexed circleId, address indexed member, uint256 nonce);
+    event InvitesClosed(uint256 indexed circleId, uint256 memberCount);
 
     // ───────────────────────────── Errors ─────────────────────────────
 
@@ -162,6 +173,14 @@ contract KittyLedger is Ownable {
     error RoundNotClosed(uint256 circleId, uint32 round);
     error PayoutMismatch();
     error InvalidCircle(string reason);
+    error CircleStillOpen(uint256 circleId);
+    error CircleNotOpen(uint256 circleId);
+    error NotOrganiser(uint256 circleId);
+    error InviteAlreadyUsed(uint256 circleId, uint256 nonce);
+    error InvalidInviteSigner(address got, address want);
+    error AlreadyMember(uint256 circleId, address member);
+    error CircleFull(uint256 circleId, uint32 maxMembers);
+    error InvitesAlreadyClosed(uint256 circleId);
 
     // ───────────────────────────── Constructor ─────────────────────────────
 
@@ -184,25 +203,75 @@ contract KittyLedger is Ownable {
         address sourceVault
     ) external returns (uint256 circleId) {
         if (members.length < 2 || members.length > MAX_MEMBERS) revert InvalidCircle("2..10 members");
-        if (contribution == 0) revert InvalidCircle("contribution");
-        if (roundBlocks == 0) revert InvalidCircle("roundBlocks");
-        if (sourceVault == address(0)) revert InvalidCircle("vault");
-
-        circleId = ++circleCount;
+        circleId = _initCircle(name, contribution, roundBlocks, startHeight, sourceVault, uint32(members.length));
         Circle storage c = _circles[circleId];
-        c.name = name;
-        c.contribution = contribution;
-        c.roundBlocks = roundBlocks;
-        c.startHeight = startHeight;
-        c.sourceVault = sourceVault;
         for (uint256 i; i < members.length; ++i) {
             address m = members[i];
             if (m == address(0) || isMember[circleId][m]) revert InvalidCircle("duplicate/zero member");
-            isMember[circleId][m] = true;
-            c.members.push(m);
+            _join(circleId, c, m);
         }
         emit CircleCreated(circleId, name, members, contribution, roundBlocks, startHeight, sourceVault);
         emit RoundOpened(circleId, 0, deadlineHeight(circleId, 0));
+    }
+
+    /// @notice Open a circle with only the organiser as member. Others join via `redeemInvite` using
+    ///         an off-chain signature from the organiser; the organiser then calls `closeInvites`
+    ///         before the first contribution can be recorded (rotation order = join order).
+    function createOpenCircle(
+        string calldata name,
+        uint256 contribution,
+        uint64 roundBlocks,
+        uint64 startHeight,
+        address sourceVault,
+        uint32 maxMembers
+    ) external returns (uint256 circleId) {
+        if (maxMembers < 2 || maxMembers > MAX_MEMBERS) revert InvalidCircle("2..10 members");
+        circleId = _initCircle(name, contribution, roundBlocks, startHeight, sourceVault, maxMembers);
+        Circle storage c = _circles[circleId];
+        c.open = true;
+        _join(circleId, c, msg.sender);
+        address[] memory members = new address[](1);
+        members[0] = msg.sender;
+        emit CircleCreated(circleId, name, members, contribution, roundBlocks, startHeight, sourceVault);
+        emit RoundOpened(circleId, 0, deadlineHeight(circleId, 0));
+    }
+
+    /// @notice Join an open circle with an invite signed by its organiser (EIP-191 over
+    ///         keccak256(abi.encodePacked(ledger, chainid, circleId, invitee, nonce))). Pattern after
+    ///         Breadchain SavingCircles.redeemInvite (MIT), bound here to the invitee's address.
+    function redeemInvite(uint256 circleId, uint256 nonce, bytes calldata sig) external {
+        Circle storage c = _circle(circleId);
+        if (!c.open) revert CircleNotOpen(circleId);
+        if (usedInviteNonces[circleId][nonce]) revert InviteAlreadyUsed(circleId, nonce);
+        if (isMember[circleId][msg.sender]) revert AlreadyMember(circleId, msg.sender);
+        if (c.members.length >= c.maxMembers) revert CircleFull(circleId, c.maxMembers);
+        if (c.currentRound != 0 || _rounds[circleId][0].contributions != 0) revert CircleStillOpen(circleId);
+
+        address signer = ECDSA.recover(inviteDigest(circleId, msg.sender, nonce), sig);
+        if (signer != c.organiser) revert InvalidInviteSigner(signer, c.organiser);
+
+        usedInviteNonces[circleId][nonce] = true;
+        _join(circleId, c, msg.sender);
+        emit InviteRedeemed(circleId, msg.sender, nonce);
+    }
+
+    /// @notice Stop accepting invites. Required before contributions can be recorded so the member
+    ///         list — and therefore the rotation order and per-round pot — is fixed.
+    function closeInvites(uint256 circleId) external {
+        Circle storage c = _circle(circleId);
+        if (msg.sender != c.organiser) revert NotOrganiser(circleId);
+        if (!c.open) revert InvitesAlreadyClosed(circleId);
+        if (c.members.length < 2) revert InvalidCircle("2..10 members");
+        c.open = false;
+        c.maxMembers = uint32(c.members.length);
+        emit InvitesClosed(circleId, c.members.length);
+    }
+
+    /// @notice The EIP-191 digest an organiser signs to invite `invitee` into `circleId`.
+    function inviteDigest(uint256 circleId, address invitee, uint256 nonce) public view returns (bytes32) {
+        return MessageHashUtils.toEthSignedMessageHash(
+            keccak256(abi.encodePacked(address(this), block.chainid, circleId, invitee, nonce))
+        );
     }
 
     /// @notice Close the current round. Allowed when every member has a proven contribution, or when
@@ -210,6 +279,7 @@ contract KittyLedger is Ownable {
     function closeRound(uint256 circleId) external {
         Circle storage c = _circle(circleId);
         if (c.status != CircleStatus.Active) revert CircleNotActive(circleId);
+        if (c.open) revert CircleStillOpen(circleId);
         uint32 r = c.currentRound;
         Round storage rd = _rounds[circleId][r];
         if (rd.status != RoundStatus.Open) revert RoundNotOpen(circleId, r);
@@ -339,6 +409,11 @@ contract KittyLedger is Ownable {
         return _records[member];
     }
 
+    /// @notice Every circle `member` belongs to, in join order.
+    function getMemberCircles(address member) external view returns (uint256[] memory) {
+        return _memberCircles[member];
+    }
+
     /// @notice Source-chain block by which round `round` must be paid.
     function deadlineHeight(uint256 circleId, uint32 round) public view returns (uint64) {
         Circle storage c = _circles[circleId];
@@ -367,6 +442,7 @@ contract KittyLedger is Ownable {
 
         Circle storage c = _circle(circleId);
         if (c.status != CircleStatus.Active) revert CircleNotActive(circleId);
+        if (c.open) revert CircleStillOpen(circleId);
         if (log.address_ != c.sourceVault) revert WrongEmitter(log.address_, c.sourceVault);
 
         // Defense in depth: the proven transaction itself must be a call *to* the vault *from* the member.
@@ -435,6 +511,34 @@ contract KittyLedger is Ownable {
             mstore(add(ptr, 40), txIndex)
             queryId := keccak256(ptr, 72)
         }
+    }
+
+    function _initCircle(
+        string calldata name,
+        uint256 contribution,
+        uint64 roundBlocks,
+        uint64 startHeight,
+        address sourceVault,
+        uint32 maxMembers
+    ) internal returns (uint256 circleId) {
+        if (contribution == 0) revert InvalidCircle("contribution");
+        if (roundBlocks == 0) revert InvalidCircle("roundBlocks");
+        if (sourceVault == address(0)) revert InvalidCircle("vault");
+        circleId = ++circleCount;
+        Circle storage c = _circles[circleId];
+        c.name = name;
+        c.contribution = contribution;
+        c.roundBlocks = roundBlocks;
+        c.startHeight = startHeight;
+        c.sourceVault = sourceVault;
+        c.organiser = msg.sender;
+        c.maxMembers = maxMembers;
+    }
+
+    function _join(uint256 circleId, Circle storage c, address m) internal {
+        isMember[circleId][m] = true;
+        c.members.push(m);
+        _memberCircles[m].push(circleId);
     }
 
     function _circle(uint256 circleId) internal view returns (Circle storage c) {

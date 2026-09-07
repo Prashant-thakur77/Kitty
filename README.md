@@ -2,96 +2,217 @@
 
 **Savings circles where every payment is proven, not promised.**
 Rotating savings (chit funds, susu, tandas, chamas) on Ethereum stablecoins, settled and
-credit-scored on Creditcoin through the **Attestcoin Protocol** — no treasurer, no oracle operator,
+credit-scored on Creditcoin through the **Attestcoin Protocol**. No treasurer, no oracle operator,
 no bridge.
 
-Built for **BUIDL CTC 2026 Fall** (DeFi track). Integration write-up: [`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md).
+Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integration write-up:
+[`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md)
 
-## 60-second version
+## Quick judge links
 
-1. A group creates a circle on Creditcoin: members, installment, round length *in Sepolia blocks*.
-2. Each round, members pay the installment into a tiny escrow vault on Ethereum Sepolia.
-3. A worker waits for the attestor network to attest those Sepolia blocks, fetches **one batch
-   proof** for the whole round from the Attestcoin Proof Builder, and submits it.
-4. `KittyLedger` asks the block-prover precompile (`0x0FD2`) to verify all payments in **one call**,
-   decodes each receipt/calldata with `EvmV1Decoder`, and records who paid on time, late, or not at all.
-5. The round closes when everyone has paid, or when the deadline block is **attested** on
-   Creditcoin (`0x0FD3` is the clock). The rotation recipient is deterministic.
-6. The vault pays out on Ethereum; that payout is proven back so the round only shows "Paid" for
-   money that verifiably moved.
-7. Every member accrues a **Kitty Score** built solely from proven transactions and attested
-   deadlines — credit history a Creditcoin lender can underwrite against.
-
-```
-Sepolia: TestUSD · KittyVault ──Contributed/PaidOut──▶ attestors ──▶ Proof Builder ──▶ worker
-Creditcoin: KittyLedger ──verifyAndEmit(batch)──▶ 0x0FD2 · is_height_attested ──▶ 0x0FD3
-```
-
-## Live deployment (CC3 Testnet + Sepolia)
-
-See [`deployments.json`](deployments.json) after running `scripts/deploy.sh`.
-
-| | address |
+| | |
 |---|---|
-| KittyLedger (Creditcoin CC3 Testnet, 102031) | _fill after deploy_ |
-| KittyVault (Sepolia, chainKey 1) | _fill after deploy_ |
-| TestUSD (Sepolia) | _fill after deploy_ |
+| **Demo video** | _link added on submission_ |
+| **Live dashboard** | _Vercel link added on submission_ (`pnpm web:dev` runs it locally) |
+| **Presentation mode** | `/presentation` on the dashboard — 10 slides, arrow keys, Print → PDF |
+| **Attack lab** | `/lab` — replay, spoofed emitter, wrong chain key, reverted source tx, late payment, each answered by the ledger's decoded custom error |
+| **KittyVault (Sepolia, chainKey 1)** | [`0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E`](https://sepolia.etherscan.io/address/0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E) |
+| **TestUSD (Sepolia)** | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
+| **KittyLedger (Creditcoin CC3 Testnet, 102031)** | _deploys with `scripts/deploy.sh`; see [`deployments.json`](deployments.json)_ |
+| **Deployer / operator** | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
+| **Testnet transaction log** | [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md) |
 
-## Quick start
+## Table of contents
 
-```bash
-pnpm install                 # worker + SDK deps (@gluwa/usc-sdk, @gluwa/asc-contracts, ethers)
-forge test                   # 27 tests; precompiles mocked at 0x0FD2 / 0x0FD3
-pnpm e2e:local               # two anvils, mocked precompiles, real worker + SDK encoding, 2 rounds + replay attack
+- [Files using Attestcoin](#files-using-attestcoin)
+- [The problem](#the-problem)
+- [How Kitty works](#how-kitty-works)
+- [Attestcoin depth](#attestcoin-depth)
+- [Attack lab](#attack-lab)
+- [Kitty Score](#kitty-score)
+- [Repository](#repository)
+- [Quick start](#quick-start)
+- [Security model](#security-model)
+- [Challenges I ran into](#challenges-i-ran-into)
+- [What makes Kitty different](#what-makes-kitty-different)
+- [Roadmap](#roadmap)
+
+## Files using Attestcoin
+
+Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`, `@gluwa/asc-contracts`, `@gluwa/usc-sdk`, the Proof Builder).
+
+| File | Attestcoin usage |
+|---|---|
+| [`src/asc/KittyLedger.sol`](src/asc/KittyLedger.sol) | `INativeQueryVerifier.verifyAndEmit` **batch** overload (≤10 txs, one continuity proof) in `recordContributions`; single overload in `confirmPayout`; `calculateTxIndex` for ASCBase-identical query ids; `EvmV1Decoder` (`getTransactionType`, `decodeReceiptFields`, `getLogsByEventSignature`, `decodeCommonTxFields`); `IChainInfo.is_height_attested` as the deadline clock in `closeRound` |
+| [`src/interfaces/IChainInfo.sol`](src/interfaces/IChainInfo.sol) | Solidity interface for the ChainInfo precompile (`0x0FD3`): `is_height_attested`, `get_latest_attestation_height_and_hash` |
+| [`src/asc/KittyViewer.sol`](src/asc/KittyViewer.sol) | One-call reads of proof-derived state for the dashboard |
+| [`src/source/KittyVault.sol`](src/source/KittyVault.sol) | Source-chain contract designed to the Attestcoin readability pattern: minimal logic, purpose-named events (`Contributed`, `PaidOut`) that the ASC binds on |
+| [`worker/src/proofs.ts`](worker/src/proofs.ts) | `@gluwa/usc-sdk` `ProofBuilder.waitUntilHeightAttested` + **`getBatchProof`** (fallback to `getProof` + `mergeProofs`); local mode uses the SDK's `encoding.abiEncode` so the decoder is exercised on genuine tx bytes |
+| [`worker/src/chain.ts`](worker/src/chain.ts) | `usc-sdk` `utils.gas.computeGasLimit` (precompile-aware gas fallback); custom-error decoding |
+| [`worker/src/worker.ts`](worker/src/worker.ts) | Readability off-chain worker: watch → wait attestation → batch prove → submit → close → pay out → prove back |
+| [`worker/src/scenarios.ts`](worker/src/scenarios.ts) | Attack scenarios that push bad proofs through the precompile path and assert the ledger's rejection |
+| [`worker/src/config.ts`](worker/src/config.ts) | ChainInfo precompile ABI (`get_latest_attestation_height_and_hash`) |
+| [`web/src/hooks.ts`](web/src/hooks.ts), [`web/src/lib/abi.ts`](web/src/lib/abi.ts) | Dashboard reads the ChainInfo precompile directly for the "Sepolia head → attested" lag indicator |
+| [`test/KittyLedger.t.sol`](test/KittyLedger.t.sol), [`test/mocks/`](test/mocks) | Precompiles mocked at their real addresses with `vm.etch`; prover-format `txBytes` fixtures in [`test/TxFixtures.sol`](test/TxFixtures.sol) |
+| [`scripts/local-e2e.sh`](scripts/local-e2e.sh) | Two anvils with the precompiles mocked via `anvil_setCode`; full loop plus replay attack |
+| [`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md) | Step-by-step integration document (required by the submission rules) |
+
+## The problem
+
+Hundreds of millions of people save through rotating circles: chit funds in India, susu in Ghana,
+tandas in Mexico, chamas in Kenya, stokvels in South Africa. They work because members watch each
+other. They fail in two ways: a treasurer disappears with the pot, or a member stops paying and
+nobody outside the group ever knows. Years of perfect payments build zero formal credit history.
+Existing on-chain ROSCA apps keep money and rules on one chain and still need a randomness oracle
+or an admin to run the rotation.
+
+## How Kitty works
+
+```
+ Ethereum Sepolia (chainKey 1)                         Creditcoin CC3 Testnet (102031)
+ ┌─────────────────────────┐                           ┌──────────────────────────────────────┐
+ │ TestUSD · KittyVault    │  Contributed / PaidOut    │ KittyLedger (ASC)                    │
+ │  contribute() escrow    │ ───────────────────────▶  │  recordContributions(batch ≤10) ──┐  │
+ │  payout()  (operator)   │                           │  closeRound  · confirmPayout      │  │
+ └───────────┬─────────────┘                           │  creditScore · KittyViewer        │  │
+             │ events                                  └────────┬──────────────┬───────────┘  │
+             ▼                                                  │              │              │
+     ┌───────────────┐  wait attestation  ┌────────────────┐   verifyAndEmit  is_height_attested
+     │ worker        │ ─────────────────▶ │ Proof Builder  │   ┌────▼─────┐  ┌────▼─────┐      │
+     │ @gluwa/usc-sdk│ ◀── batch proof ── │ prover.cc3-…   │   │ 0x0FD2   │  │ 0x0FD3   │      │
+     └───────┬───────┘                    └────────────────┘   └──────────┘  └──────────┘      │
+             └──── recordContributions · closeRound · payout · confirmPayout ──────────────────┘
+                                          ▲  React + wagmi dashboard reads both chains
 ```
 
-Testnet:
+1. A group creates a circle on Creditcoin: members (or signed invites), installment, round length
+   in *Sepolia blocks*.
+2. Each round, members pay the installment into the vault on Sepolia.
+3. The worker waits for the attestor network to attest those blocks, fetches **one batch proof**
+   for the whole round, and calls `recordContributions`.
+4. The ledger verifies all payments in **one precompile call**, decodes each receipt and calldata,
+   binds emitter / member / amount / round, and records on-time vs late by source block height.
+5. The round closes when everyone has paid, or when the deadline block is **attested**. Missed
+   members are recorded. The rotation recipient is deterministic.
+6. The vault pays out on Ethereum; that `PaidOut` transaction is proven back before the round
+   shows "Paid".
+7. Every member accrues a **Kitty Score** built solely from proven transactions and attested deadlines.
 
-```bash
-cp .env.example .env         # fill PRIVATE_KEY (needs Sepolia ETH + tCTC)
-scripts/deploy.sh            # deploys both sides, writes .env / web/.env / deployments.json
-pnpm demo fund               # give 3 demo members ETH + tUSD
-pnpm demo create             # circle on Creditcoin (3 members, 100 tUSD, 60 Sepolia blocks/round)
-pnpm demo contribute         # members pay round 0 on Sepolia
-pnpm worker                  # waits for attestation → batch proof → recordContributions → closeRound → payout → confirmPayout
-pnpm demo status             # ledger view
-pnpm web:dev                 # dashboard at http://localhost:5173
-```
+## Attestcoin depth
 
-Faucets: Sepolia ETH — https://www.alchemy.com/faucets/ethereum-sepolia · tCTC — Creditcoin Discord
-`#token-faucet` (https://discord.gg/Gu43zTfmtc) or https://thirdweb.com/creditcoin-testnet.
+| Capability | Where | Why it matters |
+|---|---|---|
+| Batch verification | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | One call per round instead of one per member; amortises the continuity proof |
+| Query-id replay protection | `_computeQueryId` (identical to `ASCBase`) + per-(circle, round, member) guard | Same proof can never count twice |
+| Chain binding | `SOURCE_CHAIN_KEY` immutable, checked before the precompile call | A same-address contract on another supported chain can't feed the ledger |
+| Emitter + calldata binding | `log.address_ == vault`, `tx.to == vault`, `tx.from == member` | A proof of someone else's transaction that merely contains a vault log is rejected |
+| Receipt status | `receiptStatus == 1` | The precompile proves inclusion, not success |
+| Attested-height clock | `is_height_attested(chainKey, deadline)` in `closeRound`; `onTime = height ≤ deadline` | No timestamps, no oracle, no admin decides when a round ends |
+| Proof-back of payouts | `confirmPayout` single `verifyAndEmit` on the `PaidOut` tx | "Paid" is never an operator's claim |
+
+## Attack lab
+
+`pnpm lab:api` + the dashboard's `/lab` page, or `pnpm scenario <name>`:
+
+| Scenario | Ledger answer |
+|---|---|
+| Replay an already-counted proof | `QueryAlreadyProcessed(queryId)` |
+| Fake vault emits a byte-identical `Contributed` event | `WrongEmitter(got, want)` |
+| Same proof, chain key 3 (Ethereum mainnet on testnet) | `WrongChain(3, 1)` |
+| Included but reverted source transaction | `SourceTxFailed()` |
+| Payment after the deadline block | Accepted, `onTime = false`, score −20 |
+
+## Kitty Score
+
+`creditScore(member)` = 500 + 15·onTime − 20·late − 120·missed, clamped to 300–850, with tiers
+A ≥ 700, B ≥ 600, C ≥ 500, D. Readable by any Creditcoin contract; inputs are only proven
+transactions and attested deadlines.
 
 ## Repository
 
 ```
 src/source/KittyVault.sol      Sepolia escrow; emits Contributed / PaidOut (minimal by design)
-src/asc/KittyLedger.sol        Creditcoin ASC: batch verify, decode, chain/emitter/calldata binding, deadlines, rotation, score
+src/source/TestUSD.sol         6-decimal demo stablecoin with open mint
+src/source/FakeVault.sol       demo-only spoof emitter for the attack lab
+src/asc/KittyLedger.sol        Creditcoin ASC: batch verify, decode, bind, deadlines, rotation, invites, score
+src/asc/KittyViewer.sol        one-call reads for the dashboard
 src/interfaces/IChainInfo.sol  0x0FD3 precompile subset
-test/                          Foundry tests + precompile mocks + prover-format tx fixtures
-worker/                        TypeScript worker (usc-sdk ProofBuilder), demo driver, replay-attack demo
-web/                           Vite + React + wagmi dashboard (proof feed, rotation, scores, contribute/close)
-scripts/                       deploy.sh · local-e2e.sh
-docs/                          STRATEGY · BUILD_PLAN · SUBMISSION · ATTESTCOIN_INTEGRATION
+test/                          Foundry tests, precompile mocks, prover-format tx fixtures
+worker/                        TypeScript worker (usc-sdk ProofBuilder), demo driver, scenarios, lab API, tx log
+web/                           Vite + React + wagmi dashboard: circles, score, attack lab, architecture, presentation
+scripts/                       deploy.sh · local-e2e.sh · local-lab.sh
+docs/                          STRATEGY · MASTER_PLAN · BUILD_PLAN · SUBMISSION · ATTESTCOIN_INTEGRATION · TESTNET_LOG
 ```
 
-## Security model — what is proven vs. what is operated
+## Quick start
+
+```bash
+pnpm install && (cd web && pnpm install)
+forge test                     # precompiles mocked at 0x0FD2 / 0x0FD3
+pnpm e2e:local                 # two anvils, mocked precompiles, real worker + SDK encoding, 2 rounds + replay attack
+pnpm run e2e:lab               # same setup, then all attack scenarios, then the lab API stays up for the dashboard
+```
+
+Testnet:
+
+```bash
+cp .env.example .env           # PRIVATE_KEY needs Sepolia ETH + tCTC
+scripts/deploy.sh              # deploys what is missing, writes .env / web/.env / deployments.json
+pnpm demo fund && pnpm demo create && pnpm demo contribute
+pnpm worker                    # attestation wait → batch proof → record → close → payout → proof-back
+pnpm demo status
+pnpm web:dev                   # http://localhost:5173
+```
+
+Faucets: Sepolia ETH — https://www.alchemy.com/faucets/ethereum-sepolia · tCTC — Creditcoin Discord
+`#token-faucet` (`/faucet address:0x…`), https://discord.gg/Gu43zTfmtc.
+
+## Security model
 
 | Claim | Backed by |
 |---|---|
-| Member X paid round R | Proof verified by 0x0FD2; receipt status 1; log from the registered vault; tx `to`=vault, `from`=member |
+| Member X paid round R | Proof verified by 0x0FD2; receipt status 1; log from the registered vault; tx `to` = vault, `from` = member |
 | Payment was on time | Proven source block height ≤ deadline height |
 | Member Y missed round R | Deadline height attested (0x0FD3) and no proven payment |
 | Recipient Z was paid | `PaidOut` proven by 0x0FD2 with matching recipient and amount |
 | Same proof can't count twice | Query id (chainKey ‖ height ‖ txIndex) + per-(circle, round, member) guard |
 | Proof from another chain can't count | `chainKey` pinned at deployment |
+| Invite is genuine | Organiser's EIP-191 signature over (ledger, chainId, circleId, member, nonce); nonce single-use |
 
 The only operated step is *sending* the payout on Ethereum (vault operator key). The ledger never
-trusts that it happened — it waits for the proof. Attestcoin writability (Creditcoin → Ethereum) is
-the natural replacement once it is audited; the vault already exposes the exact call to wire up.
+trusts that it happened; it waits for the proof. Attestcoin writability is the natural
+replacement once audited; the vault already exposes the exact call.
+
+## Challenges I ran into
+
+- **`forge script` can't simulate Creditcoin** ("prevrandao not set" on Substrate EVM headers).
+  Deployment uses `forge create` directly, as the official examples do.
+- **`ASCBase.execute` drops `chainKey` and `blockHeight`** before app logic. Kitty needs both, so
+  the ledger re-implements the pipeline with the same query-id derivation and adds a batch entry point.
+- **The precompile proves inclusion, not success.** A reverted transaction still has a valid proof;
+  the ledger checks receipt status before reading any log.
+- **Gas estimation through precompiles can fail** in estimation mode; the worker uses the SDK's
+  heuristic fallback.
+- **ethers ESM vs CommonJS typings**: `@gluwa/usc-sdk` is typed against the CJS build; the worker
+  casts once at the SDK boundary.
+- **Hosted Sepolia RPCs cap `eth_getLogs` ranges**; the worker scans in 50-block chunks.
+
+## What makes Kitty different
+
+1. The only entry that verifies a whole round in a single precompile call.
+2. Deadlines are attested source-chain block heights, not timestamps or admin calls.
+3. Output is portable credit data, not just a pot: a score any Creditcoin lender can read.
+4. Payouts are proven back; the ledger never displays money it hasn't seen move.
+5. Five live attack scenarios, each answered with a decoded custom error.
+6. Rehearsable offline: two anvils, mocked precompiles, real SDK encoding.
+7. On Creditcoin's own thesis: credit history for people banks cannot see.
 
 ## Roadmap
+
 Score-gated circle sizes · seat bidding for early payout · ERC-5192 Kitty Score badge · pot cover
-via proven-event insurance · Ethereum mainnet chainKey on CC3 mainnet.
+via proven-event insurance · Ethereum mainnet chainKey on CC3 mainnet · Attestcoin writability for payouts.
 
 ## License
-MIT
+
+MIT. Dashboard patterns adapted from SentinelCRE (MIT); contract patterns from BreadchainCoop
+saving-circles (MIT) and gluwa/attestcoin-protocol-examples (MIT).

@@ -11,7 +11,11 @@
     "typecheck": "tsc -p worker/tsconfig.json",
     "web:dev": "pnpm --dir web dev",
     "web:build": "pnpm --dir web build",
-    "e2e:local": "bash scripts/local-e2e.sh"
+    "e2e:local": "bash scripts/local-e2e.sh",
+    "e2e:lab": "bash scripts/local-lab.sh",
+    "lab:api": "tsx worker/src/api.ts",
+    "scenario": "tsx worker/src/scenarios.ts",
+    "txlog": "tsx worker/src/txlog.ts"
   },
   "keywords": [],
   "author": "",

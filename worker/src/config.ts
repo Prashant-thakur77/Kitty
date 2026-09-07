@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { format } from 'node:util';
 import dotenv from 'dotenv';
 import { ethers } from 'ethers';
 import ledgerAbi from '../abi/KittyLedger.json' with { type: 'json' };
@@ -72,4 +73,10 @@ export function saveState(s: WorkerState) {
   fs.writeFileSync(cfg.stateFile, JSON.stringify(s, null, 2));
 }
 
-export const log = (...a: unknown[]) => console.log(new Date().toISOString().slice(11, 19), ...a);
+/** Extra consumers of worker log lines (the lab API streams them over SSE). */
+export const logSinks = new Set<(line: string) => void>();
+export const log = (...a: unknown[]) => {
+  const line = `${new Date().toISOString().slice(11, 19)} ${format(...a)}`;
+  console.log(line);
+  for (const sink of logSinks) sink(line);
+};

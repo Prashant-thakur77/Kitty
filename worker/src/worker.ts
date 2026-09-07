@@ -11,7 +11,7 @@
  * Nothing here is trusted by the ledger: every effect above is re-verified on-chain.
  */
 import { ethers } from 'ethers';
-import { cfg, contracts, chainInfo, sourceProvider, ccProvider, loadState, saveState, log } from './config.ts';
+import { cfg, contracts, chainInfo, sourceProvider, ccProvider, ccWallet, loadState, saveState, log } from './config.ts';
 import { buildBatchProof, buildSingleProof } from './proofs.ts';
 import { submitRecordContributions, submitConfirmPayout, revertReason } from './chain.ts';
 
@@ -82,13 +82,16 @@ async function flushBatches() {
 
     const batch = fresh.slice(0, 10);
     try {
-      const proof = await buildBatchProof(batch.map((p) => p.txHash));
-      await submitRecordContributions(ledger, proof);
-      for (const p of batch) state.recorded[p.txHash] = true;
-      pending.set(key, fresh.filter((p) => !batch.includes(p)));
+      // Normally one proof; the testnet fallback may return several (one per unmergeable height group).
+      const proofs = await buildBatchProof(batch.map((p) => p.txHash));
+      for (const proof of proofs) {
+        await submitRecordContributions(ledger, proof);
+        for (const h of proof.txHashes) state.recorded[h] = true;
+      }
     } catch (e) {
       log(`✗ batch for ${key} failed: ${revertReason(e, ledger.interface)}`);
     }
+    pending.set(key, fresh.filter((p) => !state.recorded[p.txHash]));
   }
 }
 
@@ -106,8 +109,15 @@ async function closeRounds() {
     if (!full && !attested) continue;
     try {
       log(`→ KittyLedger.closeRound(${id}) — ${full ? 'everyone paid' : `deadline block ${deadline} attested`}`);
-      const tx = await ledger.closeRound(id);
-      const rc = await tx.wait();
+      let rc;
+      try {
+        rc = await (await ledger.closeRound(id)).wait();
+      } catch (e) {
+        if (!String((e as Error).message).includes('nonce')) throw e;
+        // fast local chains occasionally hand ethers a stale nonce right after a mined tx; retry once
+        await new Promise((r) => setTimeout(r, 2500));
+        rc = await (await ledger.closeRound(id, { nonce: await ccProvider.getTransactionCount(ccWallet.address, 'pending') })).wait();
+      }
       log(`   ✓ round ${round} closed · cc tx ${rc.hash}`);
     } catch (e) {
       log(`✗ closeRound(${id}) failed: ${revertReason(e, ledger.interface)}`);

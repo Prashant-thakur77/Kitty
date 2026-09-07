@@ -63,6 +63,33 @@ This is the technical integration document required by the BUIDL CTC submission 
    300–850. Every input is a proven transaction or an attested deadline — any Creditcoin lender
    can read it without trusting Kitty's operator.
 
+## Files using Attestcoin
+
+| File | Usage |
+|---|---|
+| `src/asc/KittyLedger.sol` | `verifyAndEmit` batch (recordContributions) and single (confirmPayout); `calculateTxIndex` query ids; `EvmV1Decoder` receipt + calldata decoding; `is_height_attested` deadline clock |
+| `src/interfaces/IChainInfo.sol` | ChainInfo precompile (0x0FD3) interface |
+| `src/asc/KittyViewer.sol` | Reads proof-derived state in one call for the dashboard |
+| `src/source/KittyVault.sol` | Source-chain contract in the readability pattern (minimal logic, purpose-named events) |
+| `worker/src/proofs.ts` | usc-sdk `ProofBuilder.waitUntilHeightAttested`, `getBatchProof`, fallback `getProof` + `mergeProofs`; local mode uses `encoding.abiEncode` |
+| `worker/src/chain.ts` | usc-sdk `utils.gas.computeGasLimit`; custom-error decoding |
+| `worker/src/worker.ts` | Readability off-chain worker loop |
+| `worker/src/scenarios.ts` | Adversarial proofs pushed through the precompile path |
+| `web/src/hooks.ts` | Dashboard reads the ChainInfo precompile for the attestation-lag indicator |
+| `test/`, `scripts/local-e2e.sh` | Precompiles mocked at their real addresses (`vm.etch` / `anvil_setCode`) |
+
+## Gas: why batch
+
+Filled from the testnet log after the first live rounds (see `docs/TESTNET_LOG.md`). Expected shape:
+one `recordContributions` for N members costs one continuity verification plus N Merkle checks and
+decodes, versus N full verifications with N single proofs.
+
+| Payments in the round | Batch (1 call) | Singles (N calls) |
+|---|---|---|
+| 1 | _tbd_ | _tbd_ |
+| 3 | _tbd_ | _tbd_ |
+| 10 | _tbd_ | _tbd_ |
+
 ## Why not inherit `ASCBase`?
 
 `ASCBase.execute` calls `_processAndEmitEvent(action, queryId, txBytes)` — it drops `chainKey`

@@ -7,6 +7,9 @@ export type Circle = {
   currentRound: number
   sourceVault: `0x${string}`
   status: number
+  organiser: `0x${string}`
+  open: boolean
+  maxMembers: number
 }
 export type Round = { status: number; contributions: number; pot: bigint; recipient: `0x${string}`; payoutQueryId: `0x${string}` }
 export type Contribution = { height: bigint; queryId: `0x${string}`; onTime: boolean }

@@ -1,0 +1,374 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "ledger",
+        "type": "address",
+        "internalType": "contract KittyLedger"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "LEDGER",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract KittyLedger"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_LATE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_MISSED",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_PENDING",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_PROVEN",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCircleFull",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "f",
+        "type": "tuple",
+        "internalType": "struct KittyViewer.CircleFull",
+        "components": [
+          {
+            "name": "circle",
+            "type": "tuple",
+            "internalType": "struct KittyLedger.Circle",
+            "components": [
+              {
+                "name": "name",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "members",
+                "type": "address[]",
+                "internalType": "address[]"
+              },
+              {
+                "name": "contribution",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "roundBlocks",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "startHeight",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "currentRound",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "sourceVault",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "status",
+                "type": "uint8",
+                "internalType": "enum KittyLedger.CircleStatus"
+              },
+              {
+                "name": "organiser",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "open",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "maxMembers",
+                "type": "uint32",
+                "internalType": "uint32"
+              }
+            ]
+          },
+          {
+            "name": "rounds",
+            "type": "tuple[]",
+            "internalType": "struct KittyLedger.Round[]",
+            "components": [
+              {
+                "name": "status",
+                "type": "uint8",
+                "internalType": "enum KittyLedger.RoundStatus"
+              },
+              {
+                "name": "contributions",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "pot",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "payoutQueryId",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "current",
+            "type": "tuple[]",
+            "internalType": "struct KittyLedger.Contribution[]",
+            "components": [
+              {
+                "name": "height",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "queryId",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "onTime",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ]
+          },
+          {
+            "name": "scores",
+            "type": "uint16[]",
+            "internalType": "uint16[]"
+          },
+          {
+            "name": "tiers",
+            "type": "string[]",
+            "internalType": "string[]"
+          },
+          {
+            "name": "records",
+            "type": "tuple[]",
+            "internalType": "struct KittyLedger.MemberRecord[]",
+            "components": [
+              {
+                "name": "onTime",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "late",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "missed",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "received",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "volume",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
+          },
+          {
+            "name": "deadline",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getMemberDashboard",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "d",
+        "type": "tuple",
+        "internalType": "struct KittyViewer.MemberDashboard",
+        "components": [
+          {
+            "name": "circleIds",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          },
+          {
+            "name": "names",
+            "type": "string[]",
+            "internalType": "string[]"
+          },
+          {
+            "name": "currentRounds",
+            "type": "uint32[]",
+            "internalType": "uint32[]"
+          },
+          {
+            "name": "myStatus",
+            "type": "uint8[]",
+            "internalType": "uint8[]"
+          },
+          {
+            "name": "score",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "tier",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "record",
+            "type": "tuple",
+            "internalType": "struct KittyLedger.MemberRecord",
+            "components": [
+              {
+                "name": "onTime",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "late",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "missed",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "received",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "volume",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "memberStatus",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "round",
+        "type": "uint32",
+        "internalType": "uint32"
+      },
+      {
+        "name": "member",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  }
+]

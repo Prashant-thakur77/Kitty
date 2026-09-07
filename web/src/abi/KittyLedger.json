@@ -116,6 +116,19 @@
   },
   {
     "type": "function",
+    "name": "closeInvites",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "closeRound",
     "inputs": [
       {
@@ -242,6 +255,50 @@
   },
   {
     "type": "function",
+    "name": "createOpenCircle",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "contribution",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "roundBlocks",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "startHeight",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "sourceVault",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "maxMembers",
+        "type": "uint32",
+        "internalType": "uint32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "creditScore",
     "inputs": [
       {
@@ -343,6 +400,21 @@
             "name": "status",
             "type": "uint8",
             "internalType": "enum KittyLedger.CircleStatus"
+          },
+          {
+            "name": "organiser",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "open",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "maxMembers",
+            "type": "uint32",
+            "internalType": "uint32"
           }
         ]
       }
@@ -391,6 +463,25 @@
             "internalType": "bool"
           }
         ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getMemberCircles",
+    "inputs": [
+      {
+        "name": "member",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -488,6 +579,35 @@
             "internalType": "bytes32"
           }
         ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "inviteDigest",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "invitee",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "nonce",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "stateMutability": "view"
@@ -619,6 +739,29 @@
   },
   {
     "type": "function",
+    "name": "redeemInvite",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "nonce",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "sig",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "renounceOwnership",
     "inputs": [],
     "outputs": [],
@@ -636,6 +779,30 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "usedInviteNonces",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "event",
@@ -812,6 +979,50 @@
   },
   {
     "type": "event",
+    "name": "InviteRedeemed",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "member",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "nonce",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "InvitesClosed",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "memberCount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       {
@@ -951,6 +1162,22 @@
   },
   {
     "type": "error",
+    "name": "AlreadyMember",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "member",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "BadLogShape",
     "inputs": []
   },
@@ -967,12 +1194,77 @@
   },
   {
     "type": "error",
+    "name": "CircleFull",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "maxMembers",
+        "type": "uint32",
+        "internalType": "uint32"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "CircleNotActive",
     "inputs": [
       {
         "name": "circleId",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "CircleNotOpen",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "CircleStillOpen",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ECDSAInvalidSignature",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ECDSAInvalidSignatureLength",
+    "inputs": [
+      {
+        "name": "length",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ECDSAInvalidSignatureS",
+    "inputs": [
+      {
+        "name": "s",
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ]
   },
@@ -1000,6 +1292,49 @@
         "name": "reason",
         "type": "string",
         "internalType": "string"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "InvalidInviteSigner",
+    "inputs": [
+      {
+        "name": "got",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "want",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "InviteAlreadyUsed",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "nonce",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "InvitesAlreadyClosed",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ]
   },
@@ -1037,6 +1372,17 @@
         "name": "want",
         "type": "uint32",
         "internalType": "uint32"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "NotOrganiser",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ]
   },
