@@ -43,7 +43,8 @@ This is the technical integration document required by the BUIDL CTC submission 
    - `decodeReceiptFields` → **`receiptStatus == 1` is enforced** ("the precompile proves
      inclusion, not success");
    - `getLogsByEventSignature(receipt, CONTRIBUTED_SIG)` → exactly one log, 4 topics, 32-byte data;
-   - `log.address_` must equal the circle's registered vault (**emitter binding**);
+   - the log must come from an **owner-trusted vault** (allowlist) and equal the circle's registered
+     vault (**emitter binding**); look-alike logs from other contracts in the same tx are ignored;
    - `decodeCommonTxFields` → `tx.to == vault` and `tx.from == member` (**calldata binding**: a
      proof of someone else's tx that merely *contains* a vault log can't be reused).
 
@@ -52,8 +53,11 @@ This is the technical integration document required by the BUIDL CTC submission 
 
 7. **Time from attested blocks, not clocks.** A contribution is *on time* iff its proven source
    block height ≤ `startHeight + (round+1)·roundBlocks`. `closeRound` may run early when everyone
-   has paid, otherwise only when **`CHAIN_INFO.is_height_attested(chainKey, deadline)`** (0x0FD3)
-   is true — the attestor network is the clock. Missed members are recorded permanently.
+   has paid, otherwise only when **`CHAIN_INFO.is_height_attested(chainKey, deadline + 64)`**
+   (0x0FD3) is true — the attestor network is the clock, and the 64-block grace window covers
+   attestation lag plus proving time so an on-time payment can never be closed out by a rival.
+   Missed members are recorded permanently, but only if they consented to the circle (invite,
+   organiser, `acceptMembership`, or a prior payment), so nobody can be listed and penalised.
 
 8. **Close the loop.** The vault operator pays the rotation recipient on Sepolia; the worker proves
    that `PaidOut` tx with a single `verifyAndEmit` and `confirmPayout` moves the round to `Paid`
