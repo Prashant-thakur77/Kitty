@@ -32,14 +32,19 @@ Kitty is an Attestcoin Smart Contract on Creditcoin CC3 Testnet that consumes pr
 Sepolia transactions through the block-prover precompile (0x0FD2) and the ChainInfo precompile
 (0x0FD3). Each savings round is verified with a *single batch call* (`verifyAndEmit` with up to 10
 Merkle proofs sharing one continuity proof) obtained from the Proof Builder via `@gluwa/usc-sdk`
-(`getBatchProof`). Every proven tx is decoded with `EvmV1Decoder`: receipt status must be 1, the
-`Contributed` log must come from the registered vault, and the transaction's own `to`/`from` must
-match the vault/member. Query ids are derived as in `ASCBase` for replay protection; the chain key
-is pinned. Round deadlines are enforced by `is_height_attested(chainKey, deadlineHeight)` — attested
-source-chain time is the only clock. Payouts on Ethereum are proven back with a single
-`verifyAndEmit` before a round can show "Paid". Result: a portable, proof-backed credit score for
-people whose savings discipline has never been visible to a lender. Integration doc:
-`docs/ATTESTCOIN_INTEGRATION.md`.
+(`getBatchProof`, with automatic fallback to single proofs). Every proven tx is decoded with
+`EvmV1Decoder`: receipt status must be 1, the `Contributed` log must come from the registered vault,
+and the transaction's own `to`/`from` must match the vault/member. Query ids are derived as in
+`ASCBase` for replay protection; the chain key is pinned. Round deadlines are enforced by
+`is_height_attested(chainKey, deadlineHeight)` — attested source-chain time is the only clock.
+Payouts on Ethereum are proven back with a single `verifyAndEmit` before a round can show "Paid".
+Members can also prove a round themselves from the browser (the Proof Builder serves CORS) and
+submit from their own wallet — the ledger verifies, the submitter is irrelevant. The resulting
+Kitty Score is *used* on Creditcoin: KittyCreditLine lends against it and a soulbound badge renders
+it on-chain. Before deployment the whole path was validated against the live network: a real
+Sepolia proof and a real 3-tx batch proof both returned `true` from the live 0x0FD2 precompile,
+while tampered bytes and a wrong chain key reverted (`pnpm verify:live`). Integration doc:
+`docs/ATTESTCOIN_INTEGRATION.md`; every file touching Attestcoin is tabled in the README.
 
 ## Demo video script (2:30)
 

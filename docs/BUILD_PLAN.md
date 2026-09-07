@@ -71,13 +71,16 @@ kitty/
 - "Spoof attack" button: replays a proof / submits a fake emitter and shows the revert reason.
 - Local two-anvil mode with mocked precompiles for a deterministic screen recording backup.
 
-## Build order (what actually happened / what remains)
-1. Foundry scaffold + deps → contracts → mocks + fixtures → 27 tests green. ✅
-2. Deploy scripts + ABI export. ✅
-3. Worker: config, proof builder (testnet + local encoder), main loop, demo driver. ✅
-4. Local e2e on two anvils with mocked precompiles, real SDK encoding. ✅ (see scripts/local-e2e.sh)
-5. Dashboard. ✅
-6. Docs + submission material. ✅
-7. **Fund `DEPLOYER_ADDRESS` on Sepolia + CC3 Testnet, run `scripts/deploy.sh`, run demo on testnet,
-   record video.** ← needs the faucets (human-only): Sepolia via Alchemy/Google/Zalalena; tCTC via
-   Creditcoin Discord `#token-faucet` or thirdweb faucet.
+## Build order (status 8 Sept 2026, late)
+1. Foundry scaffold + deps → contracts → mocks + fixtures → tests. ✅ (66 tests)
+2. Deploy scripts + ABI export. ✅ Sepolia side deployed (TestUSD, KittyVault, FakeVault).
+3. Worker: config, proof builder (batch + single fallback), main loop, demo driver, five attack
+   scenarios, SSE lab API, tx log, `verify:live`. ✅
+4. Local rehearsal: two anvils, mocked precompiles, real SDK encoding (`pnpm e2e:local`, `pnpm e2e:lab`). ✅
+5. Dashboard: landing, circles, circle (urgency band, block progress, payment modal, browser
+   proving), score + badge, borrow, attack lab, architecture, presentation. ✅ (screenshots in docs/assets)
+6. Contracts v2: KittyViewer, signed invites, KittyCreditLine + KittyUSD, KittyBadge. ✅
+7. Docs + submission material + README on the winner template; CI + GitHub Pages workflows. ✅
+8. Live-network validation without deploying: real proof + real batch proof verified by 0x0FD2. ✅
+9. **Fund `DEPLOYER_ADDRESS` with tCTC, run `scripts/deploy.sh`, run the demo on testnet, record
+   the video, enable GitHub Pages, submit.** ← the only remaining human steps (see docs/DEMO_RUNBOOK.md).
