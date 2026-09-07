@@ -7,7 +7,8 @@ import { cfg } from '../config'
 import { ledgerAbi, usdAbi, vaultAbi } from '../lib/abi'
 import { creditcoinTestnet, sepolia } from '../lib/wagmi'
 import { short, usd, num } from '../lib/format'
-import { useAttestation, useCircle, useRoundDetail, useRounds, useLedgerEvents, isProven } from '../hooks'
+import { useAttestation, useCircle, useRoundDetail, useRounds, useLedgerEvents, useVaultPayments, isProven } from '../hooks'
+import { ProvePanel } from '../components/ProvePanel'
 import { ROUND_STATUS } from '../lib/types'
 import { BlockProgress, Blockie, Section, Stat, Tag } from '../components/ui'
 import { ProofFeed } from '../components/ProofFeed'
@@ -24,6 +25,7 @@ export function CirclePage() {
   const detail = useRoundDetail(circleId, circle?.currentRound, circle?.members)
   const rounds = useRounds(circleId, circle?.members.length ?? 0)
   const { items: feed } = useLedgerEvents({ circleId })
+  const payments = useVaultPayments(circleId, circle?.currentRound, circle ? circle.startHeight + BigInt(circle.currentRound) * circle.roundBlocks : undefined)
   const { writeContractAsync, isPending } = useWriteContract()
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
   const [msg, setMsg] = useState('')
@@ -159,6 +161,7 @@ export function CirclePage() {
         </Section>
       </div>
 
+      {active && round?.status === 0 && <div className="mt-4"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} onDone={refetch} /></div>}
       <div className="mt-4"><ProofFeed items={feed} /></div>
 
       <Dialog.Root open={modal !== 'closed'} onOpenChange={(o) => !o && setModal('closed')}>

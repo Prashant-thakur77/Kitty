@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useBlockNumber, usePublicClient, useReadContract, useReadContracts } from 'wagmi'
 import { cfg, CHAIN_INFO_PRECOMPILE, ZERO32 } from './config'
-import { chainInfoAbi, ledgerAbi } from './lib/abi'
+import { chainInfoAbi, ledgerAbi, vaultAbi } from './lib/abi'
 import type { Circle, Contribution, Record_, Round } from './lib/types'
 import { creditcoinTestnet, sepolia } from './lib/wagmi'
 
@@ -134,3 +134,38 @@ export function useGlobalStats() {
 }
 
 export const isProven = (c?: Contribution) => !!c && c.queryId !== ZERO32
+
+export type VaultPayment = { member: `0x${string}`; amount: bigint; tx: `0x${string}`; block: bigint }
+
+/** Contributed events on the Sepolia vault for one (circle, round). Scans from the round's opening block. */
+export function useVaultPayments(circleId: bigint | undefined, round: number | undefined, fromBlock: bigint | undefined) {
+  const client = usePublicClient({ chainId: sepolia.id })
+  const { data: head } = useBlockNumber({ chainId: sepolia.id, watch: true })
+  const [payments, setPayments] = useState<VaultPayment[]>([])
+  useEffect(() => {
+    if (!client || !cfg.vault || circleId === undefined || round === undefined || fromBlock === undefined || head === undefined) return
+    let cancelled = false
+    ;(async () => {
+      const start = fromBlock > 20n ? fromBlock - 20n : 0n
+      const out: VaultPayment[] = []
+      try {
+        const logs = await client.getContractEvents({ address: cfg.vault, abi: vaultAbi, eventName: 'Contributed', args: { circleId, round }, fromBlock: start, toBlock: head })
+        for (const l of logs as { args: Record<string, unknown>; transactionHash: string; blockNumber: bigint }[]) out.push({ member: l.args.member as `0x${string}`, amount: l.args.amount as bigint, tx: l.transactionHash as `0x${string}`, block: l.blockNumber })
+      } catch {
+        // range-capped RPC: walk backwards in 2000-block windows, at most 10 windows
+        let to = head
+        for (let i = 0; i < 10 && to > start; i++) {
+          const from = to - 2000n > start ? to - 2000n : start
+          try {
+            const logs = await client.getContractEvents({ address: cfg.vault, abi: vaultAbi, eventName: 'Contributed', args: { circleId, round }, fromBlock: from, toBlock: to })
+            for (const l of logs as { args: Record<string, unknown>; transactionHash: string; blockNumber: bigint }[]) out.push({ member: l.args.member as `0x${string}`, amount: l.args.amount as bigint, tx: l.transactionHash as `0x${string}`, block: l.blockNumber })
+          } catch { /* skip window */ }
+          to = from - 1n
+        }
+      }
+      if (!cancelled) setPayments(out)
+    })()
+    return () => { cancelled = true }
+  }, [client, circleId, round, fromBlock, head])
+  return payments
+}
