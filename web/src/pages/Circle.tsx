@@ -49,7 +49,16 @@ export function CirclePage() {
   const mine = myIdx >= 0 ? detail.contributions?.[myIdx] : undefined
   const iProved = isProven(mine)
   const urgency: Urgency = !active ? 'calm' : iProved ? 'proven' : deadlineAttested || full ? 'urgent' : blocksToAttested !== undefined && blocksToAttested <= 20 ? 'attention' : 'calm'
-  const recipient = circle.members[circle.currentRound]
+  const byScore = circle.rotation === 1
+  // ByScore: the pot goes to the best current score among members who have not received yet (ties → earlier member)
+  const recipient = byScore
+    ? circle.members.reduce<{ m?: `0x${string}`; s: number }>((acc, m, i) => {
+        const rd = rounds ?? []
+        const already = rd.some((x) => x && x.status !== 0 && x.recipient.toLowerCase() === m.toLowerCase())
+        const sc = detail.scores?.[i]?.[0] ?? 500
+        return !already && (acc.m === undefined || sc > acc.s) ? { m, s: sc } : acc
+      }, { s: 0 }).m
+    : circle.members[circle.currentRound]
 
   async function ensure(chain: number) { if (chainId !== chain) await switchChainAsync({ chainId: chain }) }
   async function contribute() {
@@ -124,7 +133,7 @@ export function CirclePage() {
                   <div className="flex items-center gap-2">
                     <Blockie address={m} />
                     <Link to={`/score/${m}`} className="mono text-sm no-underline" style={{ color: 'var(--ink)' }}>{short(m)}</Link>
-                    {isRecipient && active && <Tag tone="sky">receives this round</Tag>}
+                    {isRecipient && active && <Tag tone="sky">{byScore ? 'leading this round' : 'receives this round'}</Tag>}
                     {address && m.toLowerCase() === address.toLowerCase() && <Tag tone="muted">you</Tag>}
                   </div>
                   <div className="flex items-center gap-3 text-xs">
@@ -140,23 +149,24 @@ export function CirclePage() {
           </div>
         </Section>
 
-        <Section title="Rotation">
+        <Section title={byScore ? 'Rotation · by Kitty Score' : 'Rotation · fixed order'} right={byScore ? <Tag tone="mint">best record first</Tag> : undefined}>
           <ol className="grid gap-2">
             {circle.members.map((m, r) => {
               const rd = rounds?.[r]
               const st = rd ? ROUND_STATUS[rd.status] : 'Open'
               const upcoming = r > circle.currentRound && active
               const tone = st === 'Paid' ? 'mint' : st === 'Closed' ? 'amber' : r === circle.currentRound && active ? 'sky' : 'muted'
+              const who = byScore ? (rd && rd.status !== 0 ? rd.recipient : r === circle.currentRound && active ? recipient : undefined) : m
               return (
                 <li key={r} className="panel-2 flex items-center justify-between px-3 py-2 text-sm" style={r === circle.currentRound && active ? { borderColor: 'var(--sky)' } : {}}>
-                  <span>round {r} → <span className="mono">{short(m)}</span></span>
+                  <span>round {r} → <span className="mono">{who ? short(who) : 'decided at close by score'}</span>{byScore && r === circle.currentRound && active && who && <span className="text-xs" style={{ color: 'var(--muted)' }}> (leading)</span>}</span>
                   <span className="flex items-center gap-2">{rd && rd.pot > 0n && <span className="mono text-xs">{usd(rd.pot)}</span>}<Tag tone={tone}>{upcoming ? 'upcoming' : st}</Tag></span>
                 </li>
               )
             })}
           </ol>
           <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
-            A round closes early when every payment is proven, or once the deadline block is <em>attested</em> (ChainInfo precompile 0x0FD3). "Paid" appears only after the Ethereum payout itself is proven back through 0x0FD2.
+            A round closes early when every payment is proven, or once the deadline block is <em>attested</em> (ChainInfo precompile 0x0FD3). "Paid" appears only after the Ethereum payout itself is proven back through 0x0FD2.{byScore && ' In a by-score circle the pot goes to the member with the best proven record who has not received yet — missing or paying late this round lowers your score before the pick.'}
           </p>
         </Section>
       </div>

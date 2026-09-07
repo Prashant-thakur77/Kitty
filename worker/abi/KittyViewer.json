@@ -150,6 +150,11 @@
                 "name": "maxMembers",
                 "type": "uint32",
                 "internalType": "uint32"
+              },
+              {
+                "name": "rotation",
+                "type": "uint8",
+                "internalType": "enum KittyLedger.Rotation"
               }
             ]
           },

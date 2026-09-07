@@ -415,6 +415,11 @@
             "name": "maxMembers",
             "type": "uint32",
             "internalType": "uint32"
+          },
+          {
+            "name": "rotation",
+            "type": "uint8",
+            "internalType": "enum KittyLedger.Rotation"
           }
         ]
       }
@@ -670,6 +675,30 @@
   },
   {
     "type": "function",
+    "name": "receivedPot",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "recordContributions",
     "inputs": [
       {
@@ -764,6 +793,24 @@
     "type": "function",
     "name": "renounceOwnership",
     "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setRotation",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "mode",
+        "type": "uint8",
+        "internalType": "enum KittyLedger.Rotation"
+      }
+    ],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -1073,6 +1120,25 @@
         "type": "bytes32",
         "indexed": false,
         "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RotationSet",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "rotation",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum KittyLedger.Rotation"
       }
     ],
     "anonymous": false
@@ -1426,6 +1492,17 @@
         "name": "queryId",
         "type": "bytes32",
         "internalType": "bytes32"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "RotationLocked",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ]
   },

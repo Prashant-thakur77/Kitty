@@ -43,6 +43,16 @@ contract KittyLedger is Ownable {
         Completed
     }
 
+    /// @notice Who gets the pot when a round closes.
+    ///         Fixed   — members[round], the classic ROSCA order.
+    ///         ByScore — the member with the highest Kitty Score who has not received a pot yet
+    ///                   (ties → earlier member). Missing or paying late this round lowers your score
+    ///                   *before* the pick, so proven behaviour decides the order inside the circle too.
+    enum Rotation {
+        Fixed,
+        ByScore
+    }
+
     enum RoundStatus {
         Open,
         Closed,
@@ -61,6 +71,7 @@ contract KittyLedger is Ownable {
         address organiser; // msg.sender of createCircle / createOpenCircle; signs invites
         bool open; // invites still redeemable; must be closed before any contribution is recorded
         uint32 maxMembers; // cap for open circles (createOpenCircle); equals members.length otherwise
+        Rotation rotation; // Fixed by default; organiser may switch to ByScore before round 0 has any proof
     }
 
     struct Round {
@@ -110,6 +121,8 @@ contract KittyLedger is Ownable {
     mapping(uint256 => mapping(uint32 => mapping(address => Contribution))) internal _contributions;
     mapping(uint256 => mapping(address => bool)) public isMember;
     mapping(address => MemberRecord) internal _records;
+    /// @notice Has this member already received a pot in this circle (each member receives exactly once).
+    mapping(uint256 => mapping(address => bool)) public receivedPot;
     mapping(address => uint256[]) internal _memberCircles;
 
     /// @notice Invite replay protection: each (circle, nonce) signed by the organiser is redeemable once.
@@ -143,6 +156,7 @@ contract KittyLedger is Ownable {
     event RoundClosed(uint256 indexed circleId, uint32 indexed round, address indexed recipient, uint256 pot, uint32 missedCount);
     event RoundOpened(uint256 indexed circleId, uint32 indexed round, uint64 deadlineHeight);
     event CircleCompleted(uint256 indexed circleId);
+    event RotationSet(uint256 indexed circleId, Rotation rotation);
     event PayoutConfirmed(uint256 indexed circleId, uint32 indexed round, address indexed recipient, uint256 amount, bytes32 queryId);
     event InviteRedeemed(uint256 indexed circleId, address indexed member, uint256 nonce);
     event InvitesClosed(uint256 indexed circleId, uint256 memberCount);
@@ -173,6 +187,7 @@ contract KittyLedger is Ownable {
     error RoundNotClosed(uint256 circleId, uint32 round);
     error PayoutMismatch();
     error InvalidCircle(string reason);
+    error RotationLocked(uint256 circleId);
     error CircleStillOpen(uint256 circleId);
     error CircleNotOpen(uint256 circleId);
     error NotOrganiser(uint256 circleId);
@@ -257,6 +272,16 @@ contract KittyLedger is Ownable {
 
     /// @notice Stop accepting invites. Required before contributions can be recorded so the member
     ///         list — and therefore the rotation order and per-round pot — is fixed.
+    /// @notice Choose Fixed or ByScore rotation. Organiser only, and only before round 0 holds any proof
+    ///         (so the rule is known to everyone before the first payment).
+    function setRotation(uint256 circleId, Rotation mode) external {
+        Circle storage c = _circle(circleId);
+        if (msg.sender != c.organiser) revert NotOrganiser(circleId);
+        if (c.currentRound != 0 || _rounds[circleId][0].contributions != 0 || _rounds[circleId][0].status != RoundStatus.Open) revert RotationLocked(circleId);
+        c.rotation = mode;
+        emit RotationSet(circleId, mode);
+    }
+
     function closeInvites(uint256 circleId) external {
         Circle storage c = _circle(circleId);
         if (msg.sender != c.organiser) revert NotOrganiser(circleId);
@@ -301,9 +326,10 @@ contract KittyLedger is Ownable {
             }
         }
 
-        address recipient = c.members[r]; // deterministic rotation
+        address recipient = _pickRecipient(circleId, c, r);
         rd.status = RoundStatus.Closed;
         rd.recipient = recipient;
+        receivedPot[circleId][recipient] = true;
         _records[recipient].received += 1;
         emit RoundClosed(circleId, r, recipient, rd.pot, missed);
 
@@ -539,6 +565,22 @@ contract KittyLedger is Ownable {
         isMember[circleId][m] = true;
         c.members.push(m);
         _memberCircles[m].push(circleId);
+    }
+
+    /// @dev Fixed: members[r]. ByScore: best current score among members who have not received a pot.
+    function _pickRecipient(uint256 circleId, Circle storage c, uint32 r) internal view returns (address best) {
+        if (c.rotation == Rotation.Fixed) return c.members[r];
+        uint16 bestScore;
+        uint256 n = c.members.length;
+        for (uint256 i; i < n; ++i) {
+            address m = c.members[i];
+            if (receivedPot[circleId][m]) continue;
+            (uint16 sc,) = creditScore(m);
+            if (best == address(0) || sc > bestScore) {
+                best = m;
+                bestScore = sc;
+            }
+        }
     }
 
     function _circle(uint256 circleId) internal view returns (Circle storage c) {

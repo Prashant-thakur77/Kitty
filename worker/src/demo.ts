@@ -1,6 +1,6 @@
 /**
  * Demo driver.
- *   pnpm demo create [--name "Lagos Susu"] [--members 3] [--amount 100] [--round-blocks 40]
+ *   pnpm demo create [--name "Lagos Susu"] [--members 3] [--amount 100] [--round-blocks 40] [--rotation fixed|score]
  *   pnpm demo contribute [--skip <memberIndex>]      members pay the current round on Sepolia
  *   pnpm demo status                                 print circle/round/member state from Creditcoin
  *   pnpm demo fund                                   (testnet) send demo members ETH + tUSD from deployer
@@ -31,6 +31,10 @@ async function create() {
   const rc = await tx.wait();
   const id = await ledger.circleCount();
   log(`✓ circle ${id} created on Creditcoin · tx ${rc.hash}`);
+  if ((opt('rotation', 'fixed') ?? 'fixed').toLowerCase() === 'score') {
+    const r = await (await ledger.setRotation(id, 1)).wait();
+    log(`✓ rotation set to ByScore (best proven record receives first) · tx ${r.hash}`);
+  }
   log(`members:\n  ${members.join('\n  ')}`);
   log(`round 0 deadline: Sepolia block ${await ledger.deadlineHeight(id, 0)}`);
 }

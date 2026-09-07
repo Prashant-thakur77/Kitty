@@ -10,6 +10,7 @@ export type Circle = {
   organiser: `0x${string}`
   open: boolean
   maxMembers: number
+  rotation: number // 0 Fixed, 1 ByScore
 }
 export type Round = { status: number; contributions: number; pot: bigint; recipient: `0x${string}`; payoutQueryId: `0x${string}` }
 export type Contribution = { height: bigint; queryId: `0x${string}`; onTime: boolean }
