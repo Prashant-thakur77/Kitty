@@ -8,7 +8,7 @@
  */
 import { pathToFileURL } from 'node:url';
 import { ethers } from 'ethers';
-import { cfg, contracts, sourceProvider, sourceWallet, loadState, log, logSinks } from './config.ts';
+import { cfg, contracts, sourceProvider, sourceWallet, loadState, log, logSinks , sourceSigner } from './config.ts';
 import { buildBatchProof, type BatchProof } from './proofs.ts';
 import { submitRecordContributions, revertReason } from './chain.ts';
 import { anvilAccount, memberWallets } from './members.ts';
@@ -131,7 +131,7 @@ const scenarios: Record<ScenarioName, (ctx: Ctx, expected: string) => Promise<Sc
     if (!fakeAddr) return { ok: false, skipped: true, expected, got: 'skipped: FAKE_VAULT_ADDRESS not set' };
     const { circleId, circle, round } = await currentCircle(ledger);
     const member: string = circle.members[0];
-    const fake = new ethers.Contract(fakeAddr, FAKE_VAULT_ABI, sourceWallet);
+    const fake = new ethers.Contract(fakeAddr, FAKE_VAULT_ABI, sourceSigner);
     log(`FakeVault ${fakeAddr} emits Contributed(circle ${circleId}, round ${round}, ${member}, ${Number(circle.contribution) / 1e6} tUSD)`);
     const tx = await fake.emitContributed(circleId, round, member, circle.contribution);
     const rc = await waitMined(tx.hash);
@@ -151,7 +151,7 @@ const scenarios: Record<ScenarioName, (ctx: Ctx, expected: string) => Promise<Sc
       const price = fee.maxFeePerGas ?? fee.gasPrice ?? ethers.parseUnits('5', 'gwei');
       const value = 200_000n * price * 2n;
       log(`funding fresh wallet ${w.address} with ${ethers.formatEther(value)} ETH from ${sourceWallet.address}`);
-      await (await sourceWallet.sendTransaction({ to: w.address, value })).wait();
+      await (await sourceSigner.sendTransaction({ to: w.address, value })).wait();
     }
     log(`${w.address} (zero tUSD allowance) calls contribute(${circleId}, ${round}, ${Number(circle.contribution) / 1e6} tUSD) with gasLimit 200000`);
     const v = vault.connect(w) as ethers.Contract;

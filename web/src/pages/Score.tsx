@@ -45,10 +45,10 @@ export function ScorePage() {
               </ResponsiveContainer>
               <div className="pointer-events-none -mt-[150px] text-center">
                 <div className="mono text-5xl font-semibold" style={{ color: tierColor }}>{value}</div>
-                <div className="eyebrow">tier {tier} · range 300–850</div>
               </div>
             </div>
-            <div className="mt-8 grid grid-cols-2 gap-2">
+            <div className="eyebrow mt-8 text-center">tier {tier} · range 300–850</div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
               <Stat label="On time" value={record?.onTime ?? 0} tone="mint" />
               <Stat label="Late" value={record?.late ?? 0} tone="amber" />
               <Stat label="Missed" value={record?.missed ?? 0} tone="rose" />

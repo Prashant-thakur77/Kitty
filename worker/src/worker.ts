@@ -181,7 +181,7 @@ async function tick() {
 async function main() {
   const [src, cc] = await Promise.all([sourceProvider.getNetwork(), ccProvider.getNetwork()]);
   log(`kitty worker · mode=${cfg.mode} · source chainId ${src.chainId} (chainKey ${cfg.chainKey}) → creditcoin chainId ${cc.chainId}`);
-  log(`vault ${cfg.vault} · ledger ${cfg.ledger} · operator ${(await ledger.runner as ethers.Wallet).address}`);
+  log(`vault ${cfg.vault} · ledger ${cfg.ledger} · operator ${ccWallet.address}`);
   let stop = false;
   process.on('SIGINT', () => (stop = true));
   do {

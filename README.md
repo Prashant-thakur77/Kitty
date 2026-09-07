@@ -24,6 +24,21 @@ Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integrat
 | **Deployer / operator** | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
 | **Testnet transaction log** | [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md) |
 
+![Circle page — urgency band, attested-height progress, members, rotation, browser proving, proof feed](docs/assets/circle.png)
+
+### Dashboard highlights
+
+**Attested time, not wall time.** The round header counts Sepolia blocks until the deadline is *attested* on Creditcoin; the bar fills mint as blocks are attested. When the deadline block is attested, anyone can close the round and missed members are recorded.
+
+![Kitty Score — gauge, lender view JSON, badge, proof-backed history](docs/assets/score.png)
+
+**The score is used.** `/score` shows exactly what a lender reads from `creditScore(address)`; `/borrow` lets KittyCreditLine lend against it; the soulbound badge renders the same numbers on-chain.
+
+![Attack lab — five live scenarios answered with decoded custom errors](docs/assets/lab.png)
+
+**Try to cheat it.** Each scenario pushes a real transaction through proof → precompile → ledger and shows the decoded rejection.
+
+
 ## Table of contents
 
 - [Files using Attestcoin](#files-using-attestcoin)

@@ -39,13 +39,17 @@ export const sourceProvider = new ethers.JsonRpcProvider(cfg.sepoliaRpc);
 export const ccProvider = new ethers.JsonRpcProvider(cfg.creditcoinRpc);
 export const sourceWallet = new ethers.Wallet(cfg.privateKey, sourceProvider);
 export const ccWallet = new ethers.Wallet(cfg.privateKey, ccProvider);
+// NonceManager keeps a local nonce counter, so back-to-back transactions never race a node whose
+// pending count lags a just-mined block (seen on anvil with --block-time and on public RPCs).
+export const sourceSigner = new ethers.NonceManager(sourceWallet);
+export const ccSigner = new ethers.NonceManager(ccWallet);
 
 export function contracts() {
   if (!cfg.vault || !cfg.ledger || !cfg.token) throw new Error('Set KITTY_VAULT_ADDRESS, KITTY_LEDGER_ADDRESS, TEST_USD_ADDRESS in .env (run scripts/deploy.sh)');
   return {
-    vault: new ethers.Contract(cfg.vault, vaultAbi, sourceWallet),
-    ledger: new ethers.Contract(cfg.ledger, ledgerAbi, ccWallet),
-    token: new ethers.Contract(cfg.token, usdAbi, sourceWallet),
+    vault: new ethers.Contract(cfg.vault, vaultAbi, sourceSigner),
+    ledger: new ethers.Contract(cfg.ledger, ledgerAbi, ccSigner),
+    token: new ethers.Contract(cfg.token, usdAbi, sourceSigner),
   };
 }
 

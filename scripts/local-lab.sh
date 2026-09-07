@@ -8,6 +8,7 @@ cd "$(dirname "$0")/.."
 export WORKER_STATE_FILE=state.lab.json
 rm -f worker/state.lab.json
 cleanup() { pkill -f "tsx worker/src/api.ts" 2>/dev/null || true; pkill -f "anvil --port 854[56]" 2>/dev/null || true; }
+pkill -f "tsx worker/src/api.ts" 2>/dev/null || true   # a stale lab API from an earlier run would hold the port
 trap cleanup EXIT INT TERM
 source scripts/local-setup.sh
 

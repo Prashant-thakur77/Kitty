@@ -8,7 +8,7 @@
  * worker/demo-members.local.json (gitignored).
  */
 import { ethers } from 'ethers';
-import { cfg, contracts, sourceProvider, ccProvider, sourceWallet, chainInfo, log } from './config.ts';
+import { cfg, contracts, sourceProvider, ccProvider, sourceWallet, chainInfo, log , sourceSigner } from './config.ts';
 import { memberWallets } from './members.ts';
 
 const args = process.argv.slice(2);
@@ -41,7 +41,7 @@ async function fund() {
   const eth = ethers.parseEther(opt('eth', cfg.mode === 'local' ? '0' : '0.004')!);
   for (const w of memberWallets(n)) {
     if (eth > 0n) {
-      const t = await sourceWallet.sendTransaction({ to: w.address, value: eth });
+      const t = await sourceSigner.sendTransaction({ to: w.address, value: eth });
       await t.wait();
     }
     const m = await token.mint(w.address, ethers.parseUnits('1000', 6));
@@ -64,10 +64,11 @@ async function contribute() {
       log(`member ${i} ${w.address} skips round ${round} (will be recorded as MISSED)`);
       continue;
     }
-    const t = token.connect(w) as ethers.Contract;
+    const signer = new ethers.NonceManager(w);
+    const t = token.connect(signer) as ethers.Contract;
     const allowance: bigint = await t.allowance(w.address, vaultAddr);
     if (allowance < c.contribution) await (await t.approve(vaultAddr, ethers.MaxUint256)).wait();
-    const v = vault.connect(w) as ethers.Contract;
+    const v = vault.connect(signer) as ethers.Contract;
     const tx = await v.contribute(circleId, round, c.contribution);
     const rc = await tx.wait();
     log(`member ${i} ${w.address} contributed ${Number(c.contribution) / 1e6} tUSD for round ${round} · sepolia tx ${rc.hash} · block ${rc.blockNumber}`);
