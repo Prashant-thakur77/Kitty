@@ -80,17 +80,23 @@ This is the technical integration document required by the BUIDL CTC submission 
 | `src/asc/KittyCreditLine.sol`, `src/asc/KittyBadge.sol` | Consumers of proof-derived state (score, record) — lending and a live-rendered soulbound badge |
 | `test/`, `scripts/local-e2e.sh` | Precompiles mocked at their real addresses (`vm.etch` / `anvil_setCode`) |
 
-## Gas: why batch
+## Gas: why batch (measured on the live precompile)
 
-Filled from the testnet log after the first live rounds (see `docs/TESTNET_LOG.md`). Expected shape:
-one `recordContributions` for N members costs one continuity verification plus N Merkle checks and
-decodes, versus N full verifications with N single proofs.
+`eth_estimateGas` against the real `0x0FD2` on CC3 Testnet, using real Proof Builder proofs for the
+three Sepolia deployment transactions (two in block 11,656,253, one in 11,656,295):
 
-| Payments in the round | Batch (1 call) | Singles (N calls) |
+| Call | Continuity roots | Gas |
 |---|---|---|
-| 1 | _tbd_ | _tbd_ |
-| 3 | _tbd_ | _tbd_ |
-| 10 | _tbd_ | _tbd_ |
+| single `verify`, tx @ 11656253 #86 | 48 | 104,141 |
+| single `verify`, tx @ 11656253 #85 | 48 | 112,239 |
+| single `verify`, tx @ 11656295 #44 | 6 | 45,433 |
+| **three singles, total** | | **261,813** |
+| **one batch `verify` of the same three** | 48 (shared) | **199,375** |
+
+The batch is 24% cheaper for three payments, and the gap grows with the age of the blocks because
+the continuity proof — the expensive part — is verified once instead of once per payment. A
+ten-member round is one continuity check plus ten Merkle checks. Reproduce with
+`pnpm verify:live <h1> <h2> <h3>` and `cast estimate`.
 
 ## Why not inherit `ASCBase`?
 

@@ -140,7 +140,9 @@ or an admin to run the rotation.
 4. The ledger verifies all payments in **one precompile call**, decodes each receipt and calldata,
    binds emitter / member / amount / round, and records on-time vs late by source block height.
 5. The round closes when everyone has paid, or when the deadline block is **attested**. Missed
-   members are recorded. The rotation recipient is deterministic.
+   members are recorded. The recipient is deterministic: fixed order, or **by Kitty Score** — the
+   best proven record among members who haven't received yet, judged *after* this round's misses
+   are recorded, so paying on time moves you up the queue.
 6. The vault pays out on Ethereum; that `PaidOut` transaction is proven back before the round
    shows "Paid".
 7. Every member accrues a **Kitty Score** built solely from proven transactions and attested deadlines.
@@ -150,7 +152,7 @@ or an admin to run the rotation.
 
 | Capability | Where | Why it matters |
 |---|---|---|
-| Batch verification | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | One call per round instead of one per member; amortises the continuity proof |
+| Batch verification | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | One call per round instead of one per member; measured on the live precompile: 3 singles 261,813 gas vs 1 batch 199,375 (−24%), and the continuity proof is checked once |
 | Query-id replay protection | `_computeQueryId` (identical to `ASCBase`) + per-(circle, round, member) guard | Same proof can never count twice |
 | Chain binding | `SOURCE_CHAIN_KEY` immutable, checked before the precompile call | A same-address contract on another supported chain can't feed the ledger |
 | Emitter + calldata binding | `log.address_ == vault`, `tx.to == vault`, `tx.from == member` | A proof of someone else's transaction that merely contains a vault log is rejected |
@@ -251,6 +253,7 @@ replacement once audited; the vault already exposes the exact call.
 
 1. The only entry that verifies a whole round in a single precompile call.
 2. Deadlines are attested source-chain block heights, not timestamps or admin calls.
+9. Score-ordered rotation: proven behaviour decides who gets the pot next, inside the circle itself.
 3. Output is portable credit data, not just a pot: a score any Creditcoin lender can read — and one already does (KittyCreditLine).
 4. Payouts are proven back; the ledger never displays money it hasn't seen move.
 5. Five live attack scenarios, each answered with a decoded custom error.

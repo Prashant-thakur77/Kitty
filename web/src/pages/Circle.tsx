@@ -9,6 +9,7 @@ import { creditcoinTestnet, sepolia } from '../lib/wagmi'
 import { short, usd, num } from '../lib/format'
 import { useAttestation, useCircle, useRoundDetail, useRounds, useLedgerEvents, useVaultPayments, isProven } from '../hooks'
 import { ProvePanel } from '../components/ProvePanel'
+import { ReverifyModal } from '../components/ReverifyModal'
 import { ROUND_STATUS } from '../lib/types'
 import { BlockProgress, Blockie, Section, Stat, Tag } from '../components/ui'
 import { ProofFeed } from '../components/ProofFeed'
@@ -30,6 +31,7 @@ export function CirclePage() {
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
   const [msg, setMsg] = useState('')
   const [modal, setModal] = useState<'closed' | 'confirm' | 'sent'>('closed')
+  const [reverify, setReverify] = useState<{ tx: `0x${string}`; member: `0x${string}` } | null>(null)
   const receipt = useWaitForTransactionReceipt({ hash: txHash, chainId: sepolia.id })
   const zero = '0x0000000000000000000000000000000000000000'
   const allowance = useReadContract({ chainId: sepolia.id, address: cfg.token, abi: usdAbi, functionName: 'allowance', args: [address ?? zero, cfg.vault], query: { enabled: !!address && !!cfg.token } })
@@ -138,6 +140,9 @@ export function CirclePage() {
                   </div>
                   <div className="flex items-center gap-3 text-xs">
                     {rec && <Spark rec={rec} />}
+                    {proven && payments.find((p) => p.member.toLowerCase() === m.toLowerCase()) && (
+                      <button className="btn btn-ghost" style={{ padding: '.15rem .5rem', fontSize: 12 }} onClick={() => setReverify({ tx: payments.find((p) => p.member.toLowerCase() === m.toLowerCase())!.tx, member: m })}>re-verify</button>
+                    )}
                     {proven ? <Tag tone={c!.onTime ? 'mint' : 'amber'}>{c!.onTime ? 'proven · on time' : 'proven · late'} @ {num(c!.height)}</Tag>
                       : round && round.status !== 0 ? <Tag tone="rose">missed</Tag>
                       : <Tag tone="muted">pending{deadlineAttested ? ' · past deadline' : ''}</Tag>}
@@ -174,6 +179,7 @@ export function CirclePage() {
       {active && round?.status === 0 && <div className="mt-4"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} onDone={refetch} /></div>}
       <div className="mt-4"><ProofFeed items={feed} /></div>
 
+      {reverify && <ReverifyModal tx={reverify.tx} member={reverify.member} onClose={() => setReverify(null)} />}
       <Dialog.Root open={modal !== 'closed'} onOpenChange={(o) => !o && setModal('closed')}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40" style={{ background: 'rgba(5,10,8,.8)' }} />
