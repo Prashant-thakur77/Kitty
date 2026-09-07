@@ -11,3 +11,4 @@ web/node_modules/
 deployments.local.json
 worker/demo-members.local.json
 worker/state*.json
+web/.env.local

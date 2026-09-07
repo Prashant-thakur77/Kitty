@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Deploys TestUSD + KittyVault (+ FakeVault) to Sepolia and KittyLedger + KittyViewer to Creditcoin CC3
-# Testnet, then writes the addresses into .env, web/.env and deployments.json. Requires a funded
+# Deploys TestUSD + KittyVault (+ FakeVault) to Sepolia and KittyLedger + KittyViewer + KittyUSD +
+# KittyCreditLine (seeded with 50,000 kUSD) + KittyBadge to Creditcoin CC3 Testnet, then writes the
+# addresses into .env, web/.env and deployments.json. Requires a funded
 # PRIVATE_KEY (Sepolia ETH + tCTC). Idempotent for Sepolia: if KITTY_VAULT_ADDRESS is already set in
 # .env, TestUSD/KittyVault are NOT redeployed (only FakeVault is).
 set -euo pipefail
@@ -47,7 +48,25 @@ echo "== Creditcoin: KittyViewer"
 OUT3=$(forge create src/asc/KittyViewer.sol:KittyViewer --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast --legacy --constructor-args "$LEDGER" 2>&1 | tee /dev/stderr)
 VIEWER=$(addr_from "$OUT3" 'Deployed to:')
 
-for v in USD VAULT FAKE LEDGER VIEWER; do
+echo "== Creditcoin: KittyUSD (demo liquidity token)"
+OUT4=$(forge create src/asc/KittyUSD.sol:KittyUSD --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast --legacy 2>&1 | tee /dev/stderr)
+KUSD=$(addr_from "$OUT4" 'Deployed to:')
+
+echo "== Creditcoin: KittyCreditLine"
+OUT5=$(forge create src/asc/KittyCreditLine.sol:KittyCreditLine --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast --legacy --constructor-args "$LEDGER" "$KUSD" 2>&1 | tee /dev/stderr)
+CREDIT=$(addr_from "$OUT5" 'Deployed to:')
+
+echo "== Creditcoin: KittyBadge"
+OUT6=$(forge create src/asc/KittyBadge.sol:KittyBadge --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast --legacy --constructor-args "$LEDGER" 2>&1 | tee /dev/stderr)
+BADGE=$(addr_from "$OUT6" 'Deployed to:')
+
+echo "== Creditcoin: mint 100,000 kUSD to deployer, seed the credit pool with 50,000"
+cast send --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --legacy "$KUSD" "mint(address,uint256)" "$DEPLOYER" 100000000000 >/dev/null
+cast send --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --legacy "$KUSD" "approve(address,uint256)" "$CREDIT" 50000000000 >/dev/null
+cast send --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --legacy "$CREDIT" "deposit(uint256)" 50000000000 >/dev/null
+echo "credit pool liquidity: $(cast call --rpc-url "$CREDITCOIN_RPC_URL" "$CREDIT" "liquidity()(uint256)") (6 dp)"
+
+for v in USD VAULT FAKE LEDGER VIEWER KUSD CREDIT BADGE; do
   [ -n "${!v}" ] || { echo "failed to capture $v address" >&2; exit 1; }
 done
 
@@ -57,19 +76,26 @@ upsert .env KITTY_VAULT_ADDRESS "$VAULT"
 upsert .env FAKE_VAULT_ADDRESS "$FAKE"
 upsert .env KITTY_LEDGER_ADDRESS "$LEDGER"
 upsert .env KITTY_VIEWER_ADDRESS "$VIEWER"
+upsert .env KITTY_USD_ADDRESS "$KUSD"
+upsert .env KITTY_CREDIT_ADDRESS "$CREDIT"
+upsert .env KITTY_BADGE_ADDRESS "$BADGE"
 touch web/.env
 upsert web/.env VITE_TEST_USD_ADDRESS "$USD"
 upsert web/.env VITE_KITTY_VAULT_ADDRESS "$VAULT"
 upsert web/.env VITE_FAKE_VAULT_ADDRESS "$FAKE"
 upsert web/.env VITE_KITTY_LEDGER_ADDRESS "$LEDGER"
 upsert web/.env VITE_KITTY_VIEWER_ADDRESS "$VIEWER"
+upsert web/.env VITE_KITTY_USD_ADDRESS "$KUSD"
+upsert web/.env VITE_KITTY_CREDIT_ADDRESS "$CREDIT"
+upsert web/.env VITE_KITTY_BADGE_ADDRESS "$BADGE"
 upsert web/.env VITE_LEDGER_DEPLOY_BLOCK "$LEDGER_BLOCK"
 upsert web/.env VITE_SOURCE_CHAIN_KEY "${SOURCE_CHAIN_KEY:-1}"
 
 cat > deployments.json <<JSON
 {
   "sepolia": { "chainId": 11155111, "TestUSD": "$USD", "KittyVault": "$VAULT", "FakeVault": "$FAKE" },
-  "creditcoinTestnet": { "chainId": 102031, "KittyLedger": "$LEDGER", "KittyViewer": "$VIEWER", "deployBlock": $LEDGER_BLOCK,
+  "creditcoinTestnet": { "chainId": 102031, "KittyLedger": "$LEDGER", "KittyViewer": "$VIEWER",
+    "KittyUSD": "$KUSD", "KittyCreditLine": "$CREDIT", "KittyBadge": "$BADGE", "deployBlock": $LEDGER_BLOCK,
     "BlockProverPrecompile": "0x0000000000000000000000000000000000000FD2",
     "ChainInfoPrecompile": "0x0000000000000000000000000000000000000fD3" },
   "sourceChainKey": ${SOURCE_CHAIN_KEY:-1}
