@@ -19,6 +19,7 @@ export function Nav() {
         <nav className="flex flex-wrap items-center gap-1 sm:ml-4">
           <NavLink to="/circles" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Circles</NavLink>
           <NavLink to="/score" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Score</NavLink>
+          <NavLink to="/borrow" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Borrow</NavLink>
           <NavLink to="/lab" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Attack lab</NavLink>
           <NavLink to="/architecture" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Architecture</NavLink>
           <NavLink to="/presentation" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Present</NavLink>

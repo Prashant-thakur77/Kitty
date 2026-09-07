@@ -7,6 +7,7 @@ import { useScore, useLedgerEvents } from '../hooks'
 import { Blockie, Section, Stat, Tag } from '../components/ui'
 import { short } from '../lib/format'
 import { cfg } from '../config'
+import { BadgeCard } from '../components/BadgeCard'
 
 export function ScorePage() {
   const { address: param } = useParams()
@@ -59,6 +60,7 @@ export function ScorePage() {
             <Section title="Lender view · readable by any Creditcoin contract" right={<Tag tone="sky">creditScore(address)</Tag>}>
               <pre className="log panel-2 p-3">{JSON.stringify({ member: addr, score: value, tier, onTime: record?.onTime ?? 0, late: record?.late ?? 0, missed: record?.missed ?? 0, received: record?.received ?? 0, volume_tUSD: record ? Number(record.volume) / 1e6 : 0, source: 'KittyLedger on Creditcoin CC3 Testnet · inputs are Attestcoin-proven Sepolia txs and attested deadlines' }, null, 2)}</pre>
             </Section>
+            <BadgeCard address={addr} />
             <Section title="History · every entry is a proof or an attested deadline">
               {history.length === 0 && <p className="text-sm" style={{ color: 'var(--muted)' }}>No proven activity for this address yet.</p>}
               {history.length > 0 && (

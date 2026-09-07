@@ -75,7 +75,9 @@ This is the technical integration document required by the BUIDL CTC submission 
 | `worker/src/chain.ts` | usc-sdk `utils.gas.computeGasLimit`; custom-error decoding |
 | `worker/src/worker.ts` | Readability off-chain worker loop |
 | `worker/src/scenarios.ts` | Adversarial proofs pushed through the precompile path |
+| `web/src/lib/prover.ts`, `web/src/components/ProvePanel.tsx` | Browser-side proving against the Proof Builder (CORS `*`): batch proof fetched client-side, `recordContributions` submitted from the member's wallet |
 | `web/src/hooks.ts` | Dashboard reads the ChainInfo precompile for the attestation-lag indicator |
+| `src/asc/KittyCreditLine.sol`, `src/asc/KittyBadge.sol` | Consumers of proof-derived state (score, record) — lending and a live-rendered soulbound badge |
 | `test/`, `scripts/local-e2e.sh` | Precompiles mocked at their real addresses (`vm.etch` / `anvil_setCode`) |
 
 ## Gas: why batch

@@ -16,6 +16,8 @@ Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integrat
 | **Live dashboard** | _Vercel link added on submission_ (`pnpm web:dev` runs it locally) |
 | **Presentation mode** | `/presentation` on the dashboard — 10 slides, arrow keys, Print → PDF |
 | **Attack lab** | `/lab` — replay, spoofed emitter, wrong chain key, reverted source tx, late payment, each answered by the ledger's decoded custom error |
+| **Borrow** | `/borrow` — KittyCreditLine underwrites purely from the Kitty Score (tier A 100% of proven volume, B 50%, C 20%, D nothing) |
+| **Prove it yourself** | On any circle page: a member fetches the round's batch proof from the Proof Builder in the browser and submits it from their own wallet, no operator |
 | **KittyVault (Sepolia, chainKey 1)** | [`0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E`](https://sepolia.etherscan.io/address/0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E) |
 | **TestUSD (Sepolia)** | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
 | **KittyLedger (Creditcoin CC3 Testnet, 102031)** | _deploys with `scripts/deploy.sh`; see [`deployments.json`](deployments.json)_ |
@@ -52,7 +54,10 @@ Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`
 | [`worker/src/worker.ts`](worker/src/worker.ts) | Readability off-chain worker: watch → wait attestation → batch prove → submit → close → pay out → prove back |
 | [`worker/src/scenarios.ts`](worker/src/scenarios.ts) | Attack scenarios that push bad proofs through the precompile path and assert the ledger's rejection |
 | [`worker/src/config.ts`](worker/src/config.ts) | ChainInfo precompile ABI (`get_latest_attestation_height_and_hash`) |
+| [`web/src/lib/prover.ts`](web/src/lib/prover.ts), [`web/src/components/ProvePanel.tsx`](web/src/components/ProvePanel.tsx) | **Browser-side proving**: calls the Proof Builder (`/api/v1/proof-batch-by-tx/1`) directly and submits `recordContributions` from the member's wallet — the ledger verifies, the submitter is irrelevant |
 | [`web/src/hooks.ts`](web/src/hooks.ts), [`web/src/lib/abi.ts`](web/src/lib/abi.ts) | Dashboard reads the ChainInfo precompile directly for the "Sepolia head → attested" lag indicator |
+| [`src/asc/KittyCreditLine.sol`](src/asc/KittyCreditLine.sol) | Lender that underwrites only from proof-derived history (`creditScore`, `getRecord`) — the score is *used* |
+| [`src/asc/KittyBadge.sol`](src/asc/KittyBadge.sol) | Soulbound badge whose on-chain SVG renders live from the ledger |
 | [`test/KittyLedger.t.sol`](test/KittyLedger.t.sol), [`test/mocks/`](test/mocks) | Precompiles mocked at their real addresses with `vm.etch`; prover-format `txBytes` fixtures in [`test/TxFixtures.sol`](test/TxFixtures.sol) |
 | [`scripts/local-e2e.sh`](scripts/local-e2e.sh) | Two anvils with the precompiles mocked via `anvil_setCode`; full loop plus replay attack |
 | [`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md) | Step-by-step integration document (required by the submission rules) |
@@ -97,6 +102,7 @@ or an admin to run the rotation.
 6. The vault pays out on Ethereum; that `PaidOut` transaction is proven back before the round
    shows "Paid".
 7. Every member accrues a **Kitty Score** built solely from proven transactions and attested deadlines.
+8. The score is used: **KittyCreditLine** lends kUSD against it, and a soulbound **Kitty Score badge** renders it live for any explorer or lender.
 
 ## Attestcoin depth
 
@@ -136,10 +142,12 @@ src/source/TestUSD.sol         6-decimal demo stablecoin with open mint
 src/source/FakeVault.sol       demo-only spoof emitter for the attack lab
 src/asc/KittyLedger.sol        Creditcoin ASC: batch verify, decode, bind, deadlines, rotation, invites, score
 src/asc/KittyViewer.sol        one-call reads for the dashboard
+src/asc/KittyCreditLine.sol    demo lender underwriting from the Kitty Score (+ KittyUSD)
+src/asc/KittyBadge.sol         ERC-5192 soulbound badge, on-chain SVG from live ledger state
 src/interfaces/IChainInfo.sol  0x0FD3 precompile subset
 test/                          Foundry tests, precompile mocks, prover-format tx fixtures
 worker/                        TypeScript worker (usc-sdk ProofBuilder), demo driver, scenarios, lab API, tx log
-web/                           Vite + React + wagmi dashboard: circles, score, attack lab, architecture, presentation
+web/                           Vite + React + wagmi dashboard: circles (with browser proving), score + badge, borrow, attack lab, architecture, presentation
 scripts/                       deploy.sh · local-e2e.sh · local-lab.sh
 docs/                          STRATEGY · MASTER_PLAN · BUILD_PLAN · SUBMISSION · ATTESTCOIN_INTEGRATION · TESTNET_LOG
 ```
@@ -201,10 +209,11 @@ replacement once audited; the vault already exposes the exact call.
 
 1. The only entry that verifies a whole round in a single precompile call.
 2. Deadlines are attested source-chain block heights, not timestamps or admin calls.
-3. Output is portable credit data, not just a pot: a score any Creditcoin lender can read.
+3. Output is portable credit data, not just a pot: a score any Creditcoin lender can read — and one already does (KittyCreditLine).
 4. Payouts are proven back; the ledger never displays money it hasn't seen move.
 5. Five live attack scenarios, each answered with a decoded custom error.
-6. Rehearsable offline: two anvils, mocked precompiles, real SDK encoding.
+6. Members can prove rounds themselves from the browser; the worker is a convenience, not a trust assumption.
+8. Rehearsable offline: two anvils, mocked precompiles, real SDK encoding.
 7. On Creditcoin's own thesis: credit history for people banks cannot see.
 
 ## Roadmap

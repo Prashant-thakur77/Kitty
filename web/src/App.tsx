@@ -5,6 +5,7 @@ import { Circles } from './pages/Circles'
 import { CirclePage } from './pages/Circle'
 import { ScorePage } from './pages/Score'
 import { Lab } from './pages/Lab'
+import { Borrow } from './pages/Borrow'
 import { Architecture } from './pages/Architecture'
 import { Presentation } from './pages/Presentation'
 import { cfg } from './config'
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/circle/:id" element={<CirclePage />} />
         <Route path="/score" element={<ScorePage />} />
         <Route path="/score/:address" element={<ScorePage />} />
+        <Route path="/borrow" element={<Borrow />} />
         <Route path="/lab" element={<Lab />} />
         <Route path="/architecture" element={<Architecture />} />
         <Route path="/presentation" element={<Presentation />} />

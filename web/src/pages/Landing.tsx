@@ -52,7 +52,7 @@ export function Landing() {
             500 base, +15 per on-time installment, −20 per late, −120 per missed, clamped to 300–850. Every input is a proven transaction or an attested deadline, so any Creditcoin lender can read it without trusting Kitty's operator.
           </p>
         </div>
-        <Link to="/score" className="btn no-underline">Look up a score</Link>
+        <div className="flex gap-2"><Link to="/score" className="btn no-underline">Look up a score</Link><Link to="/borrow" className="btn btn-mint no-underline">Borrow against it</Link></div>
       </section>
     </main>
   )
