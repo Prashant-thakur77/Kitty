@@ -1,0 +1,34 @@
+{
+  "name": "kitty",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "worker": "tsx worker/src/worker.ts",
+    "demo": "tsx worker/src/demo.ts",
+    "typecheck": "tsc -p worker/tsconfig.json",
+    "web:dev": "pnpm --dir web dev",
+    "web:build": "pnpm --dir web build",
+    "e2e:local": "bash scripts/local-e2e.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.32.1",
+  "dependencies": {
+    "@gluwa/asc-contracts": "0.2.1",
+    "@gluwa/usc-sdk": "0.18.0",
+    "@openzeppelin/contracts": "5.4.0",
+    "dotenv": "^17.4.2",
+    "ethers": "^6.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "private": true,
+  "type": "module"
+}

@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0f14;
+  --panel: #121820;
+  --line: #1f2a36;
+  --ink: #e6edf3;
+  --muted: #8b98a5;
+  --mint: #34d399;
+  --amber: #fbbf24;
+  --rose: #fb7185;
+  --sky: #38bdf8;
+}
+html, body, #root { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.pill { display:inline-flex; align-items:center; gap:.4rem; padding:.15rem .55rem; border-radius:999px; font-size:.72rem; border:1px solid var(--line); color: var(--muted); }
+.btn { padding:.5rem .9rem; border-radius:10px; border:1px solid var(--line); background:#182230; color:var(--ink); font-weight:600; }
+.btn:hover { background:#1f2c3c; }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.btn-mint { background: var(--mint); color:#062015; border-color: transparent; }
+.btn-mint:hover { background:#5eead4; }

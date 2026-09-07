@@ -1,0 +1,13 @@
+node_modules/
+out/
+cache/
+broadcast/
+.env
+.env.*
+!.env.example
+web/dist/
+web/node_modules/
+*.log
+deployments.local.json
+worker/demo-members.local.json
+worker/state*.json
