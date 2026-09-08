@@ -12,8 +12,9 @@ Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integrat
 
 | | |
 |---|---|
-| **Demo video** | _link added on submission_ |
+| **Demo video** | _testnet recording added on submission_ · fallback already in the repo: [`docs/kitty-demo-local.mp4`](docs/kitty-demo-local.mp4) (2:38, narrated, full loop against the local rehearsal world) |
 | **Live dashboard** | https://prashant-thakur77.github.io/Kitty/ — GitHub Pages, auto-deployed from `main` (one-time: repo Settings → Pages → Source: GitHub Actions). `pnpm web:dev` runs it locally |
+| **Deck (PDF)** | [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf) — printed straight from the presentation route |
 | **Presentation mode** | `/presentation` on the dashboard — 10 slides, arrow keys, Print → PDF |
 | **Attack lab** | `/lab` — replay, spoofed emitter, wrong chain key, reverted source tx, late payment, each answered by the ledger's decoded custom error |
 | **Borrow** | `/borrow` — KittyCreditLine underwrites purely from the Kitty Score (tier A 100% of proven volume, B 50%, C 20%, D nothing) |
