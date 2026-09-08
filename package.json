@@ -19,13 +19,15 @@
     "verify:live": "tsx worker/src/verify-live.ts",
     "judge": "bash scripts/judge.sh",
     "receipts": "tsx worker/src/receipts.ts",
-    "test:agent": "tsx --test worker/test/*.test.ts"
+    "test:agent": "tsx --test worker/test/*.test.ts",
+    "explain": "tsx worker/src/agent/explain-cli.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.32.1",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0",
     "@gluwa/asc-contracts": "0.2.1",
     "@gluwa/usc-sdk": "0.18.0",
     "@openzeppelin/contracts": "5.4.0",

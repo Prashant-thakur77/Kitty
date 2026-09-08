@@ -73,6 +73,8 @@ Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`
 | [`worker/src/scenarios.ts`](worker/src/scenarios.ts) | Attack scenarios that push bad proofs through the precompile path and assert the ledger's rejection |
 | [`worker/src/verifier.ts`](worker/src/verifier.ts), [`web/src/lib/verifier.ts`](web/src/lib/verifier.ts) | **Free preflight**: the precompile's view `verify` (single and batch overloads) is asked whether a proof holds *before* any gas is spent submitting it; also powers the per-payment re-verify receipt |
 | [`worker/src/agent/policy.ts`](worker/src/agent/policy.ts) | Deterministic batch policy: pools payments **across circles** under one continuity proof, never mixes chain keys, and prefers payments closest to their grace window over a fuller batch |
+| [`worker/src/agent/log.ts`](worker/src/agent/log.ts) | Every steward decision recorded with the chain state behind it — the only values Layer 3 may cite |
+| [`worker/src/agent/citations.ts`](worker/src/agent/citations.ts), [`worker/src/agent/explain.ts`](worker/src/agent/explain.ts) | Cited reasoning: the model must mark every figure it states, each is checked against chain-derived values, and any sentence with an unverifiable or uncited figure is removed before display |
 | [`worker/src/receipts.ts`](worker/src/receipts.ts) | Exports a member's proof bundle: every recorded payment with its source tx, query id and the Creditcoin proof transaction |
 | [`worker/src/verify-live.ts`](worker/src/verify-live.ts) | Real proof → real precompile: `verify` / `calculateTxIndex` on the live 0x0FD2, with tamper and wrong-chain negative checks |
 | [`test/RealProofFixture.t.sol`](test/RealProofFixture.t.sol), [`test/fixtures/`](test/fixtures) | Genuine Proof Builder `txBytes` (verified `true` on-chain) decoded with the ledger's exact `EvmV1Decoder` calls |
@@ -227,6 +229,29 @@ pnpm web:dev                   # http://localhost:5173
 
 Faucets: Sepolia ETH — https://www.alchemy.com/faucets/ethereum-sepolia · tCTC — Creditcoin Discord
 `#token-faucet` (`/faucet address:0x…`), https://discord.gg/Gu43zTfmtc.
+
+## Kitty Steward — an agent whose only power is proof
+
+The worker is an agent in three layers, and authority *decreases* as you move toward the model.
+
+| Layer | Holds | What it does |
+|---|---|---|
+| **1 · The ledger** | final say | A proof verified by 0x0FD2, receipt status 1, a log from a trusted vault, the transaction sent by the member to that vault, exact amount, current round, an unseen query id. Fail any one and nothing happens, whoever asked. |
+| **2 · Deterministic decisions** ([`policy.ts`](worker/src/agent/policy.ts)) | timing only | Prove now or wait for a fuller batch? Batching is measurably cheaper, but a payment that misses its grace window costs its owner 120 score points, so urgency beats thrift and thrift beats impatience. Which payments, in what order, across which circles. 8 unit tests, no model involved. |
+| **3 · Cited reasoning** ([`explain.ts`](worker/src/agent/explain.ts)) | none | Claude turns the decision log into plain language. Every figure it states must be marked and must appear in the log; [`citations.ts`](worker/src/agent/citations.ts) removes any sentence with an unverifiable *or uncited* figure before display. 10 unit tests. |
+
+Two properties follow, and both are demonstrable rather than promised:
+
+- **The steward's key is worth nothing.** It has no role, no ownership, no allowance. Its entire
+  action space is submitting a proof — and `recordContributions`, `closeRound` and `confirmPayout`
+  are callable by anyone, because the ledger checks the proof, not the caller.
+- **The model is optional.** With no `ANTHROPIC_API_KEY` the steward prints the deterministic
+  sentence from layer 2 and behaves identically. Run `pnpm explain` to see either path.
+
+```bash
+pnpm test:agent            # 18 unit tests: batch policy + citation validator
+pnpm explain "why did you wait?"
+```
 
 ## Publishing the dashboard
 
