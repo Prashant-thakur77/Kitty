@@ -7,7 +7,11 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from '../config.ts';
+
+// Deliberately does not import ../config.ts: the steward's decision layers must load without any
+// chain configuration, so their unit tests run anywhere (and so a missing RPC URL can never take
+// the log down with it).
+const ROOT = path.resolve(import.meta.dirname, '../../..');
 
 export interface Decision {
   at: string;
