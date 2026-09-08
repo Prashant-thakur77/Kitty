@@ -14,8 +14,9 @@ jobs:
       - run: forge test -vv
       - run: pnpm typecheck
       - run: pnpm test:agent          # steward policy + citation validator, no network
-      - run: pnpm scenarios           # 8 attack-lab scenarios against two local anvils
-        timeout-minutes: 15
+      - name: attack-lab scenarios (two local anvils, mocked precompiles)
+        run: pnpm scenarios
+        timeout-minutes: 20
   web:
     runs-on: ubuntu-latest
     steps:
