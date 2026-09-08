@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useAccount, useSwitchChain, useWriteContract } from 'wagmi'
+import { useAccount, usePublicClient, useSwitchChain, useWriteContract } from 'wagmi'
 import { ShieldCheck, ExternalLink } from 'lucide-react'
 import { cfg } from '../config'
 import { ledgerAbi } from '../lib/abi'
 import { creditcoinTestnet } from '../lib/wagmi'
 import { attestedHeight, batchProof } from '../lib/prover'
+import { verifierAbi, VERIFIER, precompileReason } from '../lib/verifier'
 import { isProven, type VaultPayment } from '../hooks'
 import type { Contribution } from '../lib/types'
 import { Section, Tag } from './ui'
@@ -17,6 +18,7 @@ export function ProvePanel({ members, contributions, payments, attested, onDone 
   const { chainId, address } = useAccount()
   const { switchChainAsync } = useSwitchChain()
   const { writeContractAsync } = useWriteContract()
+  const client = usePublicClient({ chainId: creditcoinTestnet.id })
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const pending = members.map((m, i) => ({ m, i, c: contributions?.[i] })).filter((x) => !isProven(x.c))
@@ -33,6 +35,16 @@ export function ProvePanel({ members, contributions, payments, attested, onDone 
       push(`requesting ONE batch proof for ${hashes.length} payment(s)…`)
       const p = await batchProof(hashes)
       push(`proof received · continuity roots ${p.continuity.roots.length} · heights ${p.heights.map(String).join(', ')}`)
+      // Free preflight: the precompile's `verify` is a view, so ask before paying to submit.
+      push('preflight: asking 0x0FD2 whether this batch verifies…')
+      try {
+        const ok = await client!.readContract({ address: VERIFIER, abi: verifierAbi, functionName: 'verify',
+          args: p.heights.length === 1
+            ? [p.chainKey, p.heights[0], p.txBytes[0], p.merkleProofs[0], p.continuity]
+            : [p.chainKey, p.heights, p.txBytes, p.merkleProofs, p.continuity] })
+        if (!ok) { push('✗ 0x0FD2 says this batch would not verify — nothing submitted, no gas spent'); return }
+        push('✓ 0x0FD2 preflight passed')
+      } catch (e) { push(`✗ 0x0FD2 preflight failed: ${precompileReason(e)} — nothing submitted, no gas spent`); return }
       if (chainId !== creditcoinTestnet.id) await switchChainAsync({ chainId: creditcoinTestnet.id })
       push(`submitting recordContributions from ${short(address)} on Creditcoin…`)
       const h = await writeContractAsync({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'recordContributions', args: [p.chainKey, p.heights, p.txBytes, p.merkleProofs, p.continuity], gas: 4_000_000n })

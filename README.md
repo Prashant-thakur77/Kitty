@@ -71,6 +71,8 @@ Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`
 | [`worker/src/chain.ts`](worker/src/chain.ts) | `usc-sdk` `utils.gas.computeGasLimit` (precompile-aware gas fallback); custom-error decoding |
 | [`worker/src/worker.ts`](worker/src/worker.ts) | Readability off-chain worker: watch → wait attestation → batch prove → submit → close → pay out → prove back |
 | [`worker/src/scenarios.ts`](worker/src/scenarios.ts) | Attack scenarios that push bad proofs through the precompile path and assert the ledger's rejection |
+| [`worker/src/verifier.ts`](worker/src/verifier.ts), [`web/src/lib/verifier.ts`](web/src/lib/verifier.ts) | **Free preflight**: the precompile's view `verify` (single and batch overloads) is asked whether a proof holds *before* any gas is spent submitting it; also powers the per-payment re-verify receipt |
+| [`worker/src/agent/policy.ts`](worker/src/agent/policy.ts) | Deterministic batch policy: pools payments **across circles** under one continuity proof, never mixes chain keys, and prefers payments closest to their grace window over a fuller batch |
 | [`worker/src/receipts.ts`](worker/src/receipts.ts) | Exports a member's proof bundle: every recorded payment with its source tx, query id and the Creditcoin proof transaction |
 | [`worker/src/verify-live.ts`](worker/src/verify-live.ts) | Real proof → real precompile: `verify` / `calculateTxIndex` on the live 0x0FD2, with tamper and wrong-chain negative checks |
 | [`test/RealProofFixture.t.sol`](test/RealProofFixture.t.sol), [`test/fixtures/`](test/fixtures) | Genuine Proof Builder `txBytes` (verified `true` on-chain) decoded with the ledger's exact `EvmV1Decoder` calls |
@@ -158,7 +160,8 @@ or an admin to run the rotation.
 
 | Capability | Where | Why it matters |
 |---|---|---|
-| Batch verification | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | One call per round instead of one per member; measured on the live precompile: 3 singles 261,813 gas vs 1 batch 199,375 (−24%), and the continuity proof is checked once |
+| Batch verification, **across circles** | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | Up to ten queries under one continuity proof, pooled from every open circle rather than one round at a time. Measured on the live precompile: 3 singles 261,813 gas vs 1 batch 199,375 (−24%), and the continuity proof is checked once |
+| Free preflight | precompile view `verify(...)`, both overloads | A proof that would fail is never submitted, so a bad batch costs nothing. Used by the worker and by the browser before a member pays |
 | Query-id replay protection | `_computeQueryId` (identical to `ASCBase`) + per-(circle, round, member) guard | Same proof can never count twice |
 | Chain binding | `SOURCE_CHAIN_KEY` immutable, checked before the precompile call | A same-address contract on another supported chain can't feed the ledger |
 | Emitter + calldata binding | `log.address_ == vault`, `tx.to == vault`, `tx.from == member` | A proof of someone else's transaction that merely contains a vault log is rejected |

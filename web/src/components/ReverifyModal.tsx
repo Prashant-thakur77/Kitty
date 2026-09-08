@@ -2,21 +2,11 @@ import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { usePublicClient } from 'wagmi'
 import { X, ShieldCheck } from 'lucide-react'
-import { cfg, VERIFIER_PRECOMPILE } from '../config'
+import { cfg } from '../config'
+import { verifierAbi, VERIFIER as VERIFIER_PRECOMPILE, precompileReason } from '../lib/verifier'
 import { creditcoinTestnet } from '../lib/wagmi'
 import { singleProof } from '../lib/prover'
 import { short } from '../lib/format'
-
-const verifierAbi = [
-  { type: 'function', name: 'verify', stateMutability: 'view', inputs: [
-    { name: 'chainKey', type: 'uint64' }, { name: 'height', type: 'uint64' }, { name: 'encodedTransaction', type: 'bytes' },
-    { name: 'merkleProof', type: 'tuple', components: [{ name: 'root', type: 'bytes32' }, { name: 'siblings', type: 'tuple[]', components: [{ name: 'hash', type: 'bytes32' }, { name: 'isLeft', type: 'bool' }] }] },
-    { name: 'continuityProof', type: 'tuple', components: [{ name: 'lowerEndpointDigest', type: 'bytes32' }, { name: 'roots', type: 'bytes32[]' }] },
-  ], outputs: [{ type: 'bool' }] },
-  { type: 'function', name: 'calculateTxIndex', stateMutability: 'view', inputs: [
-    { name: 'merkleProof', type: 'tuple', components: [{ name: 'root', type: 'bytes32' }, { name: 'siblings', type: 'tuple[]', components: [{ name: 'hash', type: 'bytes32' }, { name: 'isLeft', type: 'bool' }] }] },
-  ], outputs: [{ type: 'uint64' }] },
-] as const
 
 /** "Re-verify now": refetch the proof for a recorded payment and ask the LIVE precompile again, from the browser. */
 export function ReverifyModal({ tx, member, onClose }: { tx: `0x${string}`; member: `0x${string}`; onClose: () => void }) {
@@ -38,7 +28,7 @@ export function ReverifyModal({ tx, member, onClose }: { tx: `0x${string}`; memb
       push(`0x0FD2.verify(chainKey ${p.chainKey}, height ${p.heights[0]}) = ${ok}`)
       setResult(Boolean(ok))
       const bad = (p.txBytes[0].slice(0, -2) + (p.txBytes[0].endsWith('00') ? '01' : '00')) as `0x${string}`
-      try { await client.readContract({ address: VERIFIER_PRECOMPILE, abi: verifierAbi, functionName: 'verify', args: [p.chainKey, p.heights[0], bad, p.merkleProofs[0], p.continuity] }); push('tampered bytes: accepted (!)') } catch (e) { push(`tampered bytes → ${(e as Error).message.match(/reverted[^\n]*|Merkle[^\n]*/)?.[0] ?? 'reverted'}`) }
+      try { await client.readContract({ address: VERIFIER_PRECOMPILE, abi: verifierAbi, functionName: 'verify', args: [p.chainKey, p.heights[0], bad, p.merkleProofs[0], p.continuity] }); push('tampered bytes: accepted (!)') } catch (e) { push(`tampered bytes → rejected: ${precompileReason(e)}`) }
     } catch (e) { push(`✗ ${(e as Error).message.split('\n')[0]}`) } finally { setBusy(false) }
   }
   return (

@@ -18,7 +18,8 @@
     "txlog": "tsx worker/src/txlog.ts",
     "verify:live": "tsx worker/src/verify-live.ts",
     "judge": "bash scripts/judge.sh",
-    "receipts": "tsx worker/src/receipts.ts"
+    "receipts": "tsx worker/src/receipts.ts",
+    "test:agent": "tsx --test worker/test/*.test.ts"
   },
   "keywords": [],
   "author": "",

@@ -14,6 +14,8 @@ import { ethers } from 'ethers';
 import { cfg, contracts, chainInfo, sourceProvider, ccProvider, ccWallet, ccSigner, sourceSigner, loadState, saveState, log } from './config.ts';
 import { buildBatchProof, buildSingleProof } from './proofs.ts';
 import { submitRecordContributions, submitConfirmPayout, revertReason } from './chain.ts';
+import { preflight } from './verifier.ts';
+import { decideBatch, explainBatch, type PendingPayment } from './agent/policy.ts';
 
 const once = process.argv.includes('--once');
 const { vault, ledger } = contracts();
@@ -55,58 +57,84 @@ async function scanSource() {
   state.lastSourceBlock = Number.isFinite(oldest) ? Math.min(head, oldest - 1) : head;
 }
 
+/**
+ * Assemble and prove. Payments are pooled across every open circle, not one circle at a time: the
+ * Attestcoin batch overload verifies up to ten queries under a single continuity proof, so a batch
+ * that spans circles costs one call instead of several. What goes in, and when to fire, is decided
+ * by the deterministic policy in agent/policy.ts.
+ */
 async function flushBatches() {
+  // 1. Validate everything pending against the ledger: right round, real member, not already proven,
+  //    one payment per member. A stray payment would make the ledger revert the whole batch.
+  const candidates: PendingPayment[] = [];
+  const byHash = new Map<string, Pending>();
+  const attestedHeight = Number(await chainInfo.get_latest_attestation_height_and_hash(cfg.chainKey).then((r: { height: bigint }) => r.height).catch(() => 0n));
+  const sourceHead = await sourceProvider.getBlockNumber();
+
   for (const [key, list] of pending) {
-    if (list.length === 0) continue;
+    if (list.length === 0) { pending.delete(key); continue; }
     const [circleIdS, roundS] = key.split(':');
     const circleId = BigInt(circleIdS);
     const round = Number(roundS);
     const circle = await ledger.getCircle(circleId);
-    if (Number(circle.currentRound) !== round) {
-      log(`skip ${key}: ledger is on round ${circle.currentRound}`);
+    if (Number(circle.currentRound) !== round || Number(circle.status) !== 0 || circle.open) {
+      log(`skip ${key}: ledger is on round ${circle.currentRound}${circle.open ? ' (invites still open)' : ''}`);
       pending.delete(key);
       continue;
     }
-    // Drop anything the ledger already knows (e.g. worker restart).
-    const fresh: Pending[] = [];
-    for (const p of list) {
-      const c = await ledger.getContribution(circleId, round, p.member);
-      if (c.queryId !== ethers.ZeroHash) state.recorded[p.txHash] = true;
-      else fresh.push(p);
-    }
-    if (fresh.length === 0) {
-      pending.delete(key);
-      continue;
-    }
-    // One proof per member per round, members only: a duplicate or a stranger's payment would make
-    // the ledger revert the whole batch (AlreadyContributed / NotAMember) and poison every retry.
     const members = new Set((circle.members as string[]).map((m) => m.toLowerCase()));
-    const byMember = new Map<string, Pending>();
-    for (const p of [...fresh].sort((a, b) => a.block - b.block)) {
+    const chainKey = circle.chainKey !== undefined ? Number(circle.chainKey) : cfg.chainKey;
+    const deadlineHeight = Number(await ledger.deadlineHeight(circleId, round));
+    const closeHeight = Number(await ledger.closeHeight(circleId, round));
+    const seen = new Set<string>();
+    const keep: Pending[] = [];
+    for (const p of [...list].sort((a, b) => a.block - b.block)) {
       const k = p.member.toLowerCase();
       if (!members.has(k)) { state.recorded[p.txHash] = true; log(`ignoring payment from non-member ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
-      if (byMember.has(k)) { state.recorded[p.txHash] = true; log(`ignoring duplicate payment by ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
-      byMember.set(k, p);
+      if (seen.has(k)) { state.recorded[p.txHash] = true; log(`ignoring duplicate payment by ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
+      const already = await ledger.getContribution(circleId, round, p.member);
+      if (already.queryId !== ethers.ZeroHash) { state.recorded[p.txHash] = true; continue; }
+      seen.add(k);
+      keep.push(p);
+      byHash.set(p.txHash, p);
+      candidates.push({
+        txHash: p.txHash, member: p.member, circleId, round, block: p.block,
+        deadlineHeight, closeHeight, chainKey, circleSize: circle.members.length, seenAt: p.seenAt,
+      });
     }
-    const eligible = [...byMember.values()];
-    if (eligible.length === 0) { pending.delete(key); continue; }
-    const full = eligible.length >= circle.members.length;
-    const oldest = Math.min(...eligible.map((p) => p.seenAt));
-    if (!full && Date.now() - oldest < cfg.batchWaitMs && !once) continue;
+    if (keep.length === 0) pending.delete(key); else pending.set(key, keep);
+  }
+  if (candidates.length === 0) return;
 
-    const batch = eligible.slice(0, 10);
-    try {
-      // Normally one proof; the testnet fallback may return several (one per unmergeable height group).
-      const proofs = await buildBatchProof(batch.map((p) => p.txHash));
-      for (const proof of proofs) {
-        await submitRecordContributions(ledger, proof);
-        for (const h of proof.txHashes) state.recorded[h] = true;
+  // 2. Decide.
+  const decision = decideBatch(candidates, { attestedHeight, sourceHead }, { waitMs: cfg.batchWaitMs, force: once });
+  log(`steward · ${explainBatch(decision)}`);
+  if (!decision.act) return;
+
+  // 3. Prove. One proof normally; the testnet fallback may split by height group.
+  try {
+    const proofs = await buildBatchProof(decision.batch.map((p) => p.txHash));
+    for (const proof of proofs) {
+      // Free preflight against the precompile's view overload: never pay to submit a proof that
+      // the verifier would reject anyway.
+      const pre = await preflight(proof);
+      if (!pre.ok) {
+        log(`✗ preflight rejected by 0x0FD2 (${pre.detail}) — not submitting, will retry after the next attestation`);
+        continue;
       }
-    } catch (e) {
-      ccSigner.reset(); // a failed send must not leave a nonce gap
-      log(`✗ batch for ${key} failed: ${revertReason(e, ledger.interface)}`);
+      log(`   preflight ok · 0x0FD2.verify says this batch of ${proof.heights.length} would verify`);
+      await submitRecordContributions(ledger, proof);
+      for (const h of proof.txHashes) state.recorded[h] = true;
     }
-    pending.set(key, eligible.filter((p) => !state.recorded[p.txHash]));
+  } catch (e) {
+    ccSigner.reset(); // a failed send must not leave a nonce gap
+    log(`✗ batch failed: ${revertReason(e, ledger.interface)}`);
+  }
+
+  // 4. Drop everything the ledger now knows.
+  for (const [key, list] of pending) {
+    const keep = list.filter((p) => !state.recorded[p.txHash]);
+    if (keep.length === 0) pending.delete(key); else pending.set(key, keep);
   }
 }
 
