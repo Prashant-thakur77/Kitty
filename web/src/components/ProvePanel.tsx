@@ -55,7 +55,7 @@ export function ProvePanel({ members, contributions, payments, attested, onDone 
               {pay ? (
                 <span className="flex items-center gap-2 text-xs">
                   <a className="mono" href={`${cfg.sepoliaExplorer}/tx/${pay.tx}`} target="_blank" rel="noreferrer">paid · block {num(pay.block)} <ExternalLink size={11} style={{ display: 'inline' }} /></a>
-                  <Tag tone={att ? 'mint' : 'amber'}>{att ? 'attested · provable' : `waiting for attestation (${attested !== undefined ? num(pay.block - attested) : '?'} blocks)`}</Tag>
+                  <Tag tone={att ? 'mint' : 'amber'}>{att ? 'attested · provable' : attested !== undefined ? `waiting for attestation (${num(pay.block - attested)} blocks)` : 'waiting for attestation'}</Tag>
                 </span>
               ) : <Tag tone="muted">no payment on Sepolia yet</Tag>}
             </li>

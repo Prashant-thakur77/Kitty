@@ -108,3 +108,16 @@ quick start (tests, local e2e, testnet deploy, worker, dashboard) · Attestcoin 
 7. Round two. One member does not pay. Nothing happens until the deadline block itself is attested on Creditcoin. The ChainInfo precompile is the only clock. Then the round closes, the missed payment is recorded, and the score drops from five fifteen to three ninety five.
 8. Try to cheat it. Replay a proof: rejected, query already processed. A fake vault emitting a perfect event: rejected, wrong emitter. Same proof on another chain key: rejected. A reverted transaction with a valid proof: rejected, the precompile proves inclusion, not success.
 9. Every number in this score is a proven transaction or an attested deadline. That is a credit history a Creditcoin lender can underwrite against, which is the whole point of Creditcoin. Kitty. Savings circles where every payment is proven, not promised.
+
+## Backup demo video (already recorded)
+
+`docs/assets/` does not carry the file (size); the local rehearsal recording lives at
+`kitty-demo-local.mp4` (2:38, 1280×720, narrated). It walks the whole loop against the two-anvil
+world: landing → circle → members pay on the source chain → worker fetches ONE batch proof →
+`0x0FD2 verified … in ONE call` → round closes → payout proven back → a member misses and drops to
+tier D → attack lab rejects a replay and a spoofed emitter → score and credit line.
+
+Narration was generated locally with the Chatterbox TTS pipeline (`chatterbox-env`), one clip per
+segment; the muxing command is in the repo history. Re-record against the testnet once the
+Creditcoin side is deployed, using `docs/DEMO_RUNBOOK.md`; keep this file as the fallback if the
+attestation lag is unlucky on the day.
