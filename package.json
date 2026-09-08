@@ -17,7 +17,8 @@
     "scenario": "tsx worker/src/scenarios.ts",
     "txlog": "tsx worker/src/txlog.ts",
     "verify:live": "tsx worker/src/verify-live.ts",
-    "judge": "bash scripts/judge.sh"
+    "judge": "bash scripts/judge.sh",
+    "receipts": "tsx worker/src/receipts.ts"
   },
   "keywords": [],
   "author": "",

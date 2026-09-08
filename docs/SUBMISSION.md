@@ -40,8 +40,9 @@ and the transaction's own `to`/`from` must match the vault/member. Query ids are
 Payouts on Ethereum are proven back with a single `verifyAndEmit` before a round can show "Paid".
 Members can also prove a round themselves from the browser (the Proof Builder serves CORS) and
 submit from their own wallet — the ledger verifies, the submitter is irrelevant. The resulting
-Kitty Score is *used* on Creditcoin: KittyCreditLine lends against it and a soulbound badge renders
-it on-chain. Before deployment the whole path was validated against the live network: a real
+Kitty Score is *used* on Creditcoin: KittyCreditLine lends against it, a soulbound badge renders it
+on-chain, and `pnpm receipts <address>` exports a self-verifying proof bundle a lender can re-check
+against the live precompile. Before deployment the whole path was validated against the live network: a real
 Sepolia proof and a real 3-tx batch proof both returned `true` from the live 0x0FD2 precompile,
 while tampered bytes and a wrong chain key reverted (`pnpm verify:live`). Integration doc:
 `docs/ATTESTCOIN_INTEGRATION.md`; every file touching Attestcoin is tabled in the README.

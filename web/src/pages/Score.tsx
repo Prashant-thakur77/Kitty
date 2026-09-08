@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Download } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { isAddress } from 'viem'
@@ -6,7 +7,7 @@ import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from '
 import { useScore, useLedgerEvents } from '../hooks'
 import { Blockie, Section, Stat, Tag } from '../components/ui'
 import { short } from '../lib/format'
-import { cfg } from '../config'
+import { cfg, CHAIN_INFO_PRECOMPILE, VERIFIER_PRECOMPILE } from '../config'
 import { BadgeCard } from '../components/BadgeCard'
 
 export function ScorePage() {
@@ -21,6 +22,27 @@ export function ScorePage() {
   const value = score?.[0] ?? 500
   const tier = score?.[1] ?? 'C'
   const tierColor = tier === 'A' ? 'var(--mint)' : tier === 'B' ? 'var(--sky)' : tier === 'C' ? 'var(--amber)' : 'var(--rose)'
+
+  function exportBundle() {
+    const bundle = {
+      member: addr, issuedAt: new Date().toISOString(), score: value, tier,
+      record: record ? { onTime: record.onTime, late: record.late, missed: record.missed, received: record.received, volume_tUSD: Number(record.volume) / 1e6 } : undefined,
+      ledger: { address: cfg.ledger, chainId: cfg.creditcoinChainId, rpc: cfg.creditcoinRpc },
+      sourceChain: { chainKey: cfg.sourceChainKey, vault: cfg.vault, rpc: cfg.sepoliaRpc },
+      attestcoin: { blockProver: VERIFIER_PRECOMPILE, chainInfo: CHAIN_INFO_PRECOMPILE },
+      howToVerify: [
+        'Each entry names the Creditcoin transaction that carried its Attestcoin proof.',
+        'Re-check any payment against the live block-prover precompile: pnpm verify:live <sourceTx>, or the Re-verify button on the circle page.',
+        'Read the ledger directly: creditScore(member) and getContribution(circleId, round, member).',
+        'Nothing here has to be trusted: every number comes from a proven transaction or an attested deadline.',
+      ],
+      entries: history.map((h) => ({ event: h.kind, text: h.text, circleId: String(h.args.circleId ?? ''), round: Number(h.args.round ?? 0), queryId: h.qid, creditcoinTx: h.tx, creditcoinBlock: String(h.block) })),
+    }
+    const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' }))
+    const a = document.createElement('a')
+    a.href = url; a.download = `kitty-receipts-${addr!.slice(0, 10)}.json`; a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -57,7 +79,8 @@ export function ScorePage() {
             <p className="mt-3 text-xs" style={{ color: 'var(--muted)' }}>500 base · +15 on time · −20 late · −120 missed. Proven volume {record ? (Number(record.volume) / 1e6).toLocaleString() : 0} tUSD.</p>
           </section>
           <div className="grid gap-4">
-            <Section title="Lender view · readable by any Creditcoin contract" right={<Tag tone="sky">creditScore(address)</Tag>}>
+            <Section title="Lender view · readable by any Creditcoin contract" right={<div className="flex items-center gap-2"><button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: 13 }} onClick={exportBundle}><Download size={13} /> Proof bundle</button><Tag tone="sky">creditScore(address)</Tag></div>}>
+              <p className="mb-2 text-xs" style={{ color: 'var(--muted)' }}>Download the proof bundle to hand a lender a self-verifying history: every entry names the Creditcoin transaction that carried its Attestcoin proof, so they can re-check it themselves.</p>
               <pre className="log panel-2 p-3">{JSON.stringify({ member: addr, score: value, tier, onTime: record?.onTime ?? 0, late: record?.late ?? 0, missed: record?.missed ?? 0, received: record?.received ?? 0, volume_tUSD: record ? Number(record.volume) / 1e6 : 0, source: 'KittyLedger on Creditcoin CC3 Testnet · inputs are Attestcoin-proven Sepolia txs and attested deadlines' }, null, 2)}</pre>
             </Section>
             <BadgeCard address={addr} />

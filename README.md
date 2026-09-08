@@ -71,6 +71,7 @@ Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`
 | [`worker/src/chain.ts`](worker/src/chain.ts) | `usc-sdk` `utils.gas.computeGasLimit` (precompile-aware gas fallback); custom-error decoding |
 | [`worker/src/worker.ts`](worker/src/worker.ts) | Readability off-chain worker: watch → wait attestation → batch prove → submit → close → pay out → prove back |
 | [`worker/src/scenarios.ts`](worker/src/scenarios.ts) | Attack scenarios that push bad proofs through the precompile path and assert the ledger's rejection |
+| [`worker/src/receipts.ts`](worker/src/receipts.ts) | Exports a member's proof bundle: every recorded payment with its source tx, query id and the Creditcoin proof transaction |
 | [`worker/src/verify-live.ts`](worker/src/verify-live.ts) | Real proof → real precompile: `verify` / `calculateTxIndex` on the live 0x0FD2, with tamper and wrong-chain negative checks |
 | [`test/RealProofFixture.t.sol`](test/RealProofFixture.t.sol), [`test/fixtures/`](test/fixtures) | Genuine Proof Builder `txBytes` (verified `true` on-chain) decoded with the ledger's exact `EvmV1Decoder` calls |
 | [`worker/src/config.ts`](worker/src/config.ts) | ChainInfo precompile ABI (`get_latest_attestation_height_and_hash`) |
@@ -149,6 +150,9 @@ or an admin to run the rotation.
    shows "Paid".
 7. Every member accrues a **Kitty Score** built solely from proven transactions and attested deadlines.
 8. The score is used: **KittyCreditLine** lends kUSD against it, and a soulbound **Kitty Score badge** renders it live for any explorer or lender.
+9. The score is **portable**: `pnpm receipts <address>` (or the Proof bundle button on `/score`) exports a
+   self-verifying JSON — every entry names the Creditcoin transaction that carried its Attestcoin proof,
+   so a lender re-checks it against the live precompile instead of trusting Kitty.
 
 ## Attestcoin depth
 
@@ -264,6 +268,7 @@ transaction's own `from` must be the member (a safe false negative).
 1. The only entry that verifies a whole round in a single precompile call.
 2. Deadlines are attested source-chain block heights, not timestamps or admin calls.
 9. Score-ordered rotation: proven behaviour decides who gets the pot next, inside the circle itself.
+10. Portable receipts: a member can hand a lender a bundle that verifies itself against the precompile.
 3. Output is portable credit data, not just a pot: a score any Creditcoin lender can read — and one already does (KittyCreditLine).
 4. Payouts are proven back; the ledger never displays money it hasn't seen move.
 5. Five live attack scenarios, each answered with a decoded custom error.
