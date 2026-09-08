@@ -72,6 +72,7 @@ contract KittyLedger is Ownable {
         bool open; // invites still redeemable; must be closed before any contribution is recorded
         uint32 maxMembers; // cap for open circles (createOpenCircle); equals members.length otherwise
         Rotation rotation; // Fixed by default; organiser may switch to ByScore before round 0 has any proof
+        uint64 chainKey; // source chain this circle settles from (validated against the ChainInfo registry)
     }
 
     struct Round {
@@ -127,10 +128,15 @@ contract KittyLedger is Ownable {
     /// @notice Has this member already received a pot in this circle (each member receives exactly once).
     mapping(uint256 => mapping(address => bool)) public receivedPot;
     mapping(address => uint256[]) internal _memberCircles;
-    /// @notice Source-chain vaults whose events may feed this ledger (owner-curated: the deployed KittyVault).
-    ///         Without this, anyone could bind a circle to a contract that merely *emits* Contributed and
-    ///         mint "proven volume" out of thin air.
-    mapping(address => bool) public trustedVault;
+    /// @notice Source-chain vaults whose events may feed this ledger (owner-curated: the deployed KittyVault),
+    ///         keyed by *source chain*. Without this, anyone could bind a circle to a contract that merely
+    ///         *emits* Contributed and mint "proven volume" out of thin air. Keying it by chain closes the
+    ///         same-address-on-another-chain hole: a vault trusted for Sepolia proofs is not trusted for
+    ///         Ethereum mainnet proofs unless the owner says so separately.
+    mapping(uint64 => mapping(address => bool)) public trustedVault;
+    /// @notice How many chains a vault is trusted on. Diagnostics only (see `_rejectEmitter`): it lets a
+    ///         proof submitted under the wrong chain key report `WrongChain` instead of `WrongEmitter`.
+    mapping(address => uint64) public trustedVaultChains;
     /// @notice A member is only ever penalised for a circle they consented to: they redeemed an invite,
     ///         organised it, called acceptMembership, or paid into it at least once.
     mapping(uint256 => mapping(address => bool)) public accepted;
@@ -170,7 +176,9 @@ contract KittyLedger is Ownable {
     event PayoutConfirmed(uint256 indexed circleId, uint32 indexed round, address indexed recipient, uint256 amount, bytes32 queryId);
     event InviteRedeemed(uint256 indexed circleId, address indexed member, uint256 nonce);
     event InvitesClosed(uint256 indexed circleId, uint256 memberCount);
-    event VaultTrusted(address indexed vault, bool trusted);
+    event VaultTrusted(uint64 indexed chainKey, address indexed vault, bool trusted);
+    /// @notice The source chain a circle settles from, emitted alongside CircleCreated.
+    event CircleChainSet(uint256 indexed circleId, uint64 indexed chainKey);
     event MembershipAccepted(uint256 indexed circleId, address indexed member);
     event PotCarriedOver(uint256 indexed circleId, uint32 indexed fromRound, uint256 amount);
 
@@ -210,6 +218,7 @@ contract KittyLedger is Ownable {
     error CircleFull(uint256 circleId, uint32 maxMembers);
     error InvitesAlreadyClosed(uint256 circleId);
     error VaultNotTrusted(address vault);
+    error UnsupportedSourceChain(uint64 chainKey);
     error NoRecipient(uint256 circleId, uint32 round);
 
     // ───────────────────────────── Constructor ─────────────────────────────
@@ -222,8 +231,7 @@ contract KittyLedger is Ownable {
 
     // ───────────────────────────── Circle lifecycle ─────────────────────────────
 
-    /// @notice Open a circle. Permissionless: whoever organises the group creates it. Money never
-    ///         touches this contract; the vault on the source chain holds escrow.
+    /// @notice Open a circle on the ledger's default source chain (`SOURCE_CHAIN_KEY`).
     function createCircle(
         string calldata name,
         address[] calldata members,
@@ -232,16 +240,36 @@ contract KittyLedger is Ownable {
         uint64 startHeight,
         address sourceVault
     ) external returns (uint256 circleId) {
-        if (members.length < 2 || members.length > MAX_MEMBERS) revert InvalidCircle("2..10 members");
-        circleId = _initCircle(name, contribution, roundBlocks, startHeight, sourceVault, uint32(members.length));
-        Circle storage c = _circles[circleId];
-        for (uint256 i; i < members.length; ++i) {
-            address m = members[i];
-            if (m == address(0) || isMember[circleId][m]) revert InvalidCircle("duplicate/zero member");
-            _join(circleId, c, m, false); // listed, not yet consented
-        }
-        emit CircleCreated(circleId, name, members, contribution, roundBlocks, startHeight, sourceVault);
-        emit RoundOpened(circleId, 0, deadlineHeight(circleId, 0));
+        return _createCircle(name, members, contribution, roundBlocks, startHeight, sourceVault, SOURCE_CHAIN_KEY);
+    }
+
+    /// @notice Open a circle. Permissionless: whoever organises the group creates it. Money never
+    ///         touches this contract; the vault on the source chain holds escrow.
+    /// @param chainKey Source chain this circle settles from. Must exist in the ChainInfo registry
+    ///                 (`get_chain_by_key(chainKey).exists`) and `sourceVault` must be trusted *for
+    ///                 that chain*, so one ledger serves Sepolia and Ethereum mainnet circles side by side.
+    function createCircle(
+        string calldata name,
+        address[] calldata members,
+        uint256 contribution,
+        uint64 roundBlocks,
+        uint64 startHeight,
+        address sourceVault,
+        uint64 chainKey
+    ) external returns (uint256 circleId) {
+        return _createCircle(name, members, contribution, roundBlocks, startHeight, sourceVault, chainKey);
+    }
+
+    /// @notice Open-invite circle on the ledger's default source chain (`SOURCE_CHAIN_KEY`).
+    function createOpenCircle(
+        string calldata name,
+        uint256 contribution,
+        uint64 roundBlocks,
+        uint64 startHeight,
+        address sourceVault,
+        uint32 maxMembers
+    ) external returns (uint256 circleId) {
+        return _createOpenCircle(name, contribution, roundBlocks, startHeight, sourceVault, maxMembers, SOURCE_CHAIN_KEY);
     }
 
     /// @notice Open a circle with only the organiser as member. Others join via `redeemInvite` using
@@ -253,16 +281,52 @@ contract KittyLedger is Ownable {
         uint64 roundBlocks,
         uint64 startHeight,
         address sourceVault,
-        uint32 maxMembers
+        uint32 maxMembers,
+        uint64 chainKey
     ) external returns (uint256 circleId) {
+        return _createOpenCircle(name, contribution, roundBlocks, startHeight, sourceVault, maxMembers, chainKey);
+    }
+
+    function _createCircle(
+        string calldata name,
+        address[] calldata members,
+        uint256 contribution,
+        uint64 roundBlocks,
+        uint64 startHeight,
+        address sourceVault,
+        uint64 chainKey
+    ) internal returns (uint256 circleId) {
+        if (members.length < 2 || members.length > MAX_MEMBERS) revert InvalidCircle("2..10 members");
+        circleId = _initCircle(name, contribution, roundBlocks, startHeight, sourceVault, uint32(members.length), chainKey);
+        Circle storage c = _circles[circleId];
+        for (uint256 i; i < members.length; ++i) {
+            address m = members[i];
+            if (m == address(0) || isMember[circleId][m]) revert InvalidCircle("duplicate/zero member");
+            _join(circleId, c, m, false); // listed, not yet consented
+        }
+        emit CircleCreated(circleId, name, members, contribution, roundBlocks, startHeight, sourceVault);
+        emit CircleChainSet(circleId, chainKey);
+        emit RoundOpened(circleId, 0, deadlineHeight(circleId, 0));
+    }
+
+    function _createOpenCircle(
+        string calldata name,
+        uint256 contribution,
+        uint64 roundBlocks,
+        uint64 startHeight,
+        address sourceVault,
+        uint32 maxMembers,
+        uint64 chainKey
+    ) internal returns (uint256 circleId) {
         if (maxMembers < 2 || maxMembers > MAX_MEMBERS) revert InvalidCircle("2..10 members");
-        circleId = _initCircle(name, contribution, roundBlocks, startHeight, sourceVault, maxMembers);
+        circleId = _initCircle(name, contribution, roundBlocks, startHeight, sourceVault, maxMembers, chainKey);
         Circle storage c = _circles[circleId];
         c.open = true;
         _join(circleId, c, msg.sender, true);
         address[] memory members = new address[](1);
         members[0] = msg.sender;
         emit CircleCreated(circleId, name, members, contribution, roundBlocks, startHeight, sourceVault);
+        emit CircleChainSet(circleId, chainKey);
         emit RoundOpened(circleId, 0, deadlineHeight(circleId, 0));
     }
 
@@ -297,10 +361,20 @@ contract KittyLedger is Ownable {
         emit RotationSet(circleId, mode);
     }
 
-    /// @notice Curate which source-chain vaults may feed the ledger.
-    function setTrustedVault(address vault, bool trusted) external onlyOwner {
-        trustedVault[vault] = trusted;
-        emit VaultTrusted(vault, trusted);
+    /// @notice Curate which source-chain vaults may feed the ledger, per source chain. Trust is never
+    ///         global: the same address on another supported chain is a different contract.
+    function setTrustedVault(uint64 chainKey, address vault, bool trusted) public onlyOwner {
+        if (trustedVault[chainKey][vault] != trusted) {
+            trustedVault[chainKey][vault] = trusted;
+            if (trusted) trustedVaultChains[vault] += 1;
+            else trustedVaultChains[vault] -= 1;
+        }
+        emit VaultTrusted(chainKey, vault, trusted);
+    }
+
+    /// @notice Convenience for the ledger's default source chain.
+    function setTrustedVault(address vault, bool trusted) external {
+        setTrustedVault(SOURCE_CHAIN_KEY, vault, trusted); // onlyOwner enforced by the 3-arg form
     }
 
     /// @notice A member listed by createCircle opts in. Until then the circle cannot hurt their score.
@@ -342,7 +416,7 @@ contract KittyLedger is Ownable {
             // Attested source-chain time is the only clock. The grace window lets a payment mined
             // right at the deadline be proven before anyone can close the round on it.
             uint64 closeAt = deadline + GRACE_BLOCKS;
-            if (!CHAIN_INFO.is_height_attested(SOURCE_CHAIN_KEY, closeAt)) revert RoundStillOpenOnSource(closeAt);
+            if (!CHAIN_INFO.is_height_attested(c.chainKey, closeAt)) revert RoundStillOpenOnSource(closeAt);
         }
 
         uint32 missed;
@@ -394,21 +468,8 @@ contract KittyLedger is Ownable {
         INativeQueryVerifier.MerkleProof[] calldata merkleProofs,
         INativeQueryVerifier.ContinuityProof calldata continuity
     ) external {
-        if (chainKey != SOURCE_CHAIN_KEY) revert WrongChain(chainKey, SOURCE_CHAIN_KEY);
+        bytes32[] memory queryIds = _prepareBatch(chainKey, heights, encodedTxs, merkleProofs);
         uint256 n = heights.length;
-        if (n == 0) revert EmptyBatch();
-        if (n > MAX_BATCH) revert BatchTooLarge(n);
-        if (encodedTxs.length != n || merkleProofs.length != n) revert LengthMismatch();
-
-        bytes32[] memory queryIds = new bytes32[](n);
-        for (uint256 i; i < n; ++i) {
-            bytes32 qid = _computeQueryId(chainKey, heights[i], merkleProofs[i]);
-            if (processedQueries[qid]) revert QueryAlreadyProcessed(qid);
-            for (uint256 j; j < i; ++j) {
-                if (queryIds[j] == qid) revert QueryAlreadyProcessed(qid);
-            }
-            queryIds[i] = qid;
-        }
 
         bool ok = VERIFIER.verifyAndEmit(chainKey, heights, encodedTxs, merkleProofs, continuity);
         if (!ok) revert ProofRejected();
@@ -417,7 +478,7 @@ contract KittyLedger is Ownable {
         uint64 hi;
         for (uint256 i; i < n; ++i) {
             processedQueries[queryIds[i]] = true;
-            _recordContribution(queryIds[i], heights[i], encodedTxs[i]);
+            _recordContribution(chainKey, queryIds[i], heights[i], encodedTxs[i]);
             if (heights[i] < lo) lo = heights[i];
             if (heights[i] > hi) hi = heights[i];
         }
@@ -425,6 +486,7 @@ contract KittyLedger is Ownable {
     }
 
     /// @notice Prove that the vault actually paid the round's recipient on the source chain.
+    /// @dev Thin wrapper over the shared payout validation, using the single-query prover overload.
     function confirmPayout(
         uint64 chainKey,
         uint64 height,
@@ -432,7 +494,6 @@ contract KittyLedger is Ownable {
         INativeQueryVerifier.MerkleProof calldata merkleProof,
         INativeQueryVerifier.ContinuityProof calldata continuity
     ) external {
-        if (chainKey != SOURCE_CHAIN_KEY) revert WrongChain(chainKey, SOURCE_CHAIN_KEY);
         bytes32 qid = _computeQueryId(chainKey, height, merkleProof);
         if (processedQueries[qid]) revert QueryAlreadyProcessed(qid);
 
@@ -440,19 +501,33 @@ contract KittyLedger is Ownable {
         if (!ok) revert ProofRejected();
         processedQueries[qid] = true;
 
-        EvmV1Decoder.LogEntry memory log = _singleLog(encodedTx, PAIDOUT_SIG);
-        (uint256 circleId, uint32 round, address recipient, uint256 amount) = _decodeVaultLog(log);
+        _confirmPayout(chainKey, qid, encodedTx);
+    }
 
-        Circle storage c = _circle(circleId);
-        if (log.address_ != c.sourceVault) revert WrongEmitter(log.address_, c.sourceVault);
-        Round storage rd = _rounds[circleId][round];
-        if (rd.status != RoundStatus.Closed) revert RoundNotClosed(circleId, round);
-        if (rd.recipient == address(0)) revert NoRecipient(circleId, round);
-        if (recipient != rd.recipient || amount != rd.pot) revert PayoutMismatch();
+    /// @notice Confirm up to 10 payouts with ONE precompile call — payouts from *different circles*
+    ///         closing in the same window share the continuity proof the way contributions do.
+    function confirmPayouts(
+        uint64 chainKey,
+        uint64[] calldata heights,
+        bytes[] calldata encodedTxs,
+        INativeQueryVerifier.MerkleProof[] calldata merkleProofs,
+        INativeQueryVerifier.ContinuityProof calldata continuity
+    ) external {
+        bytes32[] memory queryIds = _prepareBatch(chainKey, heights, encodedTxs, merkleProofs);
+        uint256 n = heights.length;
 
-        rd.status = RoundStatus.Paid;
-        rd.payoutQueryId = qid;
-        emit PayoutConfirmed(circleId, round, recipient, amount, qid);
+        bool ok = VERIFIER.verifyAndEmit(chainKey, heights, encodedTxs, merkleProofs, continuity);
+        if (!ok) revert ProofRejected();
+
+        uint64 lo = type(uint64).max;
+        uint64 hi;
+        for (uint256 i; i < n; ++i) {
+            processedQueries[queryIds[i]] = true;
+            _confirmPayout(chainKey, queryIds[i], encodedTxs[i]);
+            if (heights[i] < lo) lo = heights[i];
+            if (heights[i] > hi) hi = heights[i];
+        }
+        emit BatchVerified(chainKey, lo, hi, n);
     }
 
     // ───────────────────────────── Views ─────────────────────────────
@@ -505,11 +580,56 @@ contract KittyLedger is Ownable {
 
     // ───────────────────────────── Internals ─────────────────────────────
 
-    function _recordContribution(bytes32 qid, uint64 height, bytes calldata encodedTx) internal {
-        EvmV1Decoder.LogEntry memory log = _singleLog(encodedTx, CONTRIBUTED_SIG);
+    /// @dev Shared batch prologue: shape checks plus query-id derivation with replay *and* in-batch
+    ///      duplicate rejection, before a single wei of gas goes to the prover.
+    function _prepareBatch(
+        uint64 chainKey,
+        uint64[] calldata heights,
+        bytes[] calldata encodedTxs,
+        INativeQueryVerifier.MerkleProof[] calldata merkleProofs
+    ) internal view returns (bytes32[] memory queryIds) {
+        uint256 n = heights.length;
+        if (n == 0) revert EmptyBatch();
+        if (n > MAX_BATCH) revert BatchTooLarge(n);
+        if (encodedTxs.length != n || merkleProofs.length != n) revert LengthMismatch();
+
+        queryIds = new bytes32[](n);
+        for (uint256 i; i < n; ++i) {
+            bytes32 qid = _computeQueryId(chainKey, heights[i], merkleProofs[i]);
+            if (processedQueries[qid]) revert QueryAlreadyProcessed(qid);
+            for (uint256 j; j < i; ++j) {
+                if (queryIds[j] == qid) revert QueryAlreadyProcessed(qid);
+            }
+            queryIds[i] = qid;
+        }
+    }
+
+    /// @dev Validate one proven `PaidOut` transaction and settle the round it belongs to.
+    function _confirmPayout(uint64 chainKey, bytes32 qid, bytes calldata encodedTx) internal {
+        EvmV1Decoder.LogEntry memory log = _singleLog(chainKey, encodedTx, PAIDOUT_SIG);
+        (uint256 circleId, uint32 round, address recipient, uint256 amount) = _decodeVaultLog(log);
+
+        Circle storage c = _circle(circleId);
+        if (chainKey != c.chainKey) revert WrongChain(chainKey, c.chainKey);
+        if (log.address_ != c.sourceVault) revert WrongEmitter(log.address_, c.sourceVault);
+        Round storage rd = _rounds[circleId][round];
+        if (rd.status != RoundStatus.Closed) revert RoundNotClosed(circleId, round);
+        if (rd.recipient == address(0)) revert NoRecipient(circleId, round);
+        if (recipient != rd.recipient || amount != rd.pot) revert PayoutMismatch();
+
+        rd.status = RoundStatus.Paid;
+        rd.payoutQueryId = qid;
+        emit PayoutConfirmed(circleId, round, recipient, amount, qid);
+    }
+
+    function _recordContribution(uint64 chainKey, bytes32 qid, uint64 height, bytes calldata encodedTx) internal {
+        EvmV1Decoder.LogEntry memory log = _singleLog(chainKey, encodedTx, CONTRIBUTED_SIG);
         (uint256 circleId, uint32 round, address member, uint256 amount) = _decodeVaultLog(log);
 
         Circle storage c = _circle(circleId);
+        // Every circle in a batch must settle from the batch's chain: a Sepolia proof can never
+        // credit a circle that settles from Ethereum mainnet, even with an identical vault address.
+        if (chainKey != c.chainKey) revert WrongChain(chainKey, c.chainKey);
         if (c.status != CircleStatus.Active) revert CircleNotActive(circleId);
         if (c.open) revert CircleStillOpen(circleId);
         if (log.address_ != c.sourceVault) revert WrongEmitter(log.address_, c.sourceVault);
@@ -545,7 +665,11 @@ contract KittyLedger is Ownable {
     ///      *trusted vault*. Same-shaped events from other contracts in the same tx are ignored, so a
     ///      token or router that happens to emit `Contributed` cannot block a genuine payment; a tx whose
     ///      only matching logs come from untrusted emitters is rejected as WrongEmitter.
-    function _singleLog(bytes calldata encodedTx, bytes32 sig) internal view returns (EvmV1Decoder.LogEntry memory chosen) {
+    function _singleLog(uint64 chainKey, bytes calldata encodedTx, bytes32 sig)
+        internal
+        view
+        returns (EvmV1Decoder.LogEntry memory chosen)
+    {
         uint8 txType = EvmV1Decoder.getTransactionType(encodedTx);
         if (!EvmV1Decoder.isValidTransactionType(txType)) revert UnsupportedTxType(txType);
         EvmV1Decoder.ReceiptFields memory receipt = EvmV1Decoder.decodeReceiptFields(encodedTx);
@@ -555,13 +679,28 @@ contract KittyLedger is Ownable {
         if (logs.length == 0) revert ExpectedExactlyOneLog(0);
         uint256 found;
         for (uint256 i; i < logs.length; ++i) {
-            if (trustedVault[logs[i].address_]) {
+            if (trustedVault[chainKey][logs[i].address_]) {
                 chosen = logs[i];
                 ++found;
             }
         }
-        if (found == 0) revert WrongEmitter(logs[0].address_, address(0));
+        if (found == 0) _rejectEmitter(chainKey, logs);
         if (found != 1) revert ExpectedExactlyOneLog(found);
+    }
+
+    /// @dev Nothing in this transaction came from a vault trusted on `chainKey`. Always reverts; the only
+    ///      question is *which* error is truthful. A proof submitted under the wrong chain key for a
+    ///      circle whose own vault emitted the log is a chain mismatch (`WrongChain`), not a spoof —
+    ///      report it as such so the caller can retry with the circle's chain. Anything else is
+    ///      `WrongEmitter`. Diagnostics only: no path here can accept a log.
+    function _rejectEmitter(uint64 chainKey, EvmV1Decoder.LogEntry[] memory logs) internal view {
+        for (uint256 i; i < logs.length; ++i) {
+            address emitter = logs[i].address_;
+            if (trustedVaultChains[emitter] == 0 || logs[i].topics.length != 4) continue;
+            Circle storage c = _circles[uint256(logs[i].topics[1])];
+            if (c.sourceVault == emitter && c.chainKey != chainKey) revert WrongChain(chainKey, c.chainKey);
+        }
+        revert WrongEmitter(logs[0].address_, address(0));
     }
 
     /// @dev Both vault events share the shape (uint256 indexed, uint32 indexed, address indexed, uint256 data).
@@ -601,14 +740,18 @@ contract KittyLedger is Ownable {
         uint64 roundBlocks,
         uint64 startHeight,
         address sourceVault,
-        uint32 maxMembers
+        uint32 maxMembers,
+        uint64 chainKey
     ) internal returns (uint256 circleId) {
         if (contribution == 0) revert InvalidCircle("contribution");
         if (roundBlocks == 0) revert InvalidCircle("roundBlocks");
-        if (sourceVault == address(0) || !trustedVault[sourceVault]) revert VaultNotTrusted(sourceVault);
+        // The registry, not a constant, decides which chains exist: ask the precompile.
+        if (!CHAIN_INFO.get_chain_by_key(chainKey).exists) revert UnsupportedSourceChain(chainKey);
+        if (sourceVault == address(0) || !trustedVault[chainKey][sourceVault]) revert VaultNotTrusted(sourceVault);
         if (startHeight > type(uint64).max / 4 || roundBlocks > (uint64(1) << 40)) revert InvalidCircle("height range");
         circleId = ++circleCount;
         Circle storage c = _circles[circleId];
+        c.chainKey = chainKey;
         c.name = name;
         c.contribution = contribution;
         c.roundBlocks = roundBlocks;

@@ -19,6 +19,27 @@ contract MockVerifier {
         return uint64(uint256(p.root) & 0xffff);
     }
 
+    /// @dev The precompile's free view overloads, used as a preflight before paying to submit.
+    function verify(
+        uint64,
+        uint64,
+        bytes calldata,
+        INativeQueryVerifier.MerkleProof calldata,
+        INativeQueryVerifier.ContinuityProof calldata
+    ) external view returns (bool) {
+        return accept;
+    }
+
+    function verify(
+        uint64,
+        uint64[] calldata,
+        bytes[] calldata,
+        INativeQueryVerifier.MerkleProof[] calldata,
+        INativeQueryVerifier.ContinuityProof calldata
+    ) external view returns (bool) {
+        return accept;
+    }
+
     function verifyAndEmit(
         uint64,
         uint64,

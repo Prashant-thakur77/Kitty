@@ -155,6 +155,11 @@
                 "name": "rotation",
                 "type": "uint8",
                 "internalType": "enum KittyLedger.Rotation"
+              },
+              {
+                "name": "chainKey",
+                "type": "uint64",
+                "internalType": "uint64"
               }
             ]
           },

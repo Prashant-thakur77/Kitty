@@ -14,6 +14,7 @@ import { ProvePanel } from '../components/ProvePanel'
 import { ReverifyModal } from '../components/ReverifyModal'
 import { ROUND_STATUS } from '../lib/types'
 import { BlockProgress, Blockie, Section, Stat, Tag } from '../components/ui'
+import { chainName } from '../lib/verifier'
 import { ProofFeed } from '../components/ProofFeed'
 
 type Urgency = 'calm' | 'attention' | 'urgent' | 'proven'
@@ -98,7 +99,7 @@ export function CirclePage() {
     <main className="mx-auto max-w-6xl px-4 py-6">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div><Link to="/circles" className="eyebrow no-underline">← circles</Link><h1 className="text-3xl">#{String(circleId)} · {circle.name}</h1></div>
-        <div className="flex gap-2">{circle.open && <Tag tone="amber">open for invites · {n}/{circle.maxMembers}</Tag>}<Tag tone={active ? 'mint' : 'muted'}>{active ? 'active' : 'completed'}</Tag><Tag tone="sky">round {circle.currentRound + 1} of {n}</Tag></div>
+        <div className="flex gap-2">{circle.open && <Tag tone="amber">open for invites · {n}/{circle.maxMembers}</Tag>}<Tag tone={active ? 'mint' : 'muted'}>{active ? 'active' : 'completed'}</Tag><Tag tone="sky">round {circle.currentRound + 1} of {n}</Tag><Tag tone="muted" title={`Proofs for this circle are only accepted from Attestcoin chain key ${circle.chainKey}`}>{chainName(circle.chainKey)}</Tag></div>
       </div>
 
       {/* Round header — urgency band (Saving Circles pattern, re-implemented; blocks not seconds) */}

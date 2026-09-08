@@ -34,3 +34,7 @@ export function precompileReason(e: unknown): string {
   const quoted = /reverted with the following reason:\s*\n?(.+)/.exec(raw)?.[1]
   return (quoted ?? raw).split('\n')[0].replace(/^execution reverted:?\s*/i, '').trim()
 }
+
+/** Attestcoin source chains, as the ChainInfo precompile reports them on CC3 Testnet. */
+export const CHAIN_NAMES: Record<number, string> = { 1: 'Ethereum Sepolia', 3: 'Ethereum mainnet' }
+export const chainName = (key: number | bigint) => CHAIN_NAMES[Number(key)] ?? `chain key ${key}`

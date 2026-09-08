@@ -55,8 +55,8 @@ if have ledger KITTY_LEDGER_ADDRESS; then echo "== KittyLedger present: $KITTY_L
 LEDGER_BLOCK=${LEDGER_DEPLOY_BLOCK:-0}
 
 echo "== Creditcoin: trust the Sepolia vault on the ledger (owner-only allowlist)"
-if [ "$(cast call --rpc-url "$CREDITCOIN_RPC_URL" "$KITTY_LEDGER_ADDRESS" "trustedVault(address)(bool)" "$KITTY_VAULT_ADDRESS")" = "true" ]; then echo "   already trusted"; else
-  cast send --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --legacy "$KITTY_LEDGER_ADDRESS" "setTrustedVault(address,bool)" "$KITTY_VAULT_ADDRESS" true >/dev/null; echo "   trusted $KITTY_VAULT_ADDRESS"; fi
+if [ "$(cast call --rpc-url "$CREDITCOIN_RPC_URL" "$KITTY_LEDGER_ADDRESS" "trustedVault(uint64,address)(bool)" "${SOURCE_CHAIN_KEY:-1}" "$KITTY_VAULT_ADDRESS")" = "true" ]; then echo "   already trusted"; else
+  cast send --rpc-url "$CREDITCOIN_RPC_URL" --private-key "$PRIVATE_KEY" --legacy "$KITTY_LEDGER_ADDRESS" "setTrustedVault(uint64,address,bool)" "${SOURCE_CHAIN_KEY:-1}" "$KITTY_VAULT_ADDRESS" true >/dev/null; echo "   trusted $KITTY_VAULT_ADDRESS on chain key ${SOURCE_CHAIN_KEY:-1}"; fi
 
 if have viewer KITTY_VIEWER_ADDRESS; then echo "== KittyViewer present: $KITTY_VIEWER_ADDRESS"; else
   echo "== Creditcoin: KittyViewer"; persist KITTY_VIEWER_ADDRESS "$(cc_create src/asc/KittyViewer.sol:KittyViewer "$KITTY_LEDGER_ADDRESS")"; fi

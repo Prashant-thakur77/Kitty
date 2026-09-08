@@ -64,7 +64,7 @@ Every file that touches the Attestcoin Protocol (precompiles `0x0FD2` / `0x0FD3`
 | File | Attestcoin usage |
 |---|---|
 | [`src/asc/KittyLedger.sol`](src/asc/KittyLedger.sol) | `INativeQueryVerifier.verifyAndEmit` **batch** overload (≤10 txs, one continuity proof) in `recordContributions`; single overload in `confirmPayout`; `calculateTxIndex` for ASCBase-identical query ids; `EvmV1Decoder` (`getTransactionType`, `decodeReceiptFields`, `getLogsByEventSignature`, `decodeCommonTxFields`); `IChainInfo.is_height_attested` as the deadline clock in `closeRound` |
-| [`src/interfaces/IChainInfo.sol`](src/interfaces/IChainInfo.sol) | Solidity interface for the ChainInfo precompile (`0x0FD3`): `is_height_attested`, `get_latest_attestation_height_and_hash` |
+| [`src/interfaces/IChainInfo.sol`](src/interfaces/IChainInfo.sol) | Solidity interface for the ChainInfo precompile (`0x0FD3`): `is_height_attested`, `get_latest_attestation_height_and_hash`, `get_attestation_bounds`, `find_lowest_attested_after`, `find_highest_attested_before`, `get_attestation_genesis_height`, `get_chain_by_key`, `get_supported_chains` — 8 of the precompile's 11 functions |
 | [`src/asc/KittyViewer.sol`](src/asc/KittyViewer.sol) | One-call reads of proof-derived state for the dashboard |
 | [`src/source/KittyVault.sol`](src/source/KittyVault.sol) | Source-chain contract designed to the Attestcoin readability pattern: minimal logic, purpose-named events (`Contributed`, `PaidOut`) that the ASC binds on |
 | [`worker/src/proofs.ts`](worker/src/proofs.ts) | `@gluwa/usc-sdk` `ProofBuilder.waitUntilHeightAttested` + **`getBatchProof`** (fallback to `getProof` + `mergeProofs`); local mode uses the SDK's `encoding.abiEncode` so the decoder is exercised on genuine tx bytes |
@@ -165,7 +165,9 @@ or an admin to run the rotation.
 | Batch verification, **across circles** | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | Up to ten queries under one continuity proof, pooled from every open circle rather than one round at a time. Measured on the live precompile: 3 singles 261,813 gas vs 1 batch 199,375 (−24%), and the continuity proof is checked once |
 | Free preflight | precompile view `verify(...)`, both overloads | A proof that would fail is never submitted, so a bad batch costs nothing. Used by the worker and by the browser before a member pays |
 | Query-id replay protection | `_computeQueryId` (identical to `ASCBase`) + per-(circle, round, member) guard | Same proof can never count twice |
-| Chain binding | `SOURCE_CHAIN_KEY` immutable, checked before the precompile call | A same-address contract on another supported chain can't feed the ledger |
+| Chain binding, **per circle** | each circle stores its own `chainKey`, validated at creation against `get_chain_by_key` | A circle settles from Sepolia (key 1) or Ethereum mainnet (key 3); proofs from any other chain are refused, and the trusted-vault allowlist is keyed by chain so a vault trusted on one chain is not trusted on another |
+| Attestation bounds | `get_attestation_bounds`, `find_lowest_attested_after`, `get_supported_chains`, `get_chain_by_key` | The exact block that will cover a payment comes from the precompile, not from arithmetic; supported chains are read from the registry rather than hard-coded |
+| Batch payout confirmation | `confirmPayouts(chainKey, heights[], txs[], proofs[], continuity)` | Several rounds' payouts proven back under one shared continuity proof |
 | Emitter + calldata binding | `log.address_ == vault`, `tx.to == vault`, `tx.from == member` | A proof of someone else's transaction that merely contains a vault log is rejected |
 | Receipt status | `receiptStatus == 1` | The precompile proves inclusion, not success |
 | Attested-height clock | `is_height_attested(chainKey, deadline)` in `closeRound`; `onTime = height ≤ deadline` | No timestamps, no oracle, no admin decides when a round ends |

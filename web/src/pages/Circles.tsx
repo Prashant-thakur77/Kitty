@@ -7,6 +7,7 @@ import { creditcoinTestnet } from '../lib/wagmi'
 import type { Circle } from '../lib/types'
 import { usd } from '../lib/format'
 import { Tag } from '../components/ui'
+import { chainName } from '../lib/verifier'
 
 export function Circles() {
   const { data: count } = useCircleCount()
@@ -34,6 +35,7 @@ export function Circles() {
                 <div><div className="eyebrow">members</div><div className="mono">{c.members.length}</div></div>
                 <div><div className="eyebrow">installment</div><div className="mono">{usd(c.contribution)}</div></div>
                 <div><div className="eyebrow">round</div><div className="mono">{c.currentRound + 1} / {c.members.length}</div></div>
+                <div className="col-span-3"><div className="eyebrow">settles from</div><div className="mono text-xs">{chainName(c.chainKey)}</div></div>
               </div>
             </Link>
           )

@@ -13,13 +13,18 @@ echo "== circle + round 0 (everyone pays)"
 pnpm -s demo fund --members 3
 pnpm -s demo create --members 3 --round-blocks 40
 pnpm -s demo contribute
+# The attestor network catches up with the source chain. The steward will not prove a payment whose
+# block is not attested yet, so the mocked 0x0FD3 frontier has to move the way the real one does.
+attest() { cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 \
+  "setAttestedHeight(uint64,uint64)" "$SOURCE_CHAIN_KEY" "$1" >/dev/null; }
+attest "$(cast block-number --rpc-url $SEPOLIA_RPC_URL)"
 pnpm -s worker --once
 pnpm -s demo status
 
 echo "== round 1 (member 2 misses; deadline passes on the source chain)"
 pnpm -s demo contribute --skip 2
 DL=$(cast call --rpc-url $CREDITCOIN_RPC_URL $LEDGER "closeHeight(uint256,uint32)(uint64)" 1 1)   # deadline + 64-block grace
-cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 "setAttestedHeight(uint64,uint64)" 1 "$DL" >/dev/null
+attest "$DL"
 pnpm -s worker --once
 pnpm -s demo status
 

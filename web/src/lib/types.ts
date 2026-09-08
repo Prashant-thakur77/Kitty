@@ -11,6 +11,7 @@ export type Circle = {
   open: boolean
   maxMembers: number
   rotation: number // 0 Fixed, 1 ByScore
+  chainKey: bigint // Attestcoin source chain this circle settles from (1 Sepolia, 3 Ethereum mainnet on CC3 testnet)
 }
 export type Round = { status: number; contributions: number; pot: bigint; recipient: `0x${string}`; payoutQueryId: `0x${string}` }
 export type Contribution = { height: bigint; queryId: `0x${string}`; onTime: boolean }
