@@ -13,7 +13,7 @@ Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integrat
 | | |
 |---|---|
 | **Demo video** | _testnet recording added on submission_ · fallback already in the repo: [`docs/kitty-demo-local.mp4`](docs/kitty-demo-local.mp4) (2:38, narrated, full loop against the local rehearsal world) |
-| **Live dashboard** | https://prashant-thakur77.github.io/Kitty/ — GitHub Pages, auto-deployed from `main` (one-time: repo Settings → Pages → Source: GitHub Actions). `pnpm web:dev` runs it locally |
+| **Live dashboard** | `pnpm web:dev` → http://localhost:5173 (reads the public testnet RPCs; no keys needed). GitHub Pages publishing is wired and opt-in — see [Publishing the dashboard](#publishing-the-dashboard) |
 | **Deck (PDF)** | [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf) — printed straight from the presentation route |
 | **Presentation mode** | `/presentation` on the dashboard — 10 slides, arrow keys, Print → PDF |
 | **Attack lab** | `/lab` — replay, spoofed emitter, wrong chain key, reverted source tx, late payment, each answered by the ledger's decoded custom error |
@@ -224,6 +224,20 @@ pnpm web:dev                   # http://localhost:5173
 
 Faucets: Sepolia ETH — https://www.alchemy.com/faucets/ethereum-sepolia · tCTC — Creditcoin Discord
 `#token-faucet` (`/faucet address:0x…`), https://discord.gg/Gu43zTfmtc.
+
+## Publishing the dashboard
+
+The dashboard is a static SPA that reads public RPCs, so anything that serves files can host it.
+GitHub Pages is wired up and waits on two one-time repository settings (they cannot be set from a
+workflow):
+
+1. **Settings → Pages → Source: GitHub Actions**
+2. **Settings → Actions → General → Workflow permissions: Read and write**
+3. **Settings → Secrets and variables → Actions → Variables → new variable `ENABLE_PAGES` = `true`**
+
+The `pages` workflow then builds `web/` with `VITE_BASE=/Kitty/` and publishes to
+`https://prashant-thakur77.github.io/Kitty/`. Until the variable is set the workflow is skipped, so
+the Actions tab stays green. Any static host works the same way: `cd web && pnpm build`, serve `dist/`.
 
 ## Security model
 
