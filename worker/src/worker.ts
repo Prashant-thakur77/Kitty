@@ -16,6 +16,7 @@ import { buildBatchProof, buildSingleProof } from './proofs.ts';
 import { submitRecordContributions, submitConfirmPayout, revertReason } from './chain.ts';
 import { preflight } from './verifier.ts';
 import { decideBatch, explainBatch, type PendingPayment } from './agent/policy.ts';
+import { record } from './agent/log.ts';
 
 const once = process.argv.includes('--once');
 const { vault, ledger } = contracts();
@@ -108,8 +109,9 @@ async function flushBatches() {
 
   // 2. Decide.
   const decision = decideBatch(candidates, { attestedHeight, sourceHead }, { waitMs: cfg.batchWaitMs, force: once });
-  log(`steward · ${explainBatch(decision)}`);
-  if (!decision.act) return;
+  const summary = explainBatch(decision);
+  log(`steward · ${summary}`);
+  if (!decision.act) { record({ kind: 'wait', summary, evidence: decision.evidence }); return; }
 
   // 3. Prove. One proof normally; the testnet fallback may split by height group.
   try {
@@ -120,11 +122,17 @@ async function flushBatches() {
       const pre = await preflight(proof);
       if (!pre.ok) {
         log(`✗ preflight rejected by 0x0FD2 (${pre.detail}) — not submitting, will retry after the next attestation`);
+        record({ kind: 'skip', summary: `0x0FD2 preflight rejected the batch: ${pre.detail}`, evidence: { ...decision.evidence, preflight: 'rejected' } });
         continue;
       }
       log(`   preflight ok · 0x0FD2.verify says this batch of ${proof.heights.length} would verify`);
-      await submitRecordContributions(ledger, proof);
+      const rc = await submitRecordContributions(ledger, proof);
       for (const h of proof.txHashes) state.recorded[h] = true;
+      record({
+        kind: 'prove', summary,
+        evidence: { ...decision.evidence, preflight: 'passed', queriesInCall: proof.heights.length, fromHeight: Math.min(...proof.heights), toHeight: Math.max(...proof.heights), continuityRoots: proof.continuity.roots.length },
+        txs: [{ chain: 'creditcoin', hash: rc.hash }, ...proof.txHashes.map((h) => ({ chain: 'source' as const, hash: h }))],
+      });
     }
   } catch (e) {
     ccSigner.reset(); // a failed send must not leave a nonce gap
@@ -155,6 +163,12 @@ async function closeRounds() {
       log(`→ KittyLedger.closeRound(${id}) — ${full ? 'everyone paid' : `deadline + grace (block ${closeAt}) attested`}`);
       const rc = await (await ledger.closeRound(id)).wait();
       log(`   ✓ round ${round} closed · cc tx ${rc.hash}`);
+      record({
+        kind: 'close',
+        summary: `closed circle ${id} round ${round} — ${full ? 'every member proven' : `close height ${closeAt} attested`}`,
+        evidence: { circleId: String(id), round, closeHeight: String(closeAt), proven: Number(rd.contributions), members: c.members.length, everyoneProven: full },
+        txs: [{ chain: 'creditcoin', hash: rc.hash }],
+      });
     } catch (e) {
       ccSigner.reset();
       log(`✗ closeRound(${id}) failed: ${revertReason(e, ledger.interface)}`);
@@ -191,6 +205,9 @@ async function payouts() {
           state.paid[key] = payoutTx;
           saveState(state);
           log(`   ✓ paid · sepolia tx ${payoutTx}`);
+          record({ kind: 'payout', summary: `paid circle ${id} round ${r}: ${Number(rd.pot) / 1e6} tUSD to ${rd.recipient}`,
+            evidence: { circleId: String(id), round: r, recipient: rd.recipient, amount_tUSD: Number(rd.pot) / 1e6 },
+            txs: [{ chain: 'source', hash: payoutTx }] });
         } catch (e) {
           sourceSigner.reset();
           log(`✗ payout ${key} failed: ${revertReason(e, vault.interface)}`);
@@ -200,8 +217,13 @@ async function payouts() {
       if (state.confirmed[payoutTx]) continue;
       try {
         const proof = await buildSingleProof(payoutTx);
-        await submitConfirmPayout(ledger, proof);
+        const pre = await preflight(proof);
+        if (!pre.ok) { log(`✗ payout preflight rejected by 0x0FD2 (${pre.detail}) — retrying later`); continue; }
+        const crc = await submitConfirmPayout(ledger, proof);
         state.confirmed[payoutTx] = true;
+        record({ kind: 'confirm', summary: `payout for circle ${id} round ${r} proven back to Creditcoin`,
+          evidence: { circleId: String(id), round: r, sourceHeight: proof.heights[0] },
+          txs: [{ chain: 'creditcoin', hash: crc.hash }, { chain: 'source', hash: payoutTx }] });
       } catch (e) {
         ccSigner.reset();
         log(`✗ confirmPayout ${key} failed: ${revertReason(e, ledger.interface)}`);
