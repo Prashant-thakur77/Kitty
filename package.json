@@ -20,7 +20,8 @@
     "judge": "bash scripts/judge.sh",
     "receipts": "tsx worker/src/receipts.ts",
     "test:agent": "tsx --test worker/test/*.test.ts",
-    "explain": "tsx worker/src/agent/explain-cli.ts"
+    "explain": "tsx worker/src/agent/explain-cli.ts",
+    "scenarios": "bash scripts/scenarios.sh"
   },
   "keywords": [],
   "author": "",

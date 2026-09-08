@@ -177,13 +177,22 @@ or an admin to run the rotation.
 
 `pnpm lab:api` + the dashboard's `/lab` page, or `pnpm scenario <name>`:
 
-| Scenario | Ledger answer |
+| Scenario | Answer |
 |---|---|
 | Replay an already-counted proof | `QueryAlreadyProcessed(queryId)` |
 | Fake vault emits a byte-identical `Contributed` event | `WrongEmitter(got, want)` |
 | Same proof, chain key 3 (Ethereum mainnet on testnet) | `WrongChain(3, 1)` |
 | Included but reverted source transaction | `SourceTxFailed()` |
 | Payment after the deadline block | Accepted, `onTime = false`, score −20 |
+| **Steal the steward's key** and try to move a pot, trust a vault, close a round early, or bind a circle to your own vault | `NotOperator()`, `OwnableUnauthorizedAccount(…)`, `RoundStillOpenOnSource(…)`, `VaultNotTrusted(…)` — the steward's key is worth nothing |
+| **Fire the agent**: a wallet with no role, no membership and no history submits the round's proof | Accepted. The ledger checks the proof, not the caller |
+| **Poison the reasoning**: mix one cited fact with three invented figures | All three stripped before display; only the cited sentence survives |
+
+Run every one of them against the local world in a single command:
+
+```bash
+pnpm scenarios        # 8 scenarios, brings up two anvils, exits with the tally
+```
 
 ## Kitty Score
 
@@ -316,7 +325,8 @@ transaction's own `from` must be the member (a safe false negative).
 3. Output is portable credit data, not just a pot: a score any Creditcoin lender can read — and one already does (KittyCreditLine).
 4. Payouts are proven back; the ledger never displays money it hasn't seen move.
 5. Five live attack scenarios, each answered with a decoded custom error.
-6. Members can prove rounds themselves from the browser; the worker is a convenience, not a trust assumption.
+6. Members can prove rounds themselves from the browser, and the attack lab demonstrates it: a wallet
+   with no relationship to Kitty carries a round while the agent is switched off.
 8. Rehearsable offline: two anvils, mocked precompiles, real SDK encoding.
 7. On Creditcoin's own thesis: credit history for people banks cannot see.
 

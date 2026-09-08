@@ -85,3 +85,17 @@ test('an empty log never reaches the model', async () => {
   const r = await explain('what did you do?', 'nothing yet', { entries: [] });
   assert.equal(r.source, 'deterministic');
 });
+
+test('a fake address is not rescued by the numeric fallback (regression: 0x… stripped to "0")', () => {
+  // The decision log almost always contains a plain "0" (round 0, missed 0). Stripping non-digits
+  // from a hex string must not let that stand in for the hash.
+  const withZero = new Set([...allowed, '0']);
+  const r = check('The payout landed in [[0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef]].', withZero);
+  assert.equal(r.text, '');
+  assert.equal(r.stripped[0].reason, 'unverifiable citation');
+});
+
+test('a short hex citation is never accepted as a prefix', () => {
+  const r = check('See [[0xe3ef]].', allowed);
+  assert.equal(r.text, '');
+});

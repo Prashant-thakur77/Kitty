@@ -34,12 +34,16 @@ function matches(value: string, allowed: Set<string>): boolean {
   const v = norm(value);
   if (!v) return false;
   if (allowed.has(v)) return true;
-  if (v.startsWith('0x') && v.length >= 10) {
+  // Hex is matched only as a hash prefix, and never falls through to the numeric rule below:
+  // stripping non-digits from 0xdeadbeef… leaves "0", which almost any log contains.
+  if (/^0x[0-9a-f]*$/.test(v)) {
+    if (v.length < 10) return false;
     for (const a of allowed) if (a.startsWith(v)) return true;
+    return false;
   }
-  // "11,656,295 tUSD" style: the number carries a unit the log stores without one
+  // "11,656,295 tUSD" style: the number carries a unit the log stores without one.
   const bare = v.replace(/[^\d.]/g, '');
-  return bare.length > 0 && allowed.has(bare);
+  return bare.length > 0 && bare === v.replace(/[a-z%$ ]/g, '') && allowed.has(bare);
 }
 
 /** Split on sentence ends without eating decimals or hex. */

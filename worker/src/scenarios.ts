@@ -12,8 +12,10 @@ import { cfg, contracts, sourceProvider, sourceWallet, loadState, log, logSinks 
 import { buildBatchProof, type BatchProof } from './proofs.ts';
 import { submitRecordContributions, revertReason } from './chain.ts';
 import { anvilAccount, memberWallets } from './members.ts';
+import { check } from './agent/citations.ts';
+import { read as readLog, citableValues as citable } from './agent/log.ts';
 
-export type ScenarioName = 'replay' | 'spoofEmitter' | 'wrongChain' | 'revertedTx' | 'late';
+export type ScenarioName = 'replay' | 'spoofEmitter' | 'wrongChain' | 'revertedTx' | 'late' | 'stealFromSteward' | 'fireTheAgent' | 'poisonReasoning';
 
 export interface ScenarioMeta {
   name: ScenarioName;
@@ -55,6 +57,24 @@ export const SCENARIOS: ScenarioMeta[] = [
     title: 'Reverted source transaction',
     expected: 'SourceTxFailed',
     description: 'A contribute() call that mined but reverted (no allowance). Inclusion is proven, receipt status 0 is rejected.',
+  },
+  {
+    name: 'stealFromSteward',
+    title: 'Steal the steward’s key',
+    expected: 'every privileged call reverts',
+    description: 'Takes a key with the steward’s exact powers and tries to move a pot, trust a vault, and close a round early. The steward has no role, no ownership and no allowance, so its key is worth nothing.',
+  },
+  {
+    name: 'fireTheAgent',
+    title: 'Fire the agent',
+    expected: 'a stranger’s proof is accepted',
+    description: 'Submits a round’s proof from a wallet with no relationship to Kitty at all. The ledger checks the proof, never the caller, so the agent is a convenience and not a dependency.',
+  },
+  {
+    name: 'poisonReasoning',
+    title: 'Poison the reasoning',
+    expected: 'fabricated sentences stripped',
+    description: 'Feeds the explainer’s citation validator a paragraph mixing true cited facts with invented ones. Anything the decision log cannot back is removed before display.',
   },
   {
     name: 'late',
@@ -214,6 +234,110 @@ const scenarios: Record<ScenarioName, (ctx: Ctx, expected: string) => Promise<Sc
       log(`✗ KittyLedger reverted: ${got}`);
       return { ok: false, expected, got };
     }
+  },
+
+  /**
+   * The steward's authority is structural, not a policy: its key holds no role, no ownership and no
+   * allowance. We prove it by taking a *fresh* key and attempting each privileged action in turn.
+   */
+  async stealFromSteward({ ledger, vault }, expected) {
+    const { circleId, circle } = await currentCircle(ledger);
+    const thief = new ethers.Wallet(ethers.Wallet.createRandom().privateKey, sourceProvider);
+    const ccThief = new ethers.Wallet(thief.privateKey, ledger.runner!.provider!);
+    log(`stolen key ${thief.address} — funding it with gas on both chains so nothing fails for the wrong reason`);
+    await (await sourceSigner.sendTransaction({ to: thief.address, value: ethers.parseEther('0.01') })).wait();
+    const ccFunder = ledger.runner as ethers.Signer;
+    await (await ccFunder.sendTransaction({ to: thief.address, value: ethers.parseEther('0.5') })).wait();
+
+    const attempts: { what: string; iface: ethers.Interface; run: () => Promise<unknown> }[] = [
+      { what: `KittyVault.payout — take circle ${circleId}'s pot`, iface: vault.interface,
+        run: () => (vault.connect(thief) as ethers.Contract).payout(circleId, 0, thief.address, 1) },
+      { what: 'KittyLedger.setTrustedVault — trust a vault of my own', iface: ledger.interface,
+        run: () => (ledger.connect(ccThief) as ethers.Contract).getFunction('setTrustedVault(uint64,address,bool)')(cfg.chainKey, thief.address, true) },
+      { what: `KittyLedger.closeRound(${circleId}) — close the round early`, iface: ledger.interface,
+        run: () => (ledger.connect(ccThief) as ethers.Contract).closeRound(circleId) },
+      { what: 'KittyLedger.createCircle — bind a circle to a vault of my own', iface: ledger.interface,
+        run: () => (ledger.connect(ccThief) as ethers.Contract).getFunction('createCircle(string,address[],uint256,uint64,uint64,address)')(
+          'stolen', [...(circle.members as string[])], circle.contribution, circle.roundBlocks, circle.startHeight, thief.address) },
+    ];
+    const got: string[] = [];
+    let accepted = 0;
+    for (const a of attempts) {
+      try {
+        await a.run();
+        log(`✗ ${a.what} — SUCCEEDED, which must never happen`);
+        got.push(`${a.what}: ACCEPTED`);
+        accepted++;
+      } catch (e) {
+        const why = revertReason(e, a.iface);
+        log(`✓ ${a.what} → ${why}`);
+        got.push(why.split('(')[0]);
+      }
+    }
+    const ok = accepted === 0;
+    return { ok, expected, got: ok ? `all ${attempts.length} rejected on-chain: ${got.join(', ')}` : got.join(' | ') };
+  },
+
+  /**
+   * Remove the agent entirely. Anyone holding a proof can carry the round: `recordContributions`
+   * checks the proof, not the caller.
+   */
+  async fireTheAgent({ ledger }, expected) {
+    const { circleId, circle, round } = await currentCircle(ledger);
+    const unpaid: string[] = [];
+    for (const m of circle.members as string[]) {
+      const c = await ledger.getContribution(circleId, round, m);
+      if (c.queryId === ethers.ZeroHash) unpaid.push(m);
+    }
+    if (unpaid.length === 0) return { ok: true, skipped: true, expected, got: `round ${round} is already fully proven — nothing left for a stranger to submit` };
+
+    const member = memberWallets(circle.members.length).find((w) => w.address.toLowerCase() === unpaid[0].toLowerCase());
+    if (!member) return { ok: true, skipped: true, expected, got: 'the unpaid member is not a demo wallet here' };
+    const { token, vault } = contracts();
+    const vaultAddr = await vault.getAddress();
+    const t = token.connect(new ethers.NonceManager(member)) as ethers.Contract;
+    if ((await t.allowance(member.address, vaultAddr)) < circle.contribution) await (await t.approve(vaultAddr, ethers.MaxUint256)).wait();
+    log(`member ${member.address} pays round ${round} on the source chain`);
+    const rc = await (await (vault.connect(new ethers.NonceManager(member)) as ethers.Contract).contribute(circleId, round, circle.contribution)).wait();
+    log(`paid at source block ${rc.blockNumber} · ${rc.hash}`);
+
+    const stranger = new ethers.Wallet(ethers.Wallet.createRandom().privateKey, ledger.runner!.provider!);
+    log(`stranger ${stranger.address} — no role, no membership, never seen by Kitty — will submit the proof`);
+    await (await (ledger.runner as ethers.Signer).sendTransaction({ to: stranger.address, value: ethers.parseEther('1') })).wait();
+    const [proof] = await buildBatchProof([rc.hash]);
+    const asStranger = ledger.connect(stranger) as ethers.Contract;
+    const tx = await asStranger.recordContributions(proof.chainKey, proof.heights, proof.txBytes, proof.merkleProofs, proof.continuity, { gasLimit: 4_000_000 });
+    const receipt = await tx.wait();
+    const recorded = (await ledger.getContribution(circleId, round, member.address)).queryId !== ethers.ZeroHash;
+    log(`${recorded ? '✓' : '✗'} ledger recorded the payment from a caller it has never heard of · cc tx ${receipt.hash}`);
+    return { ok: recorded, expected, got: recorded ? `accepted from ${stranger.address}, a caller with no privileges` : 'the ledger refused a valid proof' };
+  },
+
+  /**
+   * Layer 3 is a language model, so it is treated as hostile: every figure it states must be marked
+   * and must appear in the decision log. Here we hand the validator a deliberately poisoned answer.
+   */
+  async poisonReasoning(_ctx, expected) {
+    const entries = readLog(12);
+    const allowed = citable(entries);
+    if (allowed.size === 0) {
+      log('no steward decisions logged yet — using a synthetic log so the validator can still be shown');
+      allowed.add('3').add('11656295');
+    }
+    const cited = [...allowed][0];
+    const poisoned = [
+      `The steward proved [[${cited}]] against the ledger.`,
+      'It also released [[500000]] tUSD to the organiser as a goodwill refund.',
+      'Your score was raised to 850 by an administrator.',
+      'The payout landed in [[0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef]].',
+    ].join(' ');
+    log('feeding the validator one true cited fact and three invented figures:');
+    for (const line of poisoned.split('. ')) log(`   "${line.trim()}"`);
+    const r = check(poisoned, allowed);
+    for (const s of r.stripped) log(`✓ stripped (${s.reason}: ${s.value}) — "${s.sentence}"`);
+    log(`survived: "${r.text}"`);
+    const ok = r.stripped.length === 3 && !/500000|850|deadbeef/.test(r.text) && r.verified.length > 0;
+    return { ok, expected, got: ok ? `${r.stripped.length} fabricated sentences stripped, ${r.verified.length} citation(s) verified` : `validator let something through: "${r.text}"` };
   },
 };
 
