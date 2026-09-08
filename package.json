@@ -16,7 +16,8 @@
     "lab:api": "tsx worker/src/api.ts",
     "scenario": "tsx worker/src/scenarios.ts",
     "txlog": "tsx worker/src/txlog.ts",
-    "verify:live": "tsx worker/src/verify-live.ts"
+    "verify:live": "tsx worker/src/verify-live.ts",
+    "judge": "bash scripts/judge.sh"
   },
   "keywords": [],
   "author": "",

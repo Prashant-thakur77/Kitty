@@ -23,6 +23,7 @@ Built solo for **BUIDL CTC 2026 Fall** · Track: **DeFi** · Attestcoin integrat
 | **KittyLedger (Creditcoin CC3 Testnet, 102031)** | _deploys with `scripts/deploy.sh`; see [`deployments.json`](deployments.json)_ |
 | **Deployer / operator** | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
 | **Testnet transaction log** | [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md) |
+| **One-command check** | `pnpm judge` — contract tests, the local two-anvil rehearsal, then a real Sepolia proof verified by the live precompile |
 | **Verify the pipeline yourself** | `pnpm verify:live <anySepoliaTxHash>` — fetches the Proof Builder proof and asks the **live** 0x0FD2 precompile on CC3 Testnet to verify it (view call, no funds), then shows tampered bytes and a wrong chain key being rejected |
 
 ![Circle page — urgency band, attested-height progress, members, rotation, browser proving, proof feed](docs/assets/circle.png)
