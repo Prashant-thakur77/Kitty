@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>terminal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+  html,body{margin:0;height:100%;background:#0B100E;color:#E8F0EB;font-family:"Source Sans 3",system-ui,sans-serif;overflow:hidden}
+  .stage{height:100%;display:grid;place-items:center;padding:56px;box-sizing:border-box}
+  .win{width:100%;max-width:1480px;height:100%;background:#0F1713;border:1px solid #2E3F37;border-radius:18px;box-shadow:0 40px 120px -40px rgba(0,0,0,.8),0 0 0 1px rgba(79,209,163,.08);display:flex;flex-direction:column;overflow:hidden}
+  .bar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #22302A;background:#121B16}
+  .bar i{width:12px;height:12px;border-radius:99px;background:#2E3F37}
+  .bar i:nth-child(1){background:#F08A97}.bar i:nth-child(2){background:#E2B15C}.bar i:nth-child(3){background:#4FD1A3}
+  .bar span{margin-left:12px;font-family:"JetBrains Mono",monospace;font-size:14px;color:#8E9F96;letter-spacing:.04em}
+  .cmd{font-family:"JetBrains Mono",monospace;font-size:24px;padding:22px 26px 6px;color:#E8F0EB}
+  .cmd b{color:#4FD1A3;font-weight:600}
+  pre{margin:0;padding:8px 26px 26px;font-family:"JetBrains Mono",monospace;font-size:21px;line-height:1.6;color:#C7D3CC;white-space:pre-wrap;word-break:break-word;overflow:hidden;flex:1}
+  .l{opacity:0;animation:in .25s ease-out both}
+  .ok{color:#4FD1A3}.warn{color:#E2B15C}.bad{color:#F08A97}.dim{color:#5E6E66}.hi{color:#E8F0EB;font-weight:600}.sky{color:#7DB6E8}
+  .cur{display:inline-block;width:10px;height:20px;background:#4FD1A3;vertical-align:-3px;animation:blink 1s steps(1) infinite;margin-left:4px}
+  @keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @keyframes blink{50%{opacity:0}}
+</style></head>
+<body>
+<div class="stage"><div class="win">
+  <div class="bar"><i></i><i></i><i></i><span id="title">kitty — steward</span></div>
+  <div class="cmd" id="cmd"></div>
+  <pre id="out"></pre>
+</div></div>
+<script>
+  const out = document.getElementById('out'), cmd = document.getElementById('cmd')
+  const q = new URLSearchParams(location.search)
+  if (q.get('title')) document.getElementById('title').textContent = q.get('title')
+  const esc = (s) => s.replace(/[&<>]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))
+  const paint = (s) => {
+    let h = esc(s)
+    h = h.replace(/^(\d\d:\d\d:\d\d)/, '<span class="dim">$1</span>')
+    if (/✓|PASS|verified|proven|accepted|closed|paid/.test(s)) h = `<span class="ok">${h}</span>`
+    else if (/✗|FAIL|reverted|rejected|stripped|refused/.test(s)) h = `<span class="bad">${h}</span>`
+    else if (/waiting|steward ·|preflight|attest/.test(s)) h = `<span class="warn">${h}</span>`
+    else if (/0x[0-9a-fA-F]{6,}/.test(s)) h = h.replace(/(0x[0-9a-fA-F]{6,})/g, '<span class="sky">$1</span>')
+    return h
+  }
+  window.setCmd = (s) => { cmd.innerHTML = `<b>$</b> ${esc(s)}<span class="cur"></span>` }
+  window.pushLine = (s) => { const d = document.createElement('div'); d.className = 'l'; d.innerHTML = paint(s) || '&nbsp;'; out.appendChild(d); while (out.scrollHeight > out.clientHeight && out.firstChild) out.removeChild(out.firstChild) }
+  window.done = () => { const c = cmd.querySelector('.cur'); if (c) c.remove() }
+</script>
+</body></html>
