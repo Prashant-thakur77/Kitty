@@ -94,7 +94,7 @@ h1, h2, h3, .display { font-family: var(--display); font-weight: 700; letter-spa
 .btn .arrow { transition: transform .25s var(--ease-out); }
 .btn:hover .arrow { transform: translateX(3px); }
 
-.navlink { padding: .45rem .8rem; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 14px; text-decoration: none; transition: color .2s, background .2s; }
+.navlink { white-space: nowrap; padding: .45rem .8rem; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 14px; text-decoration: none; transition: color .2s, background .2s; }
 .navlink:hover { color: var(--ink); background: rgba(255, 255, 255, .05); text-decoration: none; }
 .navlink.active { color: var(--mint); background: var(--mint-soft); }
 .nav { transition: background .3s, border-color .3s, backdrop-filter .3s; border-bottom: 1px solid transparent; }
