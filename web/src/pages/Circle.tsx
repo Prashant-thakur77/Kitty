@@ -107,7 +107,7 @@ export function CirclePage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="eyebrow">ROUND {circle.currentRound + 1} OF {n} · CONTRIBUTION</div>
-            <div className="display mt-1 text-4xl leading-none md:text-6xl">{headline}</div>
+            <div className="headline mt-2">{headline}</div>
             <div className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>{sub}</div>
           </div>
           <div className="flex flex-wrap gap-2">

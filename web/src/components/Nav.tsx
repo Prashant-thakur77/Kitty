@@ -2,6 +2,7 @@ import { NavLink, Link } from 'react-router-dom'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Wallet, LogOut } from 'lucide-react'
 import { useAttestation } from '../hooks'
+import { useScrolled } from './motion'
 import { short, num } from '../lib/format'
 
 export function Nav() {
@@ -9,8 +10,9 @@ export function Nav() {
   const { connect, connectors, isPending } = useConnect()
   const { disconnect } = useDisconnect()
   const { head, attested, lag } = useAttestation()
+  const scrolled = useScrolled()
   return (
-    <header className="noprint sticky top-0 z-30 border-b" style={{ background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(10px)', borderColor: 'var(--line)' }}>
+    <header className="nav noprint sticky top-0 z-30" data-scrolled={scrolled}>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 no-underline" style={{ color: 'var(--ink)' }}>
           <img src={`${import.meta.env.BASE_URL}kitty.svg`} alt="" width={28} height={28} />

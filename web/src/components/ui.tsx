@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
+import { CountUp } from './motion'
 
 export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: string; tone?: 'mint' | 'amber' | 'rose' | 'sky' }) {
   const color = tone ? `var(--${tone})` : 'var(--ink)'
   return (
     <div className="panel-2 px-4 py-3">
       <div className="eyebrow">{label}</div>
-      <div className="mono text-2xl font-semibold" style={{ color }}>{value}</div>
+      <div className="mono text-2xl font-semibold" style={{ color }}>{typeof value === 'number' ? <CountUp value={value} /> : value}</div>
       {sub && <div className="text-xs" style={{ color: 'var(--muted)' }}>{sub}</div>}
     </div>
   )
@@ -15,22 +16,25 @@ export function Tag({ tone, children, title }: { tone: 'mint' | 'amber' | 'rose'
   return <span className={`pill ${tone === 'muted' ? '' : tone}`} title={title}>{children}</span>
 }
 
-/** 48-block progress bar (Saving Circles pattern, re-implemented). Fills by source-chain blocks elapsed in the round. */
+/** 48-tick scale of the round in source-chain blocks: mint = attested, amber = mined but not yet attested, the tall
+ *  white tick is the source head, the rose tick is the deadline. Hover lifts the scale (Rauno-style index). */
 export function BlockProgress({ start, deadline, now, attested }: { start: bigint; deadline: bigint; now?: bigint; attested?: bigint }) {
   const total = 48
   const span = Number(deadline - start) || 1
-  const elapsed = now === undefined ? 0 : Math.max(0, Math.min(span, Number(now - start)))
-  const att = attested === undefined ? 0 : Math.max(0, Math.min(span, Number(attested - start)))
-  const filled = Math.round((elapsed / span) * total)
-  const attFilled = Math.round((att / span) * total)
+  const pos = (h?: bigint) => (h === undefined ? -1 : Math.round((Math.max(0, Math.min(span, Number(h - start))) / span) * (total - 1)))
+  const head = pos(now)
+  const att = pos(attested)
   return (
     <div>
-      <div className="blocks" aria-hidden>
-        {Array.from({ length: total }, (_, i) => <i key={i} className={i < attFilled ? 'on' : i < filled ? 'late' : ''} />)}
+      <div className="ticks" aria-hidden>
+        {Array.from({ length: total }, (_, i) => {
+          const cls = i === total - 1 ? 'deadline' : i === head ? 'head' : i <= att ? 'on' : i <= head ? 'late' : ''
+          return <i key={i} className={cls} />
+        })}
       </div>
-      <div className="mt-1 flex justify-between text-[11px] mono" style={{ color: 'var(--muted)' }}>
-        <span>round opens · block {String(start)}</span>
-        <span><i className="dot" style={{ background: 'var(--mint)' }} /> attested&nbsp;&nbsp;<i className="dot" style={{ background: 'var(--amber)' }} /> mined, not yet attested</span>
+      <div className="mono mt-2 flex flex-wrap justify-between gap-2 text-[11px]" style={{ color: 'var(--muted)' }}>
+        <span>opens · block {String(start)}</span>
+        <span><i className="dot" style={{ background: 'var(--mint)' }} /> attested&nbsp;&nbsp;<i className="dot" style={{ background: 'var(--amber)' }} /> mined, not yet attested&nbsp;&nbsp;<i className="dot" style={{ background: 'var(--ink)' }} /> head&nbsp;&nbsp;<i className="dot" style={{ background: 'var(--rose)' }} /> deadline</span>
         <span>deadline · block {String(deadline)}</span>
       </div>
     </div>
