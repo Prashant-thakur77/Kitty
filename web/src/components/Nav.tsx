@@ -27,7 +27,7 @@ export function Nav() {
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2 no-underline" style={{ color: 'var(--ink)' }}>
             <img src={`${import.meta.env.BASE_URL}kitty.svg`} alt="" width={28} height={28} />
-            <span className="display text-xl">Kitty</span>
+            <span className="display text-2xl" style={{ letterSpacing: "-.01em" }}>Kitty</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex md:ml-4">{links}</nav>
           <div className="ml-auto flex items-center gap-3">

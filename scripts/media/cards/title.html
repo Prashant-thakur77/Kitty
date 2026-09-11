@@ -1,25 +1,25 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>card</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,500&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap">
 <style>
-  html,body{margin:0;height:100%;background:#0B100E;color:#E8F0EB;font-family:"Source Sans 3",system-ui,sans-serif;overflow:hidden}
+  html,body{margin:0;height:100%;background:#0B100E;color:#E8F0EB;font-family:Geist,system-ui,sans-serif;overflow:hidden}
   .stage{position:relative;height:100%;display:grid;place-items:center;isolation:isolate}
   .streak{position:absolute;inset:-20% -10%;z-index:-1;opacity:.95;
     background:radial-gradient(55% 40% at 72% 22%,rgba(79,209,163,.22),transparent 62%),radial-gradient(45% 35% at 20% 90%,rgba(125,182,232,.12),transparent 60%),linear-gradient(115deg,transparent 40%,rgba(232,240,235,.06) 49%,transparent 58%);
     animation:drift 16s ease-in-out infinite alternate}
   .grain{position:absolute;inset:0;z-index:-1;opacity:.05;mix-blend-mode:screen;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
   .wrap{max-width:1180px;padding:0 72px;text-align:left}
-  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:#8E9F96;display:flex;align-items:center;gap:12px}
+  .eyebrow{font-family:"Geist Mono",monospace;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:#8E9F96;display:flex;align-items:center;gap:12px}
   .eyebrow i{width:8px;height:8px;border-radius:99px;background:#4FD1A3;box-shadow:0 0 0 0 rgba(79,209,163,.4);animation:pulse 2s infinite}
-  h1{font-family:Fraunces,serif;font-weight:500;font-variation-settings:"opsz" 144;font-size:104px;line-height:.98;letter-spacing:-.03em;margin:28px 0 0;text-wrap:balance}
+  h1{font-family:"Instrument Serif",serif;font-weight:400;font-size:104px;line-height:.98;letter-spacing:-.03em;margin:28px 0 0;text-wrap:balance}
   h1 em{font-style:italic;color:#4FD1A3}
   .sub{margin-top:30px;font-size:26px;line-height:1.45;color:#8E9F96;max-width:34ch}
-  .mono{font-family:"JetBrains Mono",monospace}
+  .mono{font-family:"Geist Mono",monospace}
   .logo{display:flex;align-items:center;gap:14px;margin-bottom:40px}
-  .logo span{font-family:Fraunces,serif;font-weight:700;font-size:34px}
+  .logo span{font-family:"Instrument Serif",serif;font-weight:400;font-size:34px}
   .rise{animation:rise .9s cubic-bezier(.22,1,.36,1) both}
   .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.6s}.d4{animation-delay:.85s}
-  .foot{position:absolute;left:72px;right:72px;bottom:48px;display:flex;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:14px;color:#5E6E66;letter-spacing:.06em}
+  .foot{position:absolute;left:72px;right:72px;bottom:48px;display:flex;justify-content:space-between;font-family:"Geist Mono",monospace;font-size:14px;color:#5E6E66;letter-spacing:.06em}
   .ticks{display:flex;gap:4px;height:22px;align-items:flex-end;margin-top:44px;width:520px}
   .ticks i{flex:1;height:8px;border-radius:2px;background:#1E2B25;animation:tick .5s both}
   .ticks i.on{background:#4FD1A3;height:16px}
