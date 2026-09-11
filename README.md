@@ -46,7 +46,7 @@
 - [Security model](#security-model)
 - [Design notes](#design-notes)
 - [Roadmap](#roadmap)
-- [Acknowledgements and license](#acknowledgements-and-license)
+- [License](#license)
 
 ## Overview
 
@@ -326,8 +326,6 @@ Known limits, stated plainly: the vault operator *sends* payouts, which Attestco
 
 Score-gated circle sizes · seat bidding for early payout · loan defaults feeding the score · Attestcoin writability for payouts once audited · Ethereum mainnet chain key on CC3 mainnet · pot cover through proven-event insurance.
 
-## Acknowledgements and license
+## License
 
-Contract patterns adapted from [gluwa/attestcoin-protocol-examples](https://github.com/gluwa/attestcoin-protocol-examples) and [BreadchainCoop/saving-circles](https://github.com/BreadchainCoop/saving-circles). Dashboard patterns adapted from [SentinelCRE](https://github.com/ProjectWaja/SentinelCRE). All three are MIT. Kitty is released under the [MIT License](LICENSE).
-
-Built by Prashant for BUIDL CTC 2026 Fall, with the Attestcoin Protocol at its core.
+Released under the [MIT License](LICENSE). Built by Prashant for BUIDL CTC 2026 Fall, with the Attestcoin Protocol at its core.
