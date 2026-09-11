@@ -47,7 +47,7 @@ Sepolia proof and a real 3-tx batch proof both returned `true` from the live 0x0
 while tampered bytes and a wrong chain key reverted (`pnpm verify:live`). Integration doc:
 `docs/ATTESTCOIN_INTEGRATION.md`; every file touching Attestcoin is tabled in the README.
 
-## Demo video script (2:30)
+## Demo video script (recorded: 5:23)
 
 **0:00–0:20 — Problem.** "This is Amara's savings circle in Lagos. Ten friends, 100 dollars a
 month, one of them takes the pot each month. It works until the treasurer runs, or a member stops
@@ -94,8 +94,9 @@ quick start (tests, local e2e, testnet deploy, worker, dashboard) · Attestcoin 
 
 ## Form fields (DoraHacks)
 - Sector: DeFi
-- GitHub: `https://github.com/<you>/kitty` (push this repo)
-- Deck PDF / video: upload to Drive/YouTube, paste links.
+- GitHub: https://github.com/Prashant-thakur77/Kitty
+- Deck PDF: https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/Kitty-deck.pdf
+- Demo video: https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4 (5:23). Upload the same file to YouTube as Unlisted and paste that link too; the chapter list is in README.md under Demo.
 - Team: 1 member — Prashant (name, email, country, bio, role "solo builder").
 
 ## Narration text for TTS (feed to voiceover.py, one paragraph per clip)
@@ -110,15 +111,10 @@ quick start (tests, local e2e, testnet deploy, worker, dashboard) · Attestcoin 
 8. Try to cheat it. Replay a proof: rejected, query already processed. A fake vault emitting a perfect event: rejected, wrong emitter. Same proof on another chain key: rejected. A reverted transaction with a valid proof: rejected, the precompile proves inclusion, not success.
 9. Every number in this score is a proven transaction or an attested deadline. That is a credit history a Creditcoin lender can underwrite against, which is the whole point of Creditcoin. Kitty. Savings circles where every payment is proven, not promised.
 
-## Backup demo video (already recorded)
+## Demo video (recorded)
 
-`docs/assets/` does not carry the file (size); the local rehearsal recording lives at
-`kitty-demo-local.mp4` (2:38, 1280×720, narrated). It walks the whole loop against the two-anvil
-world: landing → circle → members pay on the source chain → worker fetches ONE batch proof →
-`0x0FD2 verified … in ONE call` → round closes → payout proven back → a member misses and drops to
-tier D → attack lab rejects a replay and a spoofed emitter → score and credit line.
-
-Narration was generated locally with the Chatterbox TTS pipeline (`chatterbox-env`), one clip per
-segment; the muxing command is in the repo history. Re-record against the testnet once the
-Creditcoin side is deployed, using `docs/DEMO_RUNBOOK.md`; keep this file as the fallback if the
-attestation lag is unlucky on the day.
+The recorded demo is the v2-submission release asset (5:23, 1920×1080, narrated with the local
+Chatterbox pipeline, captions burned in). It was recorded live in Chromium against the two-anvil
+world with every on-chain action executed during the take; the pipeline that produces it is
+documented in `scripts/media/README.md` and can be re-run against the testnet once the Creditcoin
+side is deployed.

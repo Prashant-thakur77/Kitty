@@ -68,7 +68,9 @@ Everything a member does is a plain deposit on the chain where they already hold
 
 ## Demo
 
-A five-minute narrated walkthrough is at [`docs/kitty-demo.mp4`](docs/kitty-demo.mp4). It is recorded live in Chromium against a local two-chain world, with every on-chain action executed during the take.
+A five-minute narrated walkthrough (5:23): **[download the mp4](https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4)** from the [v2-submission release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission). It is recorded live in Chromium against a local two-chain world, with every on-chain action executed during the take.
+
+Chapters: 0:00 Hook · 0:08 Problem · 0:36 Solution · 1:02 A live circle on Creditcoin · 1:22 Members pay on Sepolia · 1:40 One batch proof, free preflight, 0x0FD2 · 2:09 Round closes early, rotation · 2:33 Payout proven back · 2:46 A missed payment, attested deadline + 64-block grace · 3:16 The steward's decision log · 3:38 Attack lab: replay, spoofed emitter · 3:58 Steal the steward's key, fire the agent · 4:23 What a lender sees · 4:41 Attestcoin depth · 5:08 Close.
 
 <p align="center">
   <img src="docs/assets/demo-prove.gif" alt="The steward proves a round in one batch call" width="49%">
@@ -77,8 +79,9 @@ A five-minute narrated walkthrough is at [`docs/kitty-demo.mp4`](docs/kitty-demo
 
 | Surface | Link |
 |---|---|
+| Demo video | https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4 |
 | Live dashboard | https://prashant-thakur77.github.io/Kitty/ (GitHub Pages, from `main`) |
-| Presentation mode | `/presentation` on the dashboard, ten slides, print to PDF; a copy is at [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf) |
+| Deck | [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf), also on the [release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission); `/presentation` on the dashboard is the live version |
 | Attack lab | `/lab`, eight live scenarios |
 | Source | https://github.com/Prashant-thakur77/Kitty |
 
@@ -224,7 +227,7 @@ The score is used, not just displayed. `KittyCreditLine` underwrites purely from
 
 ## Quick start
 
-Requirements: Foundry, Node 22 with pnpm, and Docker is not needed. Everything below runs offline against two local anvils with the precompiles mocked at their real addresses.
+Requirements: Foundry, Node 22 with pnpm, and Docker is not needed. The first four commands run offline against two local anvils with the precompiles mocked at their real addresses; `pnpm judge` runs them all and then reaches the live CC3 Testnet precompile (internet, no .env needed).
 
 ```bash
 git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty
@@ -234,7 +237,7 @@ forge test              # 100 tests: ledger, vault, invites, rotation, viewer, c
 pnpm test:agent         # 20 tests: batch policy and citation validator
 pnpm scenarios          # 8 attack scenarios end to end
 pnpm e2e:local          # two full rounds, a missed payment, a payout proven back, a replay rejected
-pnpm judge              # all of the above, plus a live-precompile check, in one command
+pnpm judge              # forge + agent tests + scenarios + e2e, then a real proof checked by the live 0x0FD2 (~5 min)
 ```
 
 To explore the dashboard against a populated local world:
@@ -242,7 +245,7 @@ To explore the dashboard against a populated local world:
 ```bash
 WORLD_ROUND1=0 scripts/local-world.sh     # two anvils, contracts, one proven round; stays up
 pnpm --dir web dev                        # http://localhost:5173
-pnpm lab:api                              # powers /lab
+KITTY_ENV_FILE=worker/.env.world pnpm lab:api   # powers /lab against the world above (run one local world at a time)
 ```
 
 Testnet:
@@ -291,7 +294,7 @@ worker/
   src/verify-live.ts          real proofs against the live precompile
 web/                          Vite + React + wagmi dashboard
 scripts/                      deploy.sh · local-setup.sh · local-world.sh · local-e2e.sh · scenarios.sh · media/
-docs/                         integration write-up, plans, submission material, testnet log, deck, demo video
+docs/                         integration write-up, plans, submission material, testnet log, deck (the demo video is a release asset)
 ```
 
 ## Security model
