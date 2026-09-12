@@ -45,9 +45,11 @@ const slides: ReactNode[] = [
     <p className="mt-4">No API key: the deterministic sentence, identical behaviour.</p></Slide>,
   <Slide key={8} eyebrow="Kitty Score → credit" title="The score is used, not just displayed">
     <ul className="list-disc pl-5"><Li>500 base · +15 on time · −20 late · −120 missed · 300–850.</Li><Li>KittyCreditLine on Creditcoin underwrites from the score alone: tier A borrows 100% of proven volume, B 50%, C 20%, D nothing.</Li><Li>A soulbound Kitty Score badge renders live from the ledger, so a lender can read it on any explorer.</Li><Li>Every input is a proven transaction or an attested deadline. This is the data Creditcoin was built to carry.</Li></ul></Slide>,
-  <Slide key={9} eyebrow="Roadmap · CEIP" title="From circles to credit lines">
+  <Slide key={9} eyebrow="Live on testnet" title="The first circle has already settled">
+    <ul className="list-disc pl-5"><Li>KittyLedger, KittyViewer, KittyUSD, KittyCreditLine and KittyBadge deployed to Creditcoin CC3 Testnet on 12 September 2026 (KittyLedger <span className="mono">0xc6fe…c2dE</span>); the Sepolia vault <span className="mono">0x1172…284E</span> is trusted on the ledger.</Li><Li>Delhi Chit Circle, three members, 100 tUSD a round, rotation by score: three Sepolia payments, two batch proofs verified by the live 0x0FD2, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin, all inside twenty minutes.</Li><Li>Attack scenarios rerun against the real precompile: the forged chain key is rejected by 0x0FD2 itself before the ledger's own check can fire.</Li><Li>Every transaction is linked in docs/TESTNET_LOG.md; the hosted dashboard, steward log and attack lab read the same chain.</Li></ul></Slide>,
+  <Slide key={10} eyebrow="Roadmap · CEIP" title="From circles to credit lines">
     <ul className="list-disc pl-5"><Li>Score-gated circle sizes and seat bidding.</Li><Li>Lender integrations on Creditcoin.</Li><Li>Attestcoin writability for payouts once audited; Ethereum mainnet chainKey on CC3 mainnet.</Li><Li>Pot cover through proven-event insurance.</Li></ul></Slide>,
-  <Slide key={10} eyebrow="Team" title="Prashant · solo builder">
+  <Slide key={11} eyebrow="Team" title="Prashant · solo builder">
     <p>Foundry · TypeScript · React. Repo: {cfg.repo}. Contracts on Sepolia and Creditcoin CC3 Testnet; 103 Foundry tests · 26 agent tests · 8 attack scenarios end to end in CI; verified against the live 0x0FD2.</p></Slide>,
 ]
 
