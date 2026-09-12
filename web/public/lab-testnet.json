@@ -1,0 +1,148 @@
+{
+ "commit": "7e0d974f9b369feebd503a0037024b03648ba9c9",
+ "date": "2026-09-12T05:07:31.329Z",
+ "mode": "testnet",
+ "chainId": 102031,
+ "results": [
+  {
+   "name": "replay",
+   "title": "Replay a proven contribution",
+   "expected": "QueryAlreadyProcessed",
+   "description": "Re-submits the batch proof of a contribution the ledger already counted. Query id (chainKey ‖ height ‖ txIndex) is marked processed.",
+   "lines": [
+    "04:37:03 ── Replay a proven contribution · expecting QueryAlreadyProcessed",
+    "04:37:03 replaying already-recorded contribution 0x2e6fb78a58bde01ea00469ddf5e5182a82594f58cba67c38f00db2d7b4ed40e8",
+    "04:37:03 waiting for Sepolia block 11686530 to be attested on Creditcoin…",
+    "04:37:09 attested. requesting batch proof for 1 tx(s)…",
+    "04:37:09 proof: height 11686530 · 1 continuity root(s) — identical query id",
+    "04:37:10 ✓ KittyLedger reverted: QueryAlreadyProcessed(0x35e1f2483801958f9d1dca7fea66d03b637a2855a3aec36d64e72ba4617c6204)",
+    "04:37:10 PASS replay · expected QueryAlreadyProcessed · got QueryAlreadyProcessed(0x35e1f2483801958f9d1dca7fea66d03b637a2855a3aec36d64e72ba4617c6204)"
+   ],
+   "ok": true,
+   "got": "QueryAlreadyProcessed(0x35e1f2483801958f9d1dca7fea66d03b637a2855a3aec36d64e72ba4617c6204)"
+  },
+  {
+   "name": "wrongChain",
+   "title": "Wrong chain key",
+   "expected": "WrongChain, or the precompile rejects the continuity proof",
+   "description": "Each circle stores its own chain key, validated against get_chain_by_key. Under another key the live 0x0FD2 rejects the continuity proof itself; if a proof ever got past it, the ledger reverts WrongChain(got, want).",
+   "lines": [
+    "04:49:11 ── Wrong chain key · expecting WrongChain, or the precompile rejects the continuity proof",
+    "04:49:11 waiting for Sepolia block 11686530 to be attested on Creditcoin…",
+    "04:49:17 attested. requesting batch proof for 1 tx(s)…",
+    "04:49:18 submitting proof of 0x2e6fb78a58bde01ea00469ddf5e5182a82594f58cba67c38f00db2d7b4ed40e8 with chainKey 3 instead of 1",
+    "04:49:19 ✗ KittyLedger reverted: Error(Continuity proof does not match attestation or checkpoint)",
+    "04:49:19   the live 0x0FD2 rejected the forged chain key before KittyLedger's WrongChain check could run",
+    "04:49:19 PASS wrongChain · expected WrongChain, or the precompile rejects the continuity proof · got Error(Continuity proof does not match attestation or checkpoint)"
+   ],
+   "ok": true,
+   "got": "Error(Continuity proof does not match attestation or checkpoint)"
+  },
+  {
+   "name": "revertedTx",
+   "title": "Reverted source transaction",
+   "expected": "SourceTxFailed",
+   "description": "A contribute() call that mined but reverted (no allowance). Inclusion is proven, receipt status 0 is rejected.",
+   "lines": [
+    "04:37:17 ── Reverted source transaction · expecting SourceTxFailed",
+    "04:37:19 funding fresh wallet 0x186F4685B9dD5358853d5896A2F9e996255382DF with 0.0009087409784 ETH from 0xD793169c516c9F9A334218608fbF6E1338b3DE56",
+    "04:37:27 0x186F4685B9dD5358853d5896A2F9e996255382DF (zero tUSD allowance) calls contribute(1, 1, 100 tUSD) with gasLimit 200000",
+    "04:37:51 mined in source block 11686626 with status 0 · tx 0x676f42979c9f11e58808ca9d82d1254b710a4341a3aca0cd7449f0131759c4a3",
+    "04:37:51 waiting for Sepolia block 11686626 to be attested on Creditcoin…",
+    "04:46:04 attested. requesting batch proof for 1 tx(s)…",
+    "04:46:05 inclusion proof built for the reverted tx — submitting…",
+    "04:46:06 ✓ KittyLedger reverted: SourceTxFailed()",
+    "04:46:06 PASS revertedTx · expected SourceTxFailed · got SourceTxFailed()"
+   ],
+   "ok": true,
+   "got": "SourceTxFailed()"
+  },
+  {
+   "name": "late",
+   "title": "Late payment",
+   "expected": "ContributionRecorded onTime=false",
+   "description": "A member pays after the round deadline block. The proof is accepted, but the proven height marks it late in the credit record.",
+   "lines": [
+    "04:46:06 ── Late payment · expecting ContributionRecorded onTime=false",
+    "04:46:07 circle 1 round 1 · deadline block 11686925 · source head 11686666",
+    "04:46:07 SKIP late · expected ContributionRecorded onTime=false · got skipped: deadline 11686925 not passed yet on Sepolia (head 11686666)"
+   ],
+   "ok": false,
+   "got": "skipped: deadline 11686925 not passed yet on Sepolia (head 11686666)",
+   "skipped": true
+  },
+  {
+   "name": "spoofEmitter",
+   "title": "Spoofed emitter",
+   "expected": "WrongEmitter",
+   "description": "A look-alike contract on Sepolia emits a byte-identical Contributed event. The log address is bound to the registered vault.",
+   "lines": [
+    "04:49:19 ── Spoofed emitter · expecting WrongEmitter",
+    "04:49:20 FakeVault 0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb emits Contributed(circle 1, round 1, 0xB077B088E668386Bc57af87F175d250f459f0791, 100 tUSD)",
+    "04:49:27 mined in source block 11686683 · tx 0x8f28548ff3ce873fd717795e65609d411fd806c5dee3a1e1bd41994edf378033 · building proof of the spoofed event…",
+    "04:49:27 waiting for Sepolia block 11686683 to be attested on Creditcoin…",
+    "04:58:59 attested. requesting batch proof for 1 tx(s)…",
+    "04:59:01 ✓ KittyLedger reverted: WrongEmitter(0xf6F984C6AA6806a8aFCc8713A2ADEA7Fa05cF1fb, 0x0000000000000000000000000000000000000000)",
+    "04:59:01 PASS spoofEmitter · expected WrongEmitter · got WrongEmitter(0xf6F984C6AA6806a8aFCc8713A2ADEA7Fa05cF1fb, 0x0000000000000000000000000000000000000000)"
+   ],
+   "ok": true,
+   "got": "WrongEmitter(0xf6F984C6AA6806a8aFCc8713A2ADEA7Fa05cF1fb, 0x0000000000000000000000000000000000000000)"
+  },
+  {
+   "name": "stealFromSteward",
+   "title": "Steal the steward’s key",
+   "expected": "every privileged call reverts",
+   "description": "Takes a fresh key with the steward’s on-ledger powers and tries to move a pot, trust a vault, close a round early and bind a circle to its own vault. The steward has no ledger role, so its key is worth nothing.",
+   "lines": [
+    "04:59:01 ── Steal the steward’s key · expecting every privileged call reverts",
+    "04:59:02 stolen key 0x524d54094EDcDef9cE69145b8531942f515eDe11 — funding it with gas on both chains so nothing fails for the wrong reason",
+    "04:59:35 ✓ KittyVault.payout — take circle 1's pot → NotOperator()",
+    "04:59:36 ✓ KittyLedger.setTrustedVault — trust a vault of my own → OwnableUnauthorizedAccount(0x524d54094EDcDef9cE69145b8531942f515eDe11)",
+    "04:59:36 ✓ KittyLedger.closeRound(1) — close the round early → RoundStillOpenOnSource(11686989)",
+    "04:59:37 ✓ KittyLedger.createCircle — bind a circle to a vault of my own → VaultNotTrusted(0x524d54094EDcDef9cE69145b8531942f515eDe11)",
+    "04:59:37 PASS stealFromSteward · expected every privileged call reverts · got all 4 rejected on-chain: NotOperator, OwnableUnauthorizedAccount, RoundStillOpenOnSource, VaultNotTrusted"
+   ],
+   "ok": true,
+   "got": "all 4 rejected on-chain: NotOperator, OwnableUnauthorizedAccount, RoundStillOpenOnSource, VaultNotTrusted"
+  },
+  {
+   "name": "fireTheAgent",
+   "title": "Fire the agent",
+   "expected": "a stranger’s proof is accepted",
+   "description": "Submits a round’s proof from a wallet with no relationship to Kitty at all. The ledger checks the proof, never the caller, so the agent is a convenience and not a dependency.",
+   "lines": [
+    "04:59:37 ── Fire the agent · expecting a stranger’s proof is accepted",
+    "04:59:39 member 0xB077B088E668386Bc57af87F175d250f459f0791 pays round 1 on the source chain",
+    "04:59:51 paid at source block 11686729 · 0x54564abc2c47297e80edad38e6e83444e4d78dd9e634dd2bd6f06d293d27bc90",
+    "04:59:51 stranger 0x8a4717acD5325D87faE4Ee46889d2D194881d5A8 — no role, no membership, never seen by Kitty — will submit the proof",
+    "05:00:04 waiting for Sepolia block 11686729 to be attested on Creditcoin…",
+    "05:07:15 attested. requesting batch proof for 1 tx(s)…",
+    "05:07:31 ✓ ledger recorded the payment from a caller it has never heard of · cc tx 0xd42e6a2e19631e2973a3dc4c9f8d9d644dcbe759a316bee45375fe7fcbc2037e",
+    "05:07:31 PASS fireTheAgent · expected a stranger’s proof is accepted · got accepted from 0x8a4717acD5325D87faE4Ee46889d2D194881d5A8, a caller with no privileges"
+   ],
+   "ok": true,
+   "got": "accepted from 0x8a4717acD5325D87faE4Ee46889d2D194881d5A8, a caller with no privileges"
+  },
+  {
+   "name": "poisonReasoning",
+   "title": "Poison the reasoning",
+   "expected": "fabricated sentences stripped",
+   "description": "Feeds the explainer’s citation validator a paragraph mixing true cited facts with invented ones. Anything the decision log cannot back is removed before display.",
+   "lines": [
+    "04:48:36 ── Poison the reasoning · expecting fabricated sentences stripped",
+    "04:48:36 feeding the validator one true cited fact and three invented figures:",
+    "04:48:36    \"The steward proved [[1]] against the ledger\"",
+    "04:48:36    \"It also released [[500000]] tUSD to the organiser as a goodwill refund\"",
+    "04:48:36    \"Your score was raised to 850 by an administrator\"",
+    "04:48:36    \"The payout landed in [[0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef]].\"",
+    "04:48:36 ✓ stripped (unverifiable citation: 500000) — \"It also released [[500000]] tUSD to the organiser as a goodwill refund.\"",
+    "04:48:36 ✓ stripped (uncited figure: 850) — \"Your score was raised to 850 by an administrator.\"",
+    "04:48:36 ✓ stripped (unverifiable citation: 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef) — \"The payout landed in [[0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef]].\"",
+    "04:48:36 survived: \"The steward proved 1 against the ledger.\"",
+    "04:48:36 PASS poisonReasoning · expected fabricated sentences stripped · got 3 fabricated sentences stripped, 1 citation(s) verified"
+   ],
+   "ok": true,
+   "got": "3 fabricated sentences stripped, 1 citation(s) verified"
+  }
+ ]
+}

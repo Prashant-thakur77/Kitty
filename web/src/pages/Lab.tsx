@@ -7,9 +7,9 @@ import { Reveal, Stagger, Item, EASE_OUT } from '../components/motion'
 import { Skeleton } from '../components/Skeleton'
 
 type Scenario = { name: string; title: string; expected: string; description?: string }
-type Result = { ok: boolean; expected: string; got: string }
+type Result = { ok: boolean; expected: string; got: string; skipped?: boolean }
 /** Shape written by worker/src/record-lab.ts into web/public/lab-recorded.json. */
-type Recorded = { commit: string; date: string; mode?: string; results: (Scenario & { lines: string[]; ok: boolean; got: string })[] }
+type Recorded = { commit: string; date: string; mode?: string; results: (Scenario & { lines: string[]; ok: boolean; got: string; skipped?: boolean })[] }
 
 // Mirrors worker/src/scenarios.ts SCENARIOS (same order, descriptions verbatim). Not imported: that module pulls ethers and the worker config into the bundle.
 const FALLBACK: Scenario[] = [
@@ -74,7 +74,7 @@ export function Lab() {
         if (cancelled || !Array.isArray(rec?.results) || rec.results.length === 0) return
         setScenarios(rec.results.map(({ name, title, expected, description }) => ({ name, title, expected, description })))
         setLogs(Object.fromEntries(rec.results.map((r) => [r.name, r.lines ?? []])))
-        setResults(Object.fromEntries(rec.results.map((r) => [r.name, { ok: r.ok, expected: r.expected, got: r.got }])))
+        setResults(Object.fromEntries(rec.results.map((r) => [r.name, { ok: r.ok, expected: r.expected, got: r.got, skipped: r.skipped }])))
         setRecorded({ commit: String(rec.commit ?? ''), date: String(rec.date ?? ''), mode: rec.mode })
       } catch { /* no recorded run shipped: the fallback list with explanations stays */ }
     }
@@ -127,7 +127,7 @@ export function Lab() {
           const r = results[s.name]; const lines = logs[s.name] ?? []
           const live = running === s.name
           return (
-            <Item key={s.name} as="section" className="panel p-4" style={{ transition: 'border-color .4s', ...(r ? { borderColor: r.ok ? 'var(--mint)' : 'var(--rose)' } : live ? { borderColor: 'var(--line-2)' } : {}) }}>
+            <Item key={s.name} as="section" className="panel p-4" style={{ transition: 'border-color .4s', ...(r ? { borderColor: r.ok ? 'var(--mint)' : r.skipped ? 'var(--amber)' : 'var(--rose)' } : live ? { borderColor: 'var(--line-2)' } : {}) }}>
               <div className="flex items-start justify-between gap-3">
                 <div><div className="flex items-center gap-2"><ShieldAlert size={16} style={{ color: 'var(--rose)' }} /><span className="font-semibold">{s.title}</span></div>
                   <div className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>{WHY[s.name] ?? s.description}</div>
@@ -140,7 +140,7 @@ export function Lab() {
                     <div ref={(el) => { logRefs.current[s.name] = el }} className="log panel-2 mt-3 max-h-56 overflow-auto p-3" aria-live="polite">
                       {lines.length === 0 && live && <span className="grid gap-2" aria-label="Waiting for the first line"><Skeleton w="72%" h={10} /><Skeleton w="48%" h={10} /></span>}
                       {lines.map((l, i) => <motion.div key={i} initial={reduced ? false : { opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.22, ease: EASE_OUT }}>{linkify(l, testnet)}</motion.div>)}
-                      {r && <motion.div initial={reduced ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }} className="mt-2 flex items-center gap-2" style={{ color: r.ok ? 'var(--mint)' : 'var(--rose)' }}>{r.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {r.ok ? 'as expected' : 'UNEXPECTED'} · got {r.got}</motion.div>}
+                      {r && <motion.div initial={reduced ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }} className="mt-2 flex items-center gap-2" style={{ color: r.ok ? 'var(--mint)' : r.skipped ? 'var(--amber)' : 'var(--rose)' }}>{r.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {r.ok ? 'as expected' : r.skipped ? 'not run yet' : 'UNEXPECTED'} · {r.skipped ? r.got : `got ${r.got}`}</motion.div>}
                     </div>
                   </motion.div>
                 )}
