@@ -81,6 +81,11 @@ contract KittyLedger is Ownable {
         uint256 pot;
         address recipient;
         bytes32 payoutQueryId;
+        // The attestation that proved the deadline when the round closed on the deadline path
+        // (`find_lowest_attested_after(chainKey, closeHeight)`); zero when everyone paid and the
+        // round closed early. This is the evidence behind every ContributionMissed of the round.
+        uint64 attestedCloseHeight;
+        bytes32 attestedCloseHash;
     }
 
     struct Contribution {
@@ -168,8 +173,25 @@ contract KittyLedger is Ownable {
         bool onTime,
         bytes32 queryId
     );
-    event ContributionMissed(uint256 indexed circleId, uint32 indexed round, address indexed member, uint64 deadlineHeight);
-    event RoundClosed(uint256 indexed circleId, uint32 indexed round, address indexed recipient, uint256 pot, uint32 missedCount);
+    /// @notice `attestedHeight`/`attestedHash` identify the attestation (the first at or after the
+    ///         round's close height) that proved the deadline had passed on the source chain.
+    event ContributionMissed(
+        uint256 indexed circleId,
+        uint32 indexed round,
+        address indexed member,
+        uint64 deadlineHeight,
+        uint64 attestedHeight,
+        bytes32 attestedHash
+    );
+    /// @notice `attestedHeight` is zero when the round closed early because everyone paid.
+    event RoundClosed(
+        uint256 indexed circleId,
+        uint32 indexed round,
+        address indexed recipient,
+        uint256 pot,
+        uint32 missedCount,
+        uint64 attestedHeight
+    );
     event RoundOpened(uint256 indexed circleId, uint32 indexed round, uint64 deadlineHeight);
     event CircleCompleted(uint256 indexed circleId);
     event RotationSet(uint256 indexed circleId, Rotation rotation);
@@ -420,6 +442,11 @@ contract KittyLedger is Ownable {
             // right at the deadline be proven before anyone can close the round on it.
             uint64 closeAt = deadline + GRACE_BLOCKS;
             if (!CHAIN_INFO.is_height_attested(c.chainKey, closeAt)) revert RoundStillOpenOnSource(closeAt);
+            // Record WHICH attestation proved the deadline, so every miss below carries evidence a
+            // lender can re-check against the precompile rather than just the deadline number.
+            IChainInfo.HeightHash memory a = CHAIN_INFO.find_lowest_attested_after(c.chainKey, closeAt);
+            rd.attestedCloseHeight = a.height;
+            rd.attestedCloseHash = a.hash;
         }
 
         uint32 missed;
@@ -429,7 +456,7 @@ contract KittyLedger is Ownable {
             if (_contributions[circleId][r][m].queryId == bytes32(0) && accepted[circleId][m]) {
                 _records[m].missed += 1;
                 ++missed;
-                emit ContributionMissed(circleId, r, m, deadline);
+                emit ContributionMissed(circleId, r, m, deadline, rd.attestedCloseHeight, rd.attestedCloseHash);
             }
         }
 
@@ -452,7 +479,7 @@ contract KittyLedger is Ownable {
             emit PotCarriedOver(circleId, r, rd.pot);
             rd.pot = 0;
         }
-        emit RoundClosed(circleId, r, recipient, rd.pot, missed);
+        emit RoundClosed(circleId, r, recipient, rd.pot, missed, rd.attestedCloseHeight);
 
         if (uint256(r) + 1 == n) {
             c.status = CircleStatus.Completed;
@@ -759,6 +786,11 @@ contract KittyLedger is Ownable {
         if (!CHAIN_INFO.get_chain_by_key(chainKey).exists) revert UnsupportedSourceChain(chainKey);
         if (sourceVault == address(0) || !trustedVault[chainKey][sourceVault]) revert VaultNotTrusted(sourceVault);
         if (startHeight > type(uint64).max / 4 || roundBlocks > (uint64(1) << 40)) revert InvalidCircle("height range");
+        // Round 0's deadline must lie beyond the attested frontier. Otherwise an organiser could open a
+        // circle whose first round is already over, collect consent via invites, and have every
+        // invitee marked `missed` for a round that never existed for them.
+        IChainInfo.HeightHash memory latest = CHAIN_INFO.get_latest_attestation_height_and_hash(chainKey);
+        if (latest.exists && startHeight + roundBlocks <= latest.height) revert InvalidCircle("round 0 already attested");
         circleId = ++circleCount;
         Circle storage c = _circles[circleId];
         c.chainKey = chainKey;

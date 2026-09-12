@@ -25,9 +25,12 @@
 .viz-legend span { display: inline-flex; align-items: center; gap: 5px; }
 
 /* ── round timeline ── */
-.viz-timeline { overflow-x: auto; padding: 6px 2px 2px; scrollbar-width: thin; min-width: 0; contain: inline-size; }
+.viz-timeline { overflow-x: auto; padding: 6px 2px 2px; scrollbar-width: thin; min-width: 0; contain: inline-size; container-type: inline-size; }
 .viz-timeline .strip { display: flex; align-items: flex-start; min-width: max-content; }
-.viz-timeline .node { position: relative; width: 132px; flex: none; text-align: center; }
+/* nodes share the strip's width (cqw = the timeline's own inline size) down to 96px; more than ~4 rounds on a phone scrolls */
+.viz-timeline .node { position: relative; width: clamp(96px, calc((100cqw - 8px) / var(--n, 3)), 132px); flex: none; text-align: center; }
+/* while the strip overflows and is not scrolled to its end, fade the right edge so the overflow is visible */
+.viz-timeline[data-overflow="true"] { mask-image: linear-gradient(90deg, #000 90%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent); }
 .viz-timeline .node .disc {
   width: 34px; height: 34px; border-radius: 999px; margin: 0 auto; display: grid; place-items: center;
   background: var(--panel-2); border: 1.5px solid var(--line-2); color: var(--muted); font-family: var(--mono); font-size: 11px; font-weight: 600;
@@ -36,11 +39,11 @@
 .viz-timeline .node[data-state="paid"] .disc { border-color: var(--mint); color: var(--mint); background: var(--mint-soft); }
 .viz-timeline .node[data-state="closed"] .disc { border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
 .viz-timeline .node[data-state="current"] .disc { border-color: var(--sky); color: var(--sky); background: var(--sky-soft); box-shadow: 0 0 0 0 rgba(125, 182, 232, .35); animation: viz-ping 2.4s ease-out infinite; }
-.viz-timeline .node .who { margin-top: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--ink); white-space: nowrap; }
+.viz-timeline .node .who { margin-top: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
 .viz-timeline .node .who.tbd { color: var(--muted); font-style: italic; font-family: var(--body); }
 .viz-timeline .node .pot { font-family: var(--mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 16px; }
 .viz-timeline .node .st { margin-top: 5px; }
-.viz-timeline .node .link { position: absolute; left: -66px; top: 16px; width: 132px; height: 2px; overflow: visible; pointer-events: none; }
+.viz-timeline .node .link { position: absolute; left: -50%; top: 16px; width: 100%; height: 2px; overflow: visible; pointer-events: none; }
 .viz-timeline .node .disc svg { display: block; }
 @keyframes viz-ping { 0% { box-shadow: 0 0 0 0 rgba(125, 182, 232, .35); } 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 

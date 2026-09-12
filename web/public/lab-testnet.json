@@ -1,6 +1,6 @@
 {
- "commit": "7e0d974f9b369feebd503a0037024b03648ba9c9",
- "date": "2026-09-12T05:07:31.329Z",
+ "commit": "1f065848831f98f2fa980592dadba68917cc3a85",
+ "date": "2026-09-12T05:50:01.223Z",
  "mode": "testnet",
  "chainId": 102031,
  "results": [
@@ -63,13 +63,18 @@
    "expected": "ContributionRecorded onTime=false",
    "description": "A member pays after the round deadline block. The proof is accepted, but the proven height marks it late in the credit record.",
    "lines": [
-    "04:46:06 ── Late payment · expecting ContributionRecorded onTime=false",
-    "04:46:07 circle 1 round 1 · deadline block 11686925 · source head 11686666",
-    "04:46:07 SKIP late · expected ContributionRecorded onTime=false · got skipped: deadline 11686925 not passed yet on Sepolia (head 11686666)"
+    "05:40:59 ── Late payment · expecting ContributionRecorded onTime=false",
+    "05:41:01 circle 1 round 1 · deadline block 11686925 · source head 11686933",
+    "05:41:14 0x128aC52048072BeEb5b930Cc5D9F8c91EDE5bEBA contributed at source block 11686934 (deadline 11686925) · tx 0xff8484c87810d96b635f96ecfe4a5389562869375fc71c98748386a4c18fdade",
+    "05:41:14 waiting for Sepolia block 11686934 to be attested on Creditcoin…",
+    "05:49:52 attested. requesting batch proof for 1 tx(s)…",
+    "05:49:54 → KittyLedger.recordContributions(1 tx, heights 11686934–11686934) gas=1500000",
+    "05:50:01    ✓ verified by 0x0FD2 in one call · cc tx 0x41eb39bf080e4034263752edd7cc147d546753072c4500f92ee5b00dde7dd362",
+    "05:50:01 ✓ ContributionRecorded onTime=false (height 11686934, deadline 11686925)",
+    "05:50:01 PASS late · expected ContributionRecorded onTime=false · got ContributionRecorded onTime=false (height 11686934, deadline 11686925)"
    ],
-   "ok": false,
-   "got": "skipped: deadline 11686925 not passed yet on Sepolia (head 11686666)",
-   "skipped": true
+   "ok": true,
+   "got": "ContributionRecorded onTime=false (height 11686934, deadline 11686925)"
   },
   {
    "name": "spoofEmitter",

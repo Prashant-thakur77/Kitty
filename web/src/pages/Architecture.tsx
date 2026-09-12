@@ -1,6 +1,7 @@
 import { cfg } from '../config'
 import { Tag } from '../components/ui'
 import { Canvas3D } from '../three/Canvas3D'
+import { useAttestation, useLedgerEvents } from '../hooks'
 
 // three.js lives in its own chunk: Canvas3D fetches it only when the stage decides to render
 const flowScene = () => import('../three/FlowScene')
@@ -27,10 +28,14 @@ const NODES = [
 ]
 
 export function Architecture() {
+  // the stage is driven by the chain: packets for proven payments, an amber tick when the attested frontier moves
+  const { attested } = useAttestation()
+  const { items } = useLedgerEvents()
+  const proven = items.filter((i) => i.kind === 'ContributionRecorded').length
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="flow-scene mb-8" aria-label="Proof flow: KittyVault on Ethereum, through the 0x0FD2 block prover, into KittyLedger on Creditcoin; 0x0FD3 ChainInfo attests the clock">
-        <Canvas3D scene={flowScene} camera={FLOW_CAMERA} fallback={<FlowFallback />} />
+        <Canvas3D scene={flowScene} sceneProps={{ attested, items, proven }} camera={FLOW_CAMERA} fallback={<FlowFallback />} />
         <div className="flow-caption eyebrow">Proof flow · vault → 0x0FD2 → ledger · 0x0FD3 attests the clock</div>
       </div>
       <div className="eyebrow">Architecture</div>

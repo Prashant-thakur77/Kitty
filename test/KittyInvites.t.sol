@@ -15,6 +15,7 @@ contract KittyInvitesTest is Test {
 
     KittyLedger ledger;
     MockVerifier verifier;
+    MockChainInfo chainInfo;
 
     address vault = address(0xFA11);
     uint256 organiserPk = 0xA11CE;
@@ -35,6 +36,7 @@ contract KittyInvitesTest is Test {
         vm.etch(VERIFIER_PRECOMPILE, address(new MockVerifier()).code);
         vm.etch(CHAIN_INFO_PRECOMPILE, address(new MockChainInfo()).code);
         verifier = MockVerifier(VERIFIER_PRECOMPILE);
+        chainInfo = MockChainInfo(CHAIN_INFO_PRECOMPILE);
         verifier.setAccept(true);
         organiser = vm.addr(organiserPk);
         mallory = vm.addr(malloryPk);
@@ -121,6 +123,32 @@ contract KittyInvitesTest is Test {
         assertEq(c.members.length, 2);
         assertEq(c.members[1], bob, "join order = rotation order");
         assertEq(ledger.getMemberCircles(bob)[0], circleId);
+    }
+
+    /// @dev Consent griefing: an organiser must not be able to open an invite circle whose round 0 is
+    ///      already over on the source chain, collect consent via invites, and close the round on every
+    ///      invitee as `missed`. The frontier bound at creation is what closes the hole.
+    function test_redeemInvite_cannotBeGriefedByPastStart() public {
+        uint64 frontier = START + ROUND_BLOCKS + 64; // round 0 of a START circle is closable right now
+        chainInfo.setAttestedHeight(CHAIN_KEY, frontier);
+        vm.prank(organiser);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.InvalidCircle.selector, "round 0 already attested"));
+        ledger.createOpenCircle("Trap", AMOUNT, ROUND_BLOCKS, START, vault, MAX);
+
+        // The organiser can only open a circle whose first deadline lies beyond the frontier ...
+        vm.prank(organiser);
+        circleId = ledger.createOpenCircle("Fair", AMOUNT, ROUND_BLOCKS, frontier, vault, MAX);
+        _join(bob, 1);
+        assertTrue(ledger.accepted(circleId, bob));
+        vm.prank(organiser);
+        ledger.closeInvites(circleId);
+
+        // ... so bob cannot be marked missed before that deadline (plus grace) is actually attested.
+        uint64 closeAt = ledger.closeHeight(circleId, 0);
+        assertGt(closeAt, frontier);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.RoundStillOpenOnSource.selector, closeAt));
+        ledger.closeRound(circleId);
+        assertEq(ledger.getRecord(bob).missed, 0);
     }
 
     function test_redeemInvite_rejectsWrongSigner() public {

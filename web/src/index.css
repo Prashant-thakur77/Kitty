@@ -238,3 +238,23 @@ tr:last-child td { border-bottom: 0; }
   .card-hover:hover, .card-hover:active { transform: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ───────────────────────────── round-2 audit: mobile fixes (items 8, 10) ───────────────────────────── */
+/* a long tag may wrap instead of forcing the page wider than the phone */
+.pill.wrap { white-space: normal; text-align: center; line-height: 1.3; }
+/* block ticks never shrink below a readable width; BlockProgress halves the count on phones */
+.ticks i { min-width: 6px; }
+/* landing hero without WebGL / under 640px: the rotation wheel stands in for the 3D circle */
+.hero-wheel { position: relative; width: 300px; max-width: 100%; margin: 2.5rem auto 0; }
+.hero-wheel::before { content: ""; position: absolute; inset: -18%; z-index: -1; pointer-events: none; border-radius: 50%; background: radial-gradient(closest-side, rgba(79, 209, 163, .16), rgba(125, 182, 232, .05) 60%, transparent 100%); }
+.hero-wheel .viz-wheel .label { font-size: 15px; }
+@media (min-width: 1024px) { .hero-wheel { width: min(100%, 400px); margin: 0 auto; } }
+/* circle cards on /circles: live cells under the static row */
+.card-live { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+.card-live .cell { min-width: 0; }
+.card-live .cell .v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) { .card-live { grid-template-columns: repeat(2, minmax(0, 1fr)); } .card-live .cell:last-child { grid-column: 1 / -1; } }
+/* prove stepper: step 1 waits in amber while a mined payment has no covering attestation yet */
+.step[data-state="waiting"] .step-dot { border-color: var(--amber); color: var(--amber); background: var(--amber-soft); box-shadow: 0 0 0 0 rgba(226, 177, 92, .3); animation: pulse-amber 2.2s infinite; }
+.step[data-state="waiting"] .step-label { color: var(--amber); }
+@keyframes pulse-amber { 0% { box-shadow: 0 0 0 0 rgba(226, 177, 92, .3); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }

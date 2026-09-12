@@ -107,6 +107,21 @@ contract KittyLedgerTest is Test {
         ledger.createCircle("x", dup, AMOUNT, 1, 0, vault);
     }
 
+    function test_createCircle_revertsWhenRound0DeadlineAlreadyAttested() public {
+        address[] memory members = _all();
+        // Frontier exactly at round 0's deadline: the round is already over on the source chain.
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.InvalidCircle.selector, "round 0 already attested"));
+        ledger.createCircle("stale", members, AMOUNT, ROUND_BLOCKS, START, vault);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.InvalidCircle.selector, "round 0 already attested"));
+        ledger.createOpenCircle("stale open", AMOUNT, ROUND_BLOCKS, START, vault, 3);
+
+        // One block short of the deadline is still an open round: creation goes through.
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS - 1);
+        uint256 id = ledger.createCircle("fresh", members, AMOUNT, ROUND_BLOCKS, START, vault);
+        assertEq(ledger.deadlineHeight(id, 0), START + ROUND_BLOCKS);
+    }
+
     // ───────────── batch verification ─────────────
 
     function test_batch_recordsWholeRoundInOnePrecompileCall() public {
@@ -386,6 +401,41 @@ contract KittyLedgerTest is Test {
         assertFalse(ledger.accepted(circleId, bob));
         assertEq(ledger.getMemberCircles(bob).length, 0, "not in bob's dashboard until he opts in");
         assertEq(ledger.getMemberCircles(alice).length, 1);
+    }
+
+    function test_closeRound_recordsAttestationEvidence() public {
+        // Round 0: alice pays and consents; bob consents but never pays → one miss with evidence.
+        _record(_one(alice), _h(1_010), 0);
+        vm.prank(bob);
+        ledger.acceptMembership(circleId);
+        uint64 deadline = START + ROUND_BLOCKS;
+        uint64 closeAt = deadline + 64;
+        bytes32 expectedHash = keccak256(abi.encode(CHAIN_KEY, closeAt)); // MockChainInfo._hash
+        chainInfo.setAttestedHeight(CHAIN_KEY, closeAt);
+
+        vm.expectEmit(true, true, true, true);
+        emit KittyLedger.ContributionMissed(circleId, 0, bob, deadline, closeAt, expectedHash);
+        vm.expectEmit(true, true, true, true);
+        emit KittyLedger.RoundClosed(circleId, 0, alice, AMOUNT, 1, closeAt);
+        ledger.closeRound(circleId);
+
+        KittyLedger.Round memory r0 = ledger.getRound(circleId, 0);
+        assertEq(r0.attestedCloseHeight, closeAt, "the attestation that proved the deadline");
+        assertEq(r0.attestedCloseHash, expectedHash);
+        assertEq(ledger.getRecord(bob).missed, 1);
+
+        // Round 1: everyone pays → closes early on proofs alone; no attestation evidence is recorded.
+        uint64[] memory hs = new uint64[](3);
+        hs[0] = START + ROUND_BLOCKS + 5;
+        hs[1] = START + ROUND_BLOCKS + 6;
+        hs[2] = START + ROUND_BLOCKS + 7;
+        _record(_all(), hs, 1);
+        vm.expectEmit(true, true, true, true);
+        emit KittyLedger.RoundClosed(circleId, 1, bob, 3 * AMOUNT, 0, 0);
+        ledger.closeRound(circleId);
+        KittyLedger.Round memory r1 = ledger.getRound(circleId, 1);
+        assertEq(r1.attestedCloseHeight, 0, "early close carries no attestation");
+        assertEq(r1.attestedCloseHash, bytes32(0));
     }
 
     function test_graceWindow_roundCannotCloseUntilDeadlinePlusGrace() public {

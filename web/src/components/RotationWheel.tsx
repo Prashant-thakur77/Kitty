@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, animate, useMotionValue, useTransform, useReducedMotion } from 'motion/react'
 import { CountUp } from './motion'
@@ -212,9 +212,22 @@ export function WheelLegend() {
 /** Round history as a strip: one node per round, connectors draw in as the circle progresses. */
 export function RoundTimeline({ members, currentRound, active, byScore, recipient, rounds }: { members: readonly `0x${string}`[]; currentRound: number; active: boolean; byScore: boolean; recipient?: `0x${string}`; rounds?: (Round | undefined)[] }) {
   const reduced = useReducedMotion()
+  const box = useRef<HTMLDivElement>(null)
+  const [overflow, setOverflow] = useState(false)
+  // Right-edge fade only while there is more strip to the right (more than ~4 rounds on a phone).
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const check = () => setOverflow(el.scrollWidth - el.clientWidth - el.scrollLeft > 4)
+    check()
+    el.addEventListener('scroll', check, { passive: true })
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : undefined
+    ro?.observe(el)
+    return () => { el.removeEventListener('scroll', check); ro?.disconnect() }
+  }, [members.length])
   return (
-    <div className="viz-timeline" role="list" aria-label="Round history">
-      <div className="strip">
+    <div ref={box} className="viz-timeline" role="list" aria-label="Round history" data-overflow={overflow}>
+      <div className="strip" style={{ '--n': members.length } as CSSProperties}>
         {members.map((m, r) => {
           const rd = rounds?.[r]
           const state = rd?.status === 2 ? 'paid' : rd?.status === 1 ? 'closed' : r === currentRound && active ? 'current' : 'upcoming'
@@ -239,7 +252,7 @@ export function RoundTimeline({ members, currentRound, active, byScore, recipien
                   <svg width="14" height="14" viewBox="0 0 14 14"><motion.path d="M2.5 7.5l3 3 6-6.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" initial={reduced ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, delay: 0.4 + r * 0.18 }} /></svg>
                 ) : state === 'closed' ? (
                   <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="M7 4v3.5l2 1.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-                ) : String(r)}
+                ) : String(r + 1)}
               </motion.div>
               <div className={`who ${who ? '' : 'tbd'}`}>{who ? <Link to={`/score/${who}`} className="no-underline" style={{ color: 'inherit' }}>{short(who)}</Link> : 'by score at close'}</div>
               <div className="pot">{rd && rd.pot > 0n ? usd(rd.pot) : state === 'upcoming' ? '' : ' '}</div>

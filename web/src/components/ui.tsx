@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { CountUp } from './motion'
 
 export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: string; tone?: 'mint' | 'amber' | 'rose' | 'sky' }) {
@@ -12,14 +12,16 @@ export function Stat({ label, value, sub, tone }: { label: string; value: ReactN
   )
 }
 
-export function Tag({ tone, children, title }: { tone: 'mint' | 'amber' | 'rose' | 'sky' | 'muted'; children: ReactNode; title?: string }) {
-  return <span className={`pill ${tone === 'muted' ? '' : tone}`} title={title}>{children}</span>
+/** `wrap` lets a long tag (> ~24 chars) break onto two lines instead of forcing the page wider on phones. */
+export function Tag({ tone, children, title, wrap }: { tone: 'mint' | 'amber' | 'rose' | 'sky' | 'muted'; children: ReactNode; title?: string; wrap?: boolean }) {
+  return <span className={`pill ${tone === 'muted' ? '' : tone}${wrap ? ' wrap' : ''}`} title={title}>{children}</span>
 }
 
 /** 48-tick scale of the round in source-chain blocks: mint = attested, amber = mined but not yet attested, the tall
  *  white tick is the source head, the rose tick is the deadline. Hover lifts the scale (Rauno-style index). */
 export function BlockProgress({ start, deadline, now, attested }: { start: bigint; deadline: bigint; now?: bigint; attested?: bigint }) {
-  const total = 48
+  // Phones get 24 ticks so each stays ≥ 6px wide (48 × 4px is unreadable); decided once, at mount, from the viewport query.
+  const total = useMemo(() => (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 640px)').matches ? 24 : 48), [])
   const span = Number(deadline - start) || 1
   const pos = (h?: bigint) => (h === undefined ? -1 : Math.round((Math.max(0, Math.min(span, Number(h - start))) / span) * (total - 1)))
   const head = pos(now)

@@ -97,8 +97,12 @@ export function CirclePage() {
     try { await ensure(creditcoinTestnet.id); const h = await writeContractAsync({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'closeRound', args: [circleId] }); setMsg(`closeRound sent on Creditcoin · ${h.slice(0, 12)}…`); setTimeout(refetch, 5000) } catch (e) { setMsg((e as Error).message.split('\n')[0]) }
   }
 
-  const headline = !active ? 'CIRCLE COMPLETE' : iProved ? `PROVEN · BLOCK ${num(mine!.height)}` : iPaidOnSepolia ? 'PAID · PROOF PENDING' : myIdx >= 0 ? `PAY ${usd(circle.contribution)}` : full ? 'EVERYONE PAID' : deadlineAttested ? 'DEADLINE ATTESTED' : `${round?.contributions ?? 0} OF ${n} PROVEN`
-  const sub = !active ? 'Every member has received a pot.' : deadlineAttested ? 'The deadline plus the 64-block grace window is attested on Creditcoin. Anyone can close the round; missing members are recorded.' : deadlinePassed ? `Deadline passed; payments now count as late. ${blocksToClose} blocks of grace before the round can close.` : blocksToAttested !== undefined ? `${blocksToAttested} Sepolia blocks until the deadline is attested` : 'Waiting for attestation data…'
+  // Members with a payment mined on Sepolia this round (any amount) but no proof on Creditcoin yet — the band must not call them unpaid.
+  const paidCount = new Set(payments.map((p) => p.member.toLowerCase())).size
+  const proven = round?.contributions ?? 0
+  const paidUnattested = active && round && paidCount > proven ? paidCount - proven : 0
+  const headline = !active ? 'CIRCLE COMPLETE' : iProved ? `PROVEN · BLOCK ${num(mine!.height)}` : iPaidOnSepolia ? 'PAID · PROOF PENDING' : myIdx >= 0 ? `PAY ${usd(circle.contribution)}` : full ? 'EVERYONE PAID' : deadlineAttested ? 'DEADLINE ATTESTED' : paidUnattested > 0 ? `${paidCount} PAID · ${proven} PROVEN` : `${proven} OF ${n} PROVEN`
+  const sub = !active ? 'Every member has received a pot.' : paidUnattested > 0 && !deadlineAttested && !iProved && !iPaidOnSepolia && myIdx < 0 ? `${paidUnattested} payment${paidUnattested === 1 ? '' : 's'} mined on Sepolia, waiting for the attestor network${blocksToAttested !== undefined ? ` · ${blocksToAttested} blocks until the deadline is attested` : ''}` : deadlineAttested ? 'The deadline plus the 64-block grace window is attested on Creditcoin. Anyone can close the round; missing members are recorded.' : deadlinePassed ? `Deadline passed; payments now count as late. ${blocksToClose} blocks of grace before the round can close.` : blocksToAttested !== undefined ? `${blocksToAttested} Sepolia blocks until the deadline is attested` : 'Waiting for attestation data…'
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
@@ -142,7 +146,7 @@ export function CirclePage() {
         </Section>
 
         <div className="grid content-start gap-4">
-        <Section title={`Members · round ${circle.currentRound}`} right={<span className="mono text-xs" style={{ color: 'var(--muted)' }}>{round?.contributions ?? 0} of {n} proven</span>}>
+        <Section title={`Members · round ${circle.currentRound + 1} of ${n}`} right={<span className="mono text-xs" style={{ color: 'var(--muted)' }}>{round?.contributions ?? 0} of {n} proven</span>}>
           <div className="grid gap-2">
             {circle.members.map((m, i) => {
               const c = detail.contributions?.[i]
@@ -186,14 +190,15 @@ export function CirclePage() {
               const who = byScore ? (rd && rd.status !== 0 ? rd.recipient : r === circle.currentRound && active ? recipient : undefined) : m
               return (
                 <li key={r} className="panel-2 flex items-center justify-between px-3 py-2 text-sm" style={r === circle.currentRound && active ? { borderColor: 'var(--sky)' } : {}}>
-                  <span>round {r} → <span className="mono">{who ? short(who) : 'decided at close by score'}</span>{byScore && r === circle.currentRound && active && who && <span className="text-xs" style={{ color: 'var(--muted)' }}> (leading)</span>}</span>
+                  <span>round {r + 1} <span className="pill mono" style={{ padding: '0 .4rem', fontSize: 10, fontWeight: 500 }}>r{r}</span> → <span className="mono">{who ? short(who) : 'decided at close by score'}</span>{byScore && r === circle.currentRound && active && who && <span className="text-xs" style={{ color: 'var(--muted)' }}> (leading)</span>}</span>
                   <span className="flex items-center gap-2">{rd && rd.pot > 0n && <span className="mono text-xs">{usd(rd.pot)}</span>}<Tag tone={tone}>{upcoming ? 'upcoming' : st}</Tag></span>
                 </li>
               )
             })}
           </ol>
           </div>}
-          <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
+          <p className="mt-3 text-xs" style={{ color: 'var(--dim)' }}>Rounds are numbered 1…{n} here; contracts and logs use the 0-based index <span className="mono">rN</span>.</p>
+          <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
             A round closes early when every payment is proven, or once the deadline block is <em>attested</em> (ChainInfo precompile 0x0FD3). "Paid" appears only after the Ethereum payout itself is proven back through 0x0FD2.{byScore && ' In a by-score circle the pot goes to the member with the best proven record who has not received yet — missing or paying late this round lowers your score before the pick.'}
           </p>
         </Section>

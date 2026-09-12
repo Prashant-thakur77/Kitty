@@ -72,6 +72,7 @@ export default function App() {
             <Route path="/score" element={<ScorePage />} />
             <Route path="/score/:address" element={<ScorePage />} />
             <Route path="/borrow" element={<Borrow />} />
+            <Route path="/borrow/:address" element={<Borrow />} />
             <Route path="/steward" element={<Steward />} />
             <Route path="/lab" element={<Lab />} />
             <Route path="/architecture" element={<Architecture />} />

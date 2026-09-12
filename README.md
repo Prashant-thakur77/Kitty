@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Prashant-thakur77/Kitty/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Prashant-thakur77/Kitty/ci.yml?branch=main&style=flat-square&label=ci&color=4FD1A3"></a>
-  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry_tests-103_passing-4FD1A3?style=flat-square">
+  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry_tests-106_passing-4FD1A3?style=flat-square">
   <img alt="Attack scenarios" src="https://img.shields.io/badge/attack_scenarios-8_%2F_8_passing-4FD1A3?style=flat-square">
   <img alt="Creditcoin" src="https://img.shields.io/badge/Creditcoin-CC3_Testnet-7DB6E8?style=flat-square">
   <img alt="Attestcoin" src="https://img.shields.io/badge/Attestcoin-0x0FD2_%C2%B7_0x0FD3-7DB6E8?style=flat-square">
@@ -18,7 +18,7 @@
 
 **What no other Attestcoin contract in this field does**
 
-- **Settles a whole round in one precompile call.** Payments from every open circle are pooled into one `verifyAndEmit` under a single continuity proof, preflighted for free with the view `verify`, and measured 24% cheaper than singles against the live 0x0FD2 ([measured](#gas-measured)).
+- **Settles up to ten payments from every open circle in one precompile call.** Payments from every open circle are pooled into one `verifyAndEmit` under a single continuity proof, preflighted for free with the view `verify`, and measured 24% cheaper than singles against the live 0x0FD2 ([measured](#gas-measured)).
 - **Has no clock but the attestor network.** Deadlines are Sepolia block heights; a round with a missing payment can close only when `is_height_attested(chainKey, deadline + 64)` says so, and the Ethereum payout is proven back before the round shows *Paid*.
 - **Does not care who submits.** Fire the steward and a stranger's proof still settles the round; the steward's only on-ledger power is a proof.
 
@@ -120,7 +120,7 @@ Kitty was built to use the protocol deeply rather than minimally. The full techn
 | **Batch verification across circles** | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | Up to ten queries under one continuity proof, pooled from every open circle. The continuity proof is checked once. |
 | **Free preflight** | precompile view `verify`, both overloads, from the worker and from the browser | A proof that would fail is never submitted; a bad batch costs nothing. |
 | **Attested-height clock** | `is_height_attested(chainKey, deadline + grace)` in `closeRound`; `onTime = height ≤ deadline` | No timestamps, no admin. The attestor network decides when a round ends. |
-| **Attestation bounds** | `find_lowest_attested_after` and `get_attestation_bounds` from the dashboard (which attestation covers a payment, whether the deadline is covered), `get_chain_by_key` at circle creation, `is_height_attested` as the clock, `get_latest_attestation_height_and_hash` for the lag indicator | 5 of the ChainInfo precompile's 11 functions on the hot path; the 8-function interface in `IChainInfo.sol` is exercised against the mock in [`test/KittyMultiChain.t.sol`](test/KittyMultiChain.t.sol). |
+| **Attestation bounds** | `is_height_attested` as the clock; `find_lowest_attested_after` in `closeRound` to record *which* attestation proved every missed deadline (stored on the round, carried by `ContributionMissed` and `RoundClosed`) and from the dashboard (which attestation covers a payment); `get_chain_by_key` and `get_latest_attestation_height_and_hash` at circle creation (registry check; round 0's deadline must lie beyond the attested frontier, so an invite circle cannot be opened on an already-closed round) and the latter for the lag indicator; `get_attestation_bounds` for whether a deadline is covered | 6 of the ChainInfo precompile's 11 functions on the hot path, 4 of them inside the ledger; the 8-function interface in `IChainInfo.sol` is exercised against the mock in [`test/KittyMultiChain.t.sol`](test/KittyMultiChain.t.sol). |
 | **Per-circle chain key** | validated at creation against the on-chain registry; the trusted-vault allowlist is keyed by chain | A circle settles from Sepolia (key 1) or Ethereum mainnet (key 3). A vault trusted on one chain is not trusted on another. |
 | **Query-id replay protection** | `keccak(chainKey ‖ height ‖ txIndex)`, byte-identical to `ASCBase`, shared by every entry point, plus in-batch duplicate detection | The same proof can never count twice. |
 | **Receipt status** | `receiptStatus == 1` before any log is read | The precompile proves inclusion, not success. |
@@ -189,7 +189,7 @@ The worker is an agent in three layers, and authority decreases as you move towa
 | Layer | Holds | What it does |
 |---|---|---|
 | **1 · The ledger** | final say | A verified proof, receipt status 1, a trusted emitter, the right sender and target, the exact amount, the current round, an unseen query id. Fail any one and nothing happens, whoever asked. |
-| **2 · Deterministic decisions** | timing only | Prove now or wait for a fuller batch? Batching is measurably cheaper, but a payment that misses its grace window costs its owner 120 score points. Urgency beats thrift and thrift beats impatience. Every decision is logged with the chain state behind it. [`policy.ts`](worker/src/agent/policy.ts), 14 unit tests. |
+| **2 · Deterministic decisions** | timing only | Prove now or wait for a fuller batch? Batching is measurably cheaper, but a payment that misses its grace window costs its owner 120 score points. Urgency beats thrift and thrift beats impatience. Every decision is logged with the chain state behind it. [`policy.ts`](worker/src/agent/policy.ts), 17 unit tests. |
 | **3 · Cited reasoning** | none | Claude explains the decision log in plain language. Every figure it states must be marked and must appear in the log; [`citations.ts`](worker/src/agent/citations.ts) removes any sentence with an unverifiable *or uncited* figure before display. 12 unit tests. |
 
 Two properties follow, and both are demonstrated in the attack lab rather than asserted.
@@ -247,8 +247,8 @@ Requirements: Foundry, Node 22 with pnpm, and Docker is not needed. The first fo
 git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty
 pnpm install && pnpm --dir web install
 
-forge test              # 103 tests: ledger, vault, invites, rotation, viewer, credit line, badge, multi-chain, batch payouts, real prover bytes
-pnpm test:agent         # 26 tests: batch policy and citation validator
+forge test              # 106 tests: ledger, vault, invites, rotation, viewer, credit line, badge, multi-chain, batch payouts, real prover bytes
+pnpm test:agent         # 29 tests: batch policy and citation validator
 pnpm scenarios          # 8 attack scenarios end to end
 pnpm e2e:local          # two full rounds, a missed payment, a payout proven back, a replay rejected
 pnpm judge              # forge + agent tests + scenarios + e2e, then a real proof checked by the live 0x0FD2 (~5 min)
@@ -280,16 +280,16 @@ Faucets: Sepolia ETH from [Alchemy](https://www.alchemy.com/faucets/ethereum-sep
 | KittyVault v2 | Ethereum Sepolia, chainKey 1 | [`0x1172ABd45724069749E9EB98A0349177435B284E`](https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E) |
 | TestUSD | Ethereum Sepolia | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
 | FakeVault (attack lab) | Ethereum Sepolia | [`0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb`](https://sepolia.etherscan.io/address/0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb) |
-| KittyLedger (Attestcoin Smart Contract) | Creditcoin CC3 Testnet, 102031 | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://creditcoin-testnet.blockscout.com/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
-| KittyViewer | Creditcoin CC3 Testnet, 102031 | [`0xf6F984C6AA6806a8aFCc8713A2ADEA7Fa05cF1fb`](https://creditcoin-testnet.blockscout.com/address/0xf6F984C6AA6806a8aFCc8713A2ADEA7Fa05cF1fb) |
+| KittyLedger (Attestcoin Smart Contract) | Creditcoin CC3 Testnet, 102031 | [`0x65F6848c6A5DDB91D8b4345B806626E05dAF6e09`](https://creditcoin-testnet.blockscout.com/address/0x65F6848c6A5DDB91D8b4345B806626E05dAF6e09) |
+| KittyViewer | Creditcoin CC3 Testnet, 102031 | [`0x7d617087115F2bfDB28C86a998d99A9DD76E8FE8`](https://creditcoin-testnet.blockscout.com/address/0x7d617087115F2bfDB28C86a998d99A9DD76E8FE8) |
 | KittyUSD | Creditcoin CC3 Testnet, 102031 | [`0x1172ABd45724069749E9EB98A0349177435B284E`](https://creditcoin-testnet.blockscout.com/address/0x1172ABd45724069749E9EB98A0349177435B284E) |
-| KittyCreditLine | Creditcoin CC3 Testnet, 102031 | [`0x536930D5c1a44Ad54F7964a4f860706dA5aaEBE0`](https://creditcoin-testnet.blockscout.com/address/0x536930D5c1a44Ad54F7964a4f860706dA5aaEBE0) |
-| KittyBadge (ERC-5192) | Creditcoin CC3 Testnet, 102031 | [`0xF80Bfd97bf6F437b0f6f1d554D03B0df161e1CE3`](https://creditcoin-testnet.blockscout.com/address/0xF80Bfd97bf6F437b0f6f1d554D03B0df161e1CE3) |
+| KittyCreditLine | Creditcoin CC3 Testnet, 102031 | [`0xf86A29994593746FCA8D2D155d10beEA267e89A0`](https://creditcoin-testnet.blockscout.com/address/0xf86A29994593746FCA8D2D155d10beEA267e89A0) |
+| KittyBadge (ERC-5192) | Creditcoin CC3 Testnet, 102031 | [`0x25A1B74e7D8304749a237D0ba857c60a4af9B562`](https://creditcoin-testnet.blockscout.com/address/0x25A1B74e7D8304749a237D0ba857c60a4af9B562) |
 | Block prover precompile | Creditcoin | `0x0000000000000000000000000000000000000FD2` |
 | ChainInfo precompile | Creditcoin | `0x0000000000000000000000000000000000000fD3` |
 | Deployer / operator | both | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
 
-Deployed from block 5473022 (12 September 2026). The first live circle, *Delhi Chit Circle*, settled round 0 end to end on the same day: three Sepolia payments, two batch proofs verified by the block-prover precompile, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin. Every testnet transaction is logged with an explorer link in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md).
+Deployed from block 5473413 (12 September 2026; the first ledger, `0xc6fe…c2dE` from block 5473022, ran the first circle and all eight attack scenarios, then was superseded by this build, which bounds `startHeight` by the attested frontier and records the attestation behind every missed deadline). The first live circle, *Delhi Chit Circle*, settled round 0 end to end on the same day: three Sepolia payments, two batch proofs verified by the block-prover precompile, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin. Round 0 landed in two calls (1 + 2) because the steward's batch timer fired before two payments were attested; the policy now holds for attested roundmates. Every testnet transaction is logged with an explorer link in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md).
 
 ## Repository layout
 

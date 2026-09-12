@@ -1,14 +1,17 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
-import { useCircle, useCircleCount, useGlobalStats, useLedgerEvents } from '../hooks'
+import { useAttestation, useCircle, useCircleCount, useGlobalStats, useLedgerEvents } from '../hooks'
 import { CountUp, Reveal, Spotlight } from '../components/motion'
 import { Canvas3D, useCan3D } from '../three/Canvas3D'
+import { RotationWheel } from '../components/RotationWheel'
 import { cfg } from '../config'
 
 // three.js lives in its own chunk: Canvas3D fetches it only when the hero decides to render
 const heroScene = () => import('../three/HeroScene')
-const HERO_CAMERA = { position: [0, 4.1, 8.0] as [number, number, number], fov: 33 }
+const HERO_CAMERA = { position: [0, 4.9, 7.4] as [number, number, number], fov: 33 }
+// Stand-in members for the small-screen / no-WebGL hero wheel until the latest circle has loaded (never shown as data).
+const PLACEHOLDER = ['0xB077B088E668386Bc57af87F175d250f459f0791', '0x70997970C51812dc3A010C7d01b50e0d17dc79C8', '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'] as const
 
 const TRUST = [
   ['Holds the money', 'Treasurer', 'One contract, one chain', 'Escrow vault on Ethereum'],
@@ -30,7 +33,13 @@ export function Landing() {
   const st = useGlobalStats()
   const { items } = useLedgerEvents()
   const latest = count && (count as bigint) > 0n ? String(count) : undefined
-  const { circle } = useCircle(latest ? BigInt(latest) : undefined)
+  const { circle, round } = useCircle(latest ? BigInt(latest) : undefined)
+  const wheelMembers = circle?.members ?? PLACEHOLDER
+  const wheelRecipient = circle ? (circle.rotation === 1 ? undefined : circle.members[circle.currentRound]) : PLACEHOLDER[0]
+  const { attested } = useAttestation()
+  // The 3D hero follows the circle with the newest proven payment (falling back to the latest circle), so every pulse it plays is that circle's own history.
+  const heroId = (items.find((i) => i.kind === 'ContributionRecorded')?.args.circleId as bigint | undefined) ?? (latest ? BigInt(latest) : undefined)
+  const { circle: heroCircle } = useCircle(heroId)
   const can3D = useCan3D()
   const heroRef = useRef<HTMLElement>(null)
   const feed = items.filter((i) => ['ContributionRecorded', 'BatchVerified', 'RoundClosed', 'PayoutConfirmed', 'ContributionMissed'].includes(i.kind)).slice(0, 14)
@@ -40,7 +49,6 @@ export function Landing() {
     <main>
       {/* ── hero ── */}
       <section ref={heroRef} className={`hero${can3D ? ' hero-3d' : ''}`}>
-        {!can3D && <div className="streak" aria-hidden />}
         <div className="mx-auto max-w-6xl px-5 pb-20 pt-16 md:pt-24 lg:grid lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-8">
           <div>
             <Reveal i={0}>
@@ -62,9 +70,15 @@ export function Landing() {
               <a href={cfg.repo} target="_blank" rel="noreferrer" className="btn btn-ghost no-underline">Source <ArrowUpRight size={15} /></a>
             </Reveal>
           </div>
+          {/* Under 640px (or without WebGL2 / with reduced motion) the same wheel as the circle page stands in for the 3D scene: below the CTAs on phones, in the second column on desktop. */}
+          {!can3D && (
+            <div className="hero-wheel" aria-hidden>
+              <RotationWheel members={wheelMembers} currentRound={circle?.currentRound ?? 0} active={circle ? circle.status === 0 : true} byScore={circle?.rotation === 1} recipient={wheelRecipient} roundStatus={round?.status} payments={[]} pot={round?.pot} loading={false} />
+            </div>
+          )}
           {can3D && (
             <div className="hero-scene" aria-hidden>
-              <Canvas3D scene={heroScene} sceneProps={{ members: circle?.members, items }} camera={HERO_CAMERA} pointerFrom={heroRef} />
+              <Canvas3D scene={heroScene} sceneProps={{ members: heroCircle?.members, items, attested, circleId: heroId, circle: heroCircle }} camera={HERO_CAMERA} pointerFrom={heroRef} />
             </div>
           )}
         </div>

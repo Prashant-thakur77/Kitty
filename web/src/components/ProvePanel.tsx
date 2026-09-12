@@ -18,7 +18,7 @@ import { short, num } from '../lib/format'
 
 const STEPS = ['Attested', 'Proof fetched', 'Preflight ok', 'Verified on Creditcoin'] as const
 /** `done` = how many steps are complete (0–4); `failed` = the index of the step that failed, if any. */
-function Stepper({ done, failed, busy }: { done: number; failed: number | null; busy: boolean }) {
+function Stepper({ done, failed, busy, waiting }: { done: number; failed: number | null; busy: boolean; waiting?: boolean }) {
   const reduced = useReducedMotion()
   // the rail spans three gaps between four nodes, so each completed step fills a third
   const fill = Math.max(0, Math.min(3, done - 1)) / 3
@@ -26,13 +26,14 @@ function Stepper({ done, failed, busy }: { done: number; failed: number | null; 
     <div className="stepper mt-4" role="list" aria-label="Proof progress">
       <motion.span className="rail" aria-hidden initial={false} animate={{ scaleX: fill }} transition={reduced ? { duration: 0 } : { duration: 0.6, ease: EASE_OUT }} />
       {STEPS.map((label, i) => {
-        const state = failed === i ? 'error' : i < done ? 'done' : busy && i === done ? 'active' : 'idle'
+        // 'waiting' = a payment is mined on Sepolia but no attestation covers it yet: step 1 sits in amber until 0x0FD3 says otherwise
+        const state = failed === i ? 'error' : i < done ? 'done' : busy && i === done ? 'active' : waiting && i === 0 && done === 0 ? 'waiting' : 'idle'
         return (
-          <div key={label} className="step" data-state={state} role="listitem" aria-current={state === 'active' ? 'step' : undefined}>
+          <div key={label} className="step" data-state={state} role="listitem" aria-current={state === 'active' || state === 'waiting' ? 'step' : undefined}>
             <motion.span className="step-dot" initial={false} animate={reduced ? {} : { scale: state === 'done' ? [1, 1.25, 1] : 1 }} transition={{ duration: 0.4, ease: EASE_OUT }}>
               {state === 'done' ? <Check size={13} strokeWidth={3} /> : state === 'error' ? <X size={13} strokeWidth={3} /> : i + 1}
             </motion.span>
-            <span className="step-label">{label}<span className="sr-only">{state === 'done' ? ', complete' : state === 'error' ? ', failed' : state === 'active' ? ', in progress' : ''}</span></span>
+            <span className="step-label">{state === 'waiting' ? 'Attesting…' : label}<span className="sr-only">{state === 'done' ? ', complete' : state === 'error' ? ', failed' : state === 'active' ? ', in progress' : state === 'waiting' ? ', waiting for the attestor network' : ''}</span></span>
           </div>
         )
       })}
@@ -64,6 +65,14 @@ export function ProvePanel({ members, contributions, payments, attested, chainKe
   const push = (l: string) => setLog((s) => [...s, l])
   // Step 1 (Attested) is complete the moment 0x0FD3 says an attestation covers at least one payment, before any click.
   const shownDone = Math.max(done, ready.length > 0 ? 1 : 0)
+  // Paid on Sepolia but no attestation covers it yet: say which block we are waiting on instead of "Prove 0 payments".
+  const waiting = ready.length === 0 && provable.length > 0
+  const maxPaidBlock = provable.reduce((a, x) => (x.pay!.block > a ? x.pay!.block : a), 0n)
+  const lag = attested !== undefined && maxPaidBlock > attested ? maxPaidBlock - attested : 0n
+  const buttonText = busy ? 'Proving…'
+    : ready.length > 0 ? `Prove ${ready.length} payment${ready.length === 1 ? '' : 's'} in one call`
+    : waiting ? `Waiting for attestation of Sepolia block ${num(maxPaidBlock)} (attested ${num(attested)}, lag ${num(lag)})`
+    : 'Nothing to prove yet'
 
   async function prove() {
     setBusy(true); setLog([]); setFailed(null)
@@ -154,10 +163,11 @@ export function ProvePanel({ members, contributions, payments, attested, chainKe
           )
         })}
       </ul>
-      <Stepper done={shownDone} failed={failed} busy={busy} />
-      <div className="mt-4 flex items-center gap-3">
-        <button className="btn btn-mint" disabled={busy || ready.length === 0 || !address} onClick={prove} aria-busy={busy}><ShieldCheck size={15} /> {busy ? 'Proving…' : `Prove ${ready.length} payment${ready.length === 1 ? '' : 's'} in one call`}</button>
-        {!address && <span className="text-xs" style={{ color: 'var(--muted)' }}>Connect any wallet with a little tCTC.</span>}
+      <Stepper done={shownDone} failed={failed} busy={busy} waiting={waiting} />
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button className={`btn ${ready.length > 0 ? 'btn-mint' : ''}`} style={{ textAlign: 'left' }} disabled={busy || ready.length === 0 || !address} onClick={prove} aria-busy={busy}><ShieldCheck size={15} style={{ flex: 'none' }} /> <span>{buttonText}</span></button>
+        {!address && ready.length > 0 && <span className="text-xs" style={{ color: 'var(--muted)' }}>Connect any wallet with a little tCTC.</span>}
+        {waiting && <span className="text-xs" style={{ color: 'var(--muted)' }}>{provable.length} payment{provable.length === 1 ? '' : 's'} mined on Sepolia; the attestor network attests roughly every 8 minutes.</span>}
       </div>
       <AnimatePresence initial={false}>
         {log.length > 0 && (

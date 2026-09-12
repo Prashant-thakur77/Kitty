@@ -31,6 +31,13 @@ Circle #1 *Delhi Chit Circle* · round 0: 3 Sepolia payments → 2 batch proofs 
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound 0 (everyone paid) | [0xc9ca3583…4cd89c](https://creditcoin-testnet.blockscout.com/tx/0xc9ca3583bdc4143e46838a6005ffca2802b866b472285252ad513e46494cd89c) | 341740 |
 | 2026-09-12 | Sepolia | payout round 0 (300 tUSD to member 0) | [0xe8b660fa…626841](https://sepolia.etherscan.io/tx/0xe8b660face84ebcd2164861a1dacd0621af892f278a442c1fb688b2641626841) | 64821 |
 | 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout round 0 (payout proven back through 0x0FD2) | [0x7bda53a5…3c0da9](https://creditcoin-testnet.blockscout.com/tx/0x7bda53a527732ebab36299206e616c53af38acc60d886d27081a88888f3c0da9) | 372484 |
+| 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyLedger v2 (startHeight bounded by the attested frontier; misses record the attestation that proved the deadline) | [0x41753630…83ab68](https://creditcoin-testnet.blockscout.com/tx/0x4175363073918ba657b0a39f830c0ffaafb0ddafdfb78f7e901af0366c83ab68) | 4889709 |
+| 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyBadge (v2 ledger) | [0x698d1b06…4318cd](https://creditcoin-testnet.blockscout.com/tx/0x698d1b0605517aed9d6b05f9f61718c91db0c3d63f419004c2556ccc874318cd) | 1834620 |
+| 2026-09-12 | Creditcoin CC3 Testnet | createCircle on v2 (Delhi Chit Circle, 3 members, 100 tUSD, 200 blocks) | [0xbb449c9e…e89bf7](https://creditcoin-testnet.blockscout.com/tx/0xbb449c9e9cc4bb43f0c044f3f2e8701e65a6c194de4e9b26e94d348530e89bf7) | 357960 |
+| 2026-09-12 | Creditcoin CC3 Testnet | setRotation ByScore (v2 circle 1) | [0x317ad64c…d16268](https://creditcoin-testnet.blockscout.com/tx/0x317ad64c3245722be384b993a28b74bda6ec4521b79f2efc90d97353bed16268) | 328048 |
+| 2026-09-12 | Sepolia | contribute round 0 member 0 (v2 circle 1) | [0xf231e011…088f7e](https://sepolia.etherscan.io/tx/0xf231e011ab2f665066ed31f86500b007c983fcf2abdfaf7e40deabc656088f7e) | 51633 |
+| 2026-09-12 | Sepolia | contribute round 0 member 1 (v2 circle 1) | [0xf8446f1f…c39d34](https://sepolia.etherscan.io/tx/0xf8446f1f4806bd03def5c3c107d5a3bd448ea91a7fb5926933be579e06c39d34) | 51633 |
+| 2026-09-12 | Sepolia | contribute round 0 member 2 (v2 circle 1) | [0x2402e24b…ed4c64](https://sepolia.etherscan.io/tx/0x2402e24b0df89a5db1f9d3c2216b39b69b7195e31a57f1f1b133652e8ced4c64) | 51633 |
 
 ## Live precompile verification (no deployment needed)
 
