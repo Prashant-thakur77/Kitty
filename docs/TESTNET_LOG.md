@@ -76,6 +76,7 @@ Two full rounds settled on 12 September 2026. On the first ledger (`0xc6fe…c2d
 | 2026-09-12 | Creditcoin CC3 Testnet | recordContributions circle 3 round 1: proven from the browser by the member's own wallet (no operator) | [0x7b8fdaab…8861b5](https://creditcoin-testnet.blockscout.com/tx/0x7b8fdaab59af28c7df083528702b02ff5babe8260365a9ec2d0032d5cb8861b5) | 401366 |
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 1 round 1 on the attested deadline + 64: member 2 recorded MISSED with the attestation that proved it | [0xef146316…9f01ca](https://creditcoin-testnet.blockscout.com/tx/0xef146316d55e42f20a54a8d97935d711769d3f4571cf0fd760af4471bd9f01ca) | 362992 |
 | 2026-09-12 | Sepolia | payout circle 1 round 1 (200 tUSD to the best proven record) | [0x7e9b4f03…59941b](https://sepolia.etherscan.io/tx/0x7e9b4f032ce67a8aa10d8a97eea48e2132f5311ddcfe8d25bd47767cf159941b) | 69633 |
+| 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout circle 1 round 1 (proven back through 0x0FD2) | [0xa55fa22b…1c7091](https://creditcoin-testnet.blockscout.com/tx/0xa55fa22bd75de6a8462d4efbad1864b76782269d63ac1df3f2e000c21a1c7091) | 385238 |
 
 ## Live precompile verification (no deployment needed)
 
