@@ -11,7 +11,7 @@ This is the technical integration document required by the BUIDL CTC submission 
 | Block-prover precompile | `0x0000000000000000000000000000000000000FD2` (`INativeQueryVerifier`) |
 | ChainInfo precompile | `0x0000000000000000000000000000000000000fD3` |
 | Proof Builder | `https://prover.cc3-testnet.creditcoin.network` (`/api/v1/attested-height/1`, `/api/v1/proof-batch-by-tx`) |
-| KittyLedger | `0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276` on CC3 Testnet, deploy block 5473533 (v1 `0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`, block 5473022, ran the first circle and the attack scenarios) |
+| KittyLedger | `0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276` on CC3 Testnet, deploy block 5473533 (the first ledger `0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`, block 5473022, ran the first circle and the attack scenarios; two intermediate ledgers, `0x65F6…6e09` and `0xA311…E2De`, were superseded the same day) |
 | KittyVault | `0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84` on Sepolia, trusted on the ledger for chain key 1 (the first circle ran on `0x1172…284E`) |
 | Packages | `@gluwa/asc-contracts@0.2.1` (Solidity), `@gluwa/usc-sdk@0.18.0` (TypeScript) |
 | Deployed contracts | see `deployments.json` (written by `scripts/deploy.sh`) |
@@ -130,21 +130,21 @@ One row per protocol function, with where Kitty calls it. Line numbers refer to 
 
 | Interface | Function | Where |
 |---|---|---|
-| `INativeQueryVerifier` (0x0FD2) | `verifyAndEmit` (batch) | `recordContributions`, `KittyLedger.sol:511`; `confirmPayouts`, `:556` |
-| `INativeQueryVerifier` | `verifyAndEmit` (single) | `confirmPayout`, `KittyLedger.sol:537` |
+| `INativeQueryVerifier` (0x0FD2) | `verifyAndEmit` (batch) | `recordContributions`, `KittyLedger.sol:512`; `confirmPayouts`, `:557` |
+| `INativeQueryVerifier` | `verifyAndEmit` (single) | `confirmPayout`, `KittyLedger.sol:538` |
 | `INativeQueryVerifier` | `verify` (both view overloads) | free preflight and re-verify: `worker/src/verifier.ts`, `web/src/lib/verifier.ts` |
-| `INativeQueryVerifier` | `calculateTxIndex` | query ids, `_computeQueryId`, `KittyLedger.sol:764` |
-| `ChainInfo` (0x0FD3) | `is_height_attested` | the clock in `closeRound`, `KittyLedger.sol:444` |
-| `ChainInfo` | `find_lowest_attested_after` | `closeRound`, `KittyLedger.sol:447`: the attestation that proved a missed deadline, stored as `Round.attestedCloseHeight/Hash` and emitted in `ContributionMissed` / `RoundClosed`; `web/src/hooks.ts`: which attestation covers each payment |
-| `ChainInfo` | `get_chain_by_key` | circle creation, `_initCircle`, `KittyLedger.sol:786` |
-| `ChainInfo` | `get_latest_attestation_height_and_hash` | `_initCircle`, `KittyLedger.sol:792`: round 0's deadline must lie beyond the attested frontier (`InvalidCircle("round 0 already attested")`); `worker/src/worker.ts:72`, `worker/src/api.ts:31`, `web/src/hooks.ts:14` |
+| `INativeQueryVerifier` | `calculateTxIndex` | query ids, `_computeQueryId`, `KittyLedger.sol:763` |
+| `ChainInfo` (0x0FD3) | `is_height_attested` | the clock in `closeRound`, `KittyLedger.sol:445` |
+| `ChainInfo` | `find_lowest_attested_after` | `closeRound`, `KittyLedger.sol:448`: the attestation that proved a missed deadline, stored as `Round.attestedCloseHeight/Hash` and emitted in `ContributionMissed` / `RoundClosed`; `web/src/hooks.ts`: which attestation covers each payment |
+| `ChainInfo` | `get_chain_by_key` | circle creation, `_initCircle`, `KittyLedger.sol:790` |
+| `ChainInfo` | `get_latest_attestation_height_and_hash` | `_initCircle`, `KittyLedger.sol:796`: round 0's deadline must lie beyond the attested frontier (`InvalidCircle("round 0 already attested")`); `worker/src/worker.ts:72`, `worker/src/api.ts:43`, `web/src/hooks.ts:14` |
 | `ChainInfo` | `get_attestation_bounds` | `web/src/hooks.ts`: whether a deadline is covered, or the latest attested block below it |
 | `ChainInfo` | `find_highest_attested_before`, `get_attestation_genesis_height`, `get_supported_chains` | declared in `src/interfaces/IChainInfo.sol`, tested against the mock in `test/KittyMultiChain.t.sol:236-263`; not on the hot path |
 | `ChainInfo` | `get_checkpoint_for_height`, `get_latest_checkpoint_height_and_hash`, `get_attestation_height_for_digest` | not used; continuity proofs come from the Proof Builder |
 
-Six of the ChainInfo precompile's eleven functions are on the hot path, four of them inside
+Five of the ChainInfo precompile's eleven functions are on the hot path, four of them inside
 `KittyLedger.sol` itself; the eight-function interface in `IChainInfo.sol` is exercised end to end
-against the mock. Query ids: `_computeQueryId` in `KittyLedger.sol` (lines 759-771) is byte-identical to `readability/ASCBase.sol` lines 99-111 in
+against the mock. Query ids: `_computeQueryId` in `KittyLedger.sol` (lines 763-775) is byte-identical to `readability/ASCBase.sol` lines 94-112 in
 `@gluwa/asc-contracts@0.2.1`, so a query processed by Kitty is the same id any `ASCBase` contract
 would derive for that transaction.
 
@@ -188,10 +188,10 @@ verify → dedupe → act pipeline with identical query-id derivation and adds `
 ## Testing without the network
 
 `test/` mocks both precompiles at their real addresses with `vm.etch` and builds prover-format
-`txBytes` (`abi.encode(uint8 txType, bytes[] chunks)`) in `test/TxFixtures.sol`. 106 tests in 11
-suites (KittyLedger 33, Invites 16, MultiChain 14, CreditLine 12, BatchPayout 9, Badge 6, Viewer 6,
-Rotation 4, Vault 4, FakeVault 1, RealProofFixture 1 with genuine Proof Builder bytes for Sepolia tx
-11656295 #44) cover the batch path, replay, spoofed emitter, wrong transaction target, reverted
+`txBytes` (`abi.encode(uint8 txType, bytes[] chunks)`) in `test/TxFixtures.sol`. 162 tests in 15
+suites (KittyLedger 36, KittyGas 23, Invites 16, MultiChain 14, CreditLine 12, LedgerFuzz 12,
+Invariant 10, BatchPayout 9, VaultFuzz 8, Badge 6, Viewer 6, Rotation 4, Vault 4, FakeVault 1,
+RealProofFixture 1 with genuine Proof Builder bytes for Sepolia tx 11656295 #44) cover the batch path, replay, spoofed emitter, wrong transaction target, reverted
 source tx, non-member, wrong amount/round, late flagging, deadline gating via ChainInfo, per-circle
 chain keys, rotation, payout proof and batch payout proof, invites, scoring, credit lines and the
 badge.

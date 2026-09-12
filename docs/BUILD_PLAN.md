@@ -1,5 +1,7 @@
 # Kitty — build plan
 
+> **Status, 12 September 2026.** The original build plan, kept as written; the counts and the 8 September build order below are historical. Step 9 is done: the deployer was funded, `scripts/deploy.sh` ran, the final ledger `0xC2A1…F276` and its paired vault `0xa27e…DA84` are in `deployments.json`, three circles settled on testnet, the video was recorded, GitHub Pages is live and the test suite is at 162 Foundry, 29 agent and 11 bot tests. The current architecture is in [`TECH.md`](TECH.md) and [`specs/PROTOCOL.md`](specs/PROTOCOL.md); operations in [`OPERATIONS.md`](OPERATIONS.md).
+
 ## Architecture
 
 ```

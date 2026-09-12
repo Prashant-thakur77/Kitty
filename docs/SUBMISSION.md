@@ -68,12 +68,16 @@ What no other Attestcoin contract in this field does:
 - Live on Creditcoin CC3 Testnet: KittyLedger at
   `0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276` (with KittyViewer, KittyUSD, KittyCreditLine and
   KittyBadge) trusts its paired KittyVault `0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84` on Sepolia.
-  Two full rounds settled end to end on 12 September 2026. On the first ledger: three Sepolia
-  payments, two batch proofs verified by 0x0FD2, an early close, a 300 tUSD payout on Sepolia and
-  its proof back to Creditcoin, then all eight attack scenarios against the live precompile
-  (including a real late payment after the attested deadline). On the final ledger, with the
-  roundmate hold rule: the whole round verified as one batch of three in a single precompile call,
-  closed, paid out and proven back. Every transaction is linked in `docs/TESTNET_LOG.md`.
+  Everything below happened on 12 September 2026. On the first ledger (`0xc6fe…c2dE`): three
+  Sepolia payments, two batch proofs verified by 0x0FD2, an early close, a 300 tUSD payout on
+  Sepolia and its proof back to Creditcoin, then all eight attack scenarios against the live
+  precompile (including a real late payment after the attested deadline). On the final ledger,
+  with the roundmate hold rule: three circles; the Delhi Chit Circle's round 0 verified as one
+  batch of three in a single precompile call, closed, paid out and proven back; round 0 of two
+  more circles verified as one cross-circle batch of eight; a five-member round as one batch of
+  five; a member proving their own payment from the browser during the demo recording; a real
+  missed payment closed on the attested deadline with the attestation recorded on chain; two
+  circles run to completion. Every transaction is linked in `docs/TESTNET_LOG.md`.
 - Verified against the live precompile before deployment: a real Sepolia proof and a real 3-tx
   batch proof both returned `true` from the live 0x0FD2, tampered bytes and a wrong chain key
   reverted (`pnpm verify:live`), and the batch measured 24% cheaper than three singles.

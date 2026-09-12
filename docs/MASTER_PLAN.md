@@ -1,5 +1,7 @@
 # Kitty — Master Plan (BUIDL CTC 2026 Fall)
 
+> **Status, 12 September 2026.** Plan document, kept as written; the checkboxes and the 8 September status below are historical. Everything in days 1 to 5 shipped: the Creditcoin side is deployed (final ledger `0xC2A1…F276`, paired vault `0xa27e…DA84` on Sepolia), three circles settled on testnet, the hosted dashboard is on GitHub Pages rather than Vercel, the deck has twelve slides, and the test counts are now 162 Foundry, 29 agent, 11 bot and 8 attack scenarios. The current description is in [`TECH.md`](TECH.md), [`OPERATIONS.md`](OPERATIONS.md) and [`SUBMISSION.md`](SUBMISSION.md); every transaction is in [`TESTNET_LOG.md`](TESTNET_LOG.md).
+
 Detailed build-to-win plan. Every item names the exact repo, file, and license it is taken from.
 Rule of the road: **take freely from MIT-licensed repos (copy files, keep the header), re-implement
 from unlicensed repos (design only), never lift a current BUIDL CTC competitor's submission** — the

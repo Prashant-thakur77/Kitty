@@ -25,9 +25,10 @@ const Li = ({ children }: { children: ReactNode }) => <li className="mb-2 max-w-
 
 /* ───────────── slide 4: the first circle, read from whatever ledger cfg points at ───────────── */
 
-/** The Delhi Chit Circle's members on CC3 Testnet (KittyLedger getCircle(1), identical on v2 and v3), so the wheel never prints empty when the chain cfg points at has no circle. */
+/** The Delhi Chit Circle's members on CC3 Testnet (KittyLedger getCircle(1) on the final ledger 0xC2A1…F276), so the wheel never prints empty when the chain cfg points at has no circle. */
 const SAMPLE_MEMBERS = ['0xB077B088E668386Bc57af87F175d250f459f0791', '0x128AC52048072BeEb5b930cC5D9F8c91EDe5BEbA', '0x8FFb6727EAe2F3C5EF9F68aC0aC2dA0CAEc2D1dA'] as const
-const SAMPLE = { name: 'Delhi Chit Circle', circles: 1, proven: 3, batches: 2, settled: 300, attested: 11686789n }
+/** Round 0 of the Delhi Chit Circle on the final ledger, from docs/TESTNET_LOG.md: one batch of three, closed, paid out and proven back. */
+const SAMPLE = { name: 'Delhi Chit Circle', circles: 1, proven: 3, batches: 1, settled: 300, attested: 11687401n }
 
 function LiveCircleSlide() {
   const count = useCircleCount()
@@ -61,7 +62,7 @@ function LiveCircleSlide() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Stat label="Circles" value={n(circles, SAMPLE.circles)} sub={sub} />
           <Stat label="Payments proven" value={n(stats.proven, SAMPLE.proven)} sub={live ? `${stats.onTimePct}% on time` : 'all on time'} tone="mint" />
-          <Stat label="Batch proofs" value={n(stats.batches, SAMPLE.batches)} sub={live ? `${stats.batched} tx through 0x0FD2` : '1 + 2 tx through 0x0FD2'} tone="sky" />
+          <Stat label="Batch proofs" value={n(stats.batches, SAMPLE.batches)} sub={live ? `${stats.batched} tx through 0x0FD2` : '3 tx through 0x0FD2 in one call'} tone="sky" />
           <Stat label="tUSD settled" value={n(stats.settled, SAMPLE.settled)} sub="payouts proven back" tone="mint" />
           <Stat label="Attested Sepolia block" value={<span className="text-xl">{String(attested ?? SAMPLE.attested)}</span>} sub={attested !== undefined ? 'latest · 0x0FD3' : 'close block · testnet record'} tone="amber" />
           <Stat label="KittyLedger" value={<a href={`${cfg.creditcoinExplorer}/address/${cfg.ledger}`} target="_blank" rel="noreferrer" className="text-xl">{short(cfg.ledger)}</a>} sub="Creditcoin CC3 Testnet · Blockscout" />
@@ -130,19 +131,19 @@ function DecisionCard({ d }: { d: Decision }) {
   )
 }
 
-/* ───────────── slide 9: the first circle's transactions, from docs/TESTNET_LOG.md ───────────── */
+/* ───────────── slide 9: the final ledger's transactions, from docs/TESTNET_LOG.md ───────────── */
 
 const CC = 'https://creditcoin-testnet.blockscout.com/tx/'
 const SEP = 'https://sepolia.etherscan.io/tx/'
 const TXS: { action: string; chain: 'Creditcoin' | 'Sepolia'; hash: `0x${string}`; gas: number }[] = [
-  { action: 'createCircle · Delhi Chit Circle, 3 members, 100 tUSD, 200 blocks', chain: 'Creditcoin', hash: '0x342f75d7bf3a5e3dadabc1a5b04a77e80ace7d232a01aafd792da4f2673cb89c', gas: 354101 },
-  { action: 'recordContributions round 0 · batch of 1 through 0x0FD2', chain: 'Creditcoin', hash: '0xaf5a3477f4460cca81100c5ce11fa136b41dab1cc4f5dc1fce889c52ff3e3ec0', gas: 390516 },
-  { action: 'recordContributions round 0 · batch of 2 through 0x0FD2', chain: 'Creditcoin', hash: '0x05ef192da87d9e70898e4be106a44a77be0431e6bbe9a4eca7112e49f739c0ef', gas: 588527 },
-  { action: 'closeRound 0 · everyone paid, early close', chain: 'Creditcoin', hash: '0xc9ca3583bdc4143e46838a6005ffca2802b866b472285252ad513e46494cd89c', gas: 341740 },
-  { action: 'payout round 0 · 300 tUSD to member 0', chain: 'Sepolia', hash: '0xe8b660face84ebcd2164861a1dacd0621af892f278a442c1fb688b2641626841', gas: 64821 },
-  { action: 'confirmPayout round 0 · proven back through 0x0FD2', chain: 'Creditcoin', hash: '0x7bda53a527732ebab36299206e616c53af38acc60d886d27081a88888f3c0da9', gas: 372484 },
-  { action: 'deploy KittyLedger v2 · startHeight bounded by the attested frontier; a miss cites its attestation', chain: 'Creditcoin', hash: '0x4175363073918ba657b0a39f830c0ffaafb0ddafdfb78f7e901af0366c83ab68', gas: 4889709 },
-  { action: 'deploy KittyLedger v3 · payments cannot predate the circle (the ledger read today)', chain: 'Creditcoin', hash: '0x3053c63b37800c09345d4710cab62b82e43d91d6093556023223450d003c411c', gas: 4901416 },
+  { action: 'deploy KittyLedger · the final ledger, 0xC2A1…F276', chain: 'Creditcoin', hash: '0x2199459939956219c713c4fe59c800713798e4bd922312d5a0a93a50fd7ac7f5', gas: 4901416 },
+  { action: 'recordContributions round 0 · the whole round, batch of 3, one 0x0FD2 call', chain: 'Creditcoin', hash: '0xac2a637fb248dfc8b74801b8ec993be4d7c3831d083774ef261e84cdb9652fe9', gas: 888573 },
+  { action: 'closeRound 0 · everyone paid, early close, rotation by score', chain: 'Creditcoin', hash: '0x53cbb51ddf2337bae79f33870d591a72aefcf8ca930e9edda5a12ac882277bbb', gas: 354326 },
+  { action: 'payout round 0 · 300 tUSD to member 0', chain: 'Sepolia', hash: '0xfee3061882b31b7adc8603fd3bdec728b9c777a5760b11ec346ed0e2b87263c3', gas: 64821 },
+  { action: 'confirmPayout round 0 · proven back through 0x0FD2', chain: 'Creditcoin', hash: '0x92344d886c25f2e14a573f9934407797f0379bdd100bda4e5a5101000174ba88', gas: 386582 },
+  { action: 'recordContributions · 8 payments from circles 2 and 3 in ONE precompile call', chain: 'Creditcoin', hash: '0xa7310f0081f8e3254b3ba511526196e8bf34cdb5d203f481fb05636815c1f7fa', gas: 1936724 },
+  { action: 'recordContributions circle 3 round 1 · proven from the browser by the member, no operator', chain: 'Creditcoin', hash: '0x7b8fdaab59af28c7df083528702b02ff5babe8260365a9ec2d0032d5cb8861b5', gas: 401366 },
+  { action: 'closeRound circle 1 round 1 · attested deadline + 64, a real miss with its attestation', chain: 'Creditcoin', hash: '0xef146316d55e42f20a54a8d97935d711769d3f4571cf0fd760af4471bd9f01ca', gas: 362992 },
 ]
 
 const slides: ReactNode[] = [
@@ -180,7 +181,7 @@ const slides: ReactNode[] = [
   <Slide key={8} eyebrow="Kitty Score → credit" title="The score is used, not just displayed">
     <ul className="list-disc pl-5"><Li>500 base · +15 on time · −20 late · −120 missed · 300–850.</Li><Li>KittyCreditLine on Creditcoin underwrites from the score alone: tier A borrows 100% of proven volume, B 50%, C 20%, D nothing.</Li><Li>A soulbound Kitty Score badge renders live from the ledger, so a lender can read it on any explorer.</Li><Li>Every input is a proven transaction or an attested deadline. This is the data Creditcoin was built to carry.</Li></ul></Slide>,
   <Slide key={9} eyebrow="Live on testnet" title="The first circle has already settled" dense wide>
-    <ul className="list-disc pl-5 text-[15px] [&_li]:max-w-[110ch]"><Li>KittyLedger, KittyViewer, KittyUSD, KittyCreditLine and KittyBadge deployed to Creditcoin CC3 Testnet on 12 September 2026 (KittyLedger <span className="mono">0xC2A1…F276</span>); its paired Sepolia vault <span className="mono">0xa27e…DA84</span> is trusted on the ledger; the first circle and all eight attack scenarios ran on the first ledger and vault.</Li><Li>Delhi Chit Circle, three members, 100 tUSD a round, rotation by score: three Sepolia payments, two batch proofs verified by the live 0x0FD2, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin, all inside twenty minutes.</Li><Li>Attack scenarios rerun against the real precompile: the forged chain key is rejected by 0x0FD2 itself. Every transaction is in docs/TESTNET_LOG.md; the hosted dashboard, steward log and attack lab read the same chain.</Li></ul>
+    <ul className="list-disc pl-5 text-[15px] [&_li]:max-w-[110ch]"><Li>KittyLedger, KittyViewer, KittyUSD, KittyCreditLine and KittyBadge deployed to Creditcoin CC3 Testnet on 12 September 2026 (KittyLedger <span className="mono">0xC2A1…F276</span>); its paired Sepolia vault <span className="mono">0xa27e…DA84</span> is trusted on the ledger; the first circle and all eight attack scenarios ran on the first ledger and vault.</Li><Li>Delhi Chit Circle, three members, 100 tUSD a round, rotation by score: three Sepolia payments, one batch proof of three verified by the live 0x0FD2 in a single call, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin. Then two more circles: eight payments settled in one cross-circle call, a member proving from the browser, and a real miss closed on the attested deadline.</Li><Li>Attack scenarios rerun against the real precompile: the forged chain key is rejected by 0x0FD2 itself. Every transaction is in docs/TESTNET_LOG.md; the hosted dashboard, steward log and attack lab read the same chain.</Li></ul>
     <table className="mt-2 [&_td]:py-[3px] [&_th]:py-1 [&_td]:text-[12.5px] [&_td]:whitespace-nowrap"><thead><tr><th>Action</th><th>Chain</th><th>Transaction</th><th>Gas</th></tr></thead><tbody>
       {TXS.map((t) => (
         <tr key={t.hash}><td style={{ color: 'var(--ink)' }}>{t.action}</td><td>{t.chain}</td><td className="mono"><a href={`${t.chain === 'Sepolia' ? SEP : CC}${t.hash}`} target="_blank" rel="noreferrer">{t.hash.slice(0, 10)}…{t.hash.slice(-6)}</a></td><td className="mono">{t.gas.toLocaleString()}</td></tr>

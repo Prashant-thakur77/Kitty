@@ -1,5 +1,7 @@
 # Kitty — hackathon strategy (BUIDL CTC 2026 Fall)
 
+> **Status, 12 September 2026.** This is the pre-build strategy document, kept as written. Idea A shipped: contracts live on Creditcoin CC3 Testnet and Ethereum Sepolia (`deployments.json`), three circles settled through the live precompiles, eight attack scenarios recorded against them, 162 Foundry tests, 29 agent tests and 11 bot tests in CI, the demo video and the twelve-slide deck published. The current description is in [`TECH.md`](TECH.md), [`ATTESTCOIN_INTEGRATION.md`](ATTESTCOIN_INTEGRATION.md) and [`SUBMISSION.md`](SUBMISSION.md); every transaction is in [`TESTNET_LOG.md`](TESTNET_LOG.md).
+
 Target: **BUIDL CTC 2026 Fall — "BUIDL For The Real World"** (DoraHacks, Creditcoin + Credit Labs).
 Prize: $10k / $3k / $2k + CEIP fast-track for the top three. Track chosen: **DeFi** (prizes are
 awarded overall, not per track — the track is a label; depth of Attestcoin use is a scored criterion).

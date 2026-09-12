@@ -1,5 +1,7 @@
 # Kitty v2 plan — deeper Attestcoin, plus an agent that cannot lie
 
+> **Status, 12 September 2026.** The v2 plan, kept as written; section 2 describes the codebase before this work and the 8 September status in section 5b is historical (its counts have since grown to 162 Foundry tests, 29 agent tests, 11 bot tests and 8 attack scenarios, with five of the eleven ChainInfo functions on the hot path: `is_height_attested`, `find_lowest_attested_after`, `get_chain_by_key`, `get_latest_attestation_height_and_hash`, `get_attestation_bounds`). Tracks A, B and C all shipped and ran on testnet: cross-circle batches of eight and five in one precompile call, the steward's decision log on `/steward`, and the three agent-safety scenarios recorded against the live precompile. The current description is in [`TECH.md`](TECH.md) and [`ATTESTCOIN_INTEGRATION.md`](ATTESTCOIN_INTEGRATION.md).
+
 Goal: win on the criterion the organisers actually weight — *"Depth of Attestcoin Protocol
 utilization will be evaluated as one of the core scoring criteria"* — and pick up the AI track's
 framing without bolting a chatbot onto a DeFi app.

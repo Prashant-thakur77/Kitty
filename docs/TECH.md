@@ -64,7 +64,7 @@ Each query id is marked processed, then `_recordContribution(chainKey, qid, heig
 
 | # | Check | Where | Revert |
 |---|---|---|---|
-| 1 | `EvmV1Decoder.getTransactionType` is a valid type (0 to 4) | `_singleLog`, line 714 | `UnsupportedTxType(txType)` |
+| 1 | `EvmV1Decoder.getTransactionType` is a valid type (0 to 4) | `_singleLog`, line 715 | `UnsupportedTxType(txType)` |
 | 2 | `EvmV1Decoder.decodeReceiptFields(encodedTx).receiptStatus == 1` | `_singleLog`, line 718 | `SourceTxFailed()` |
 | 3 | `getLogsByEventSignature(receipt, CONTRIBUTED_SIG)` returns at least one log | `_singleLog`, line 720 | `ExpectedExactlyOneLog(0)` |
 | 4 | among those logs, count the ones whose `address_` is in `trustedVault[chainKey]`; if none, `_rejectEmitter` | `_singleLog`, line 728 | `WrongChain(got, want)` when the emitter is the circle's own vault trusted on another chain, otherwise `WrongEmitter(logs[0].address_, address(0))` |
@@ -222,7 +222,7 @@ Before submitting, the worker asks the precompile's free view `verify` whether t
 | three singles, total | | 261,813 |
 | one batch `verify` of the same three | 48, shared | 199,375 |
 
-The batch is 24% cheaper for three payments, and the saving grows with block age because the continuity proof is verified once instead of once per payment. On the ledger itself, the testnet log shows `recordContributions` at 390,516 gas for a batch of 1, 588,527 for a batch of 2 and 888,573 for a batch of 3 (each including decoding and storage), and `confirmPayout` at 372,484 and 386,582.
+The batch is 24% cheaper for three payments, and the saving grows with block age because the continuity proof is verified once instead of once per payment. On the ledger itself, the testnet log shows `recordContributions` at 390,516 gas for a batch of 1, 588,527 for a batch of 2, 888,573 for a batch of 3, 918,257 for a batch of 5 and 1,936,724 for the cross-circle batch of 8 (each including decoding and storage), and `confirmPayout` between 372,484 and 386,582.
 
 ## Attestcoin coverage
 
@@ -255,7 +255,7 @@ The one action Kitty still delegates to an operator is the Sepolia payout. With 
 
 ## Current state
 
-Live on Ethereum Sepolia and Creditcoin CC3 Testnet since 12 September 2026, addresses in [`deployments.json`](../deployments.json). The Delhi Chit Circle (3 members, 100 tUSD, 200 Sepolia blocks a round, rotation by score) settled round 0 end to end on the final ledger: three Sepolia payments, one batch proof of three verified by `0x0FD2` in a single call, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin; round 1 has two payments proven and one member deliberately missing. Two more circles were opened on the same ledger afterwards (circle 2, Lagos Susu, 5 members, 50 tUSD, 300 blocks, fixed rotation; circle 3, Oaxaca Tanda, 3 members, 100 tUSD, 250 blocks, by score) with their round-0 payments on Sepolia. Every transaction is in [`TESTNET_LOG.md`](TESTNET_LOG.md).
+Live on Ethereum Sepolia and Creditcoin CC3 Testnet since 12 September 2026, addresses in [`deployments.json`](../deployments.json). The Delhi Chit Circle (3 members, 100 tUSD, 200 Sepolia blocks a round, rotation by score) settled round 0 end to end on the final ledger: three Sepolia payments, one batch proof of three verified by `0x0FD2` in a single call, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin. Round 1 closed on the attested deadline with one member deliberately missing, the miss carrying the attestation that proved it, and the pot went to the best proven record; the final round closed with nobody paying and the circle completed. Two more circles ran on the same ledger (circle 2, Lagos Susu, 5 members, 50 tUSD, 300 blocks, fixed rotation; circle 3, Oaxaca Tanda, 3 members, 100 tUSD, 250 blocks, by score): their round-0 payments were verified as one cross-circle batch of eight, a five-member round as one batch of five, and a member of circle 3 proved their own payment from the browser during the demo recording. Every transaction is in [`TESTNET_LOG.md`](TESTNET_LOG.md).
 
 Verification: 162 Foundry tests across 15 suites (unit, fuzz, stateful invariants with a rotation oracle and an attacker target, isolated gas measurements) with both precompiles mocked at their real addresses and one suite decoding genuine Proof Builder bytes; 29 worker unit tests for the batch policy and the citation validator; 8 attack scenarios that push real transactions through proof, precompile and ledger, run in CI on every push and recorded against the live testnets.
 

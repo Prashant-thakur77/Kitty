@@ -169,8 +169,9 @@ pnpm txlog <sepolia|creditcoin> <0xtxhash> "<action>"
 
 | Command | What it does |
 |---|---|
-| `forge test` | 107 tests in 11 suites, precompiles mocked with `vm.etch`. |
+| `forge test` | 162 tests in 15 suites (unit, fuzz, invariants, gas), precompiles mocked with `vm.etch`. |
 | `pnpm test:agent` | 29 Node tests: `worker/test/policy.test.ts` (17) and `worker/test/citations.test.ts` (12). No network, no `.env`. |
+| `pnpm test:bot` | 11 Node tests: `bot/test/format.test.ts`, message formatting. No network. |
 | `pnpm typecheck` | `tsc -p worker/tsconfig.json`. |
 | `pnpm scenario <name>… \| --all` | Runs scenarios against whatever `.env` points at and prints PASS/FAIL. |
 | `pnpm scenarios` | `scripts/scenarios.sh`: two anvils, one proven round, all eight scenarios, exits with the failure count. |

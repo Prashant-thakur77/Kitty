@@ -1,5 +1,7 @@
 # Demo runbook (testnet, recording day)
 
+> **Status, 12 September 2026.** The recording-day script, kept as written; the segment timings and the circle name below are the plan, not the take. The demo was recorded against the final ledger with the Delhi Chit Circle, Lagos Susu and Oaxaca Tanda circles; the published video is 4:54 and its chapter list is in the README's Demo section. Every transaction from the day is in [`TESTNET_LOG.md`](TESTNET_LOG.md); the operational reference is [`OPERATIONS.md`](OPERATIONS.md).
+
 Total wall time ≈ 25 minutes because of two attestation waits (~8 min each). Record in segments.
 
 ## T−30 min · prepare
