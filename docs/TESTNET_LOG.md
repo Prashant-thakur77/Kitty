@@ -38,6 +38,16 @@ Circle #1 *Delhi Chit Circle* · round 0: 3 Sepolia payments → 2 batch proofs 
 | 2026-09-12 | Sepolia | contribute round 0 member 0 (v2 circle 1) | [0xf231e011…088f7e](https://sepolia.etherscan.io/tx/0xf231e011ab2f665066ed31f86500b007c983fcf2abdfaf7e40deabc656088f7e) | 51633 |
 | 2026-09-12 | Sepolia | contribute round 0 member 1 (v2 circle 1) | [0xf8446f1f…c39d34](https://sepolia.etherscan.io/tx/0xf8446f1f4806bd03def5c3c107d5a3bd448ea91a7fb5926933be579e06c39d34) | 51633 |
 | 2026-09-12 | Sepolia | contribute round 0 member 2 (v2 circle 1) | [0x2402e24b…ed4c64](https://sepolia.etherscan.io/tx/0x2402e24b0df89a5db1f9d3c2216b39b69b7195e31a57f1f1b133652e8ced4c64) | 51633 |
+| 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyLedger v3 (payments cannot predate the circle) | [0x3053c63b…3c411c](https://creditcoin-testnet.blockscout.com/tx/0x3053c63b37800c09345d4710cab62b82e43d91d6093556023223450d003c411c) | 4901416 |
+| 2026-09-12 | Creditcoin CC3 Testnet | createCircle on v3 (Delhi Chit Circle, 3 members, 100 tUSD, 200 blocks) | [0x970a2b57…a4e336](https://creditcoin-testnet.blockscout.com/tx/0x970a2b5767b9f88a0e336958997f5a4637ef50ac256d3dff01ed79b5f0a4e336) | 357960 |
+| 2026-09-12 | Sepolia | contribute round 0 member 0 (v3 circle 1) | [0xe5426f5f…05b8f2](https://sepolia.etherscan.io/tx/0xe5426f5fe1fb7a39c8e7c87884a3b172f79bc3e8c1ad4460f899723ca905b8f2) | 51633 |
+| 2026-09-12 | Sepolia | contribute round 0 member 1 (v3 circle 1) | [0xa81e72db…1af76b](https://sepolia.etherscan.io/tx/0xa81e72db3c13499c68dd4206a7f6fd57dbec88d86faeeed2f24444280c1af76b) | 51633 |
+| 2026-09-12 | Sepolia | contribute round 0 member 2 (v3 circle 1) | [0x53d50a46…9505ae](https://sepolia.etherscan.io/tx/0x53d50a4604e9e4fd15a7e1617e617379ee212e538a50de8b110b8735239505ae) | 51633 |
+| 2026-09-12 | Creditcoin CC3 Testnet | createCircle on the final ledger (Delhi Chit Circle, 3 members, 100 tUSD, 200 blocks) | [0x35963b5a…fcdf9c](https://creditcoin-testnet.blockscout.com/tx/0x35963b5ac50093648923d6ffcce73c31f912c720c888dbe14daef72f63fcdf9c) | 357960 |
+| 2026-09-12 | Sepolia | contribute round 0 member 0 (final vault) | [0xe896669f…987a4b](https://sepolia.etherscan.io/tx/0xe896669ff87415e221e9a47c86e00dd164b19d4052450cb560380df8e1987a4b) | 105733 |
+| 2026-09-12 | Sepolia | contribute round 0 member 1 (final vault) | [0xbff79eb5…ecfa1d](https://sepolia.etherscan.io/tx/0xbff79eb5e3bebeac93a127416578e5bbdffd38a8504f211155f0542107ecfa1d) | 71533 |
+| 2026-09-12 | Sepolia | contribute round 0 member 2 (final vault) | [0x02b511aa…1dd204](https://sepolia.etherscan.io/tx/0x02b511aa9ead2c612d06ac13861ad4f09a33874738a573a22df3bcc6cf1dd204) | 71533 |
+| 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyLedger (final) | [0x21994599…7ac7f5](https://creditcoin-testnet.blockscout.com/tx/0x2199459939956219c713c4fe59c800713798e4bd922312d5a0a93a50fd7ac7f5) | 4901416 |
 
 ## Live precompile verification (no deployment needed)
 

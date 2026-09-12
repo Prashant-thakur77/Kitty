@@ -10,6 +10,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; source .env; set +a
 FORCE=",${FORCE_REDEPLOY:-},"
+# A vault serves exactly one ledger: it marks payouts per (circleId, round) and a new ledger reuses circle ids, so a
+# ledger redeploy without a fresh vault would leave the new ledger's first rounds unpayable. Pair them.
+if [[ "$FORCE" == *",ledger,"* && "$FORCE" != *",vault,"* ]]; then echo "ledger redeploy implies a fresh vault"; FORCE="${FORCE}vault,"; fi
 
 upsert() { # file key value
   if grep -q "^$2=" "$1" 2>/dev/null; then sed -i "s|^$2=.*|$2=$3|" "$1"; else echo "$2=$3" >> "$1"; fi

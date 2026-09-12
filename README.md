@@ -277,19 +277,19 @@ Faucets: Sepolia ETH from [Alchemy](https://www.alchemy.com/faucets/ethereum-sep
 
 | Contract | Network | Address |
 |---|---|---|
-| KittyVault v2 | Ethereum Sepolia, chainKey 1 | [`0x1172ABd45724069749E9EB98A0349177435B284E`](https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E) |
+| KittyVault | Ethereum Sepolia, chainKey 1 | [`0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84`](https://sepolia.etherscan.io/address/0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84) |
 | TestUSD | Ethereum Sepolia | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
 | FakeVault (attack lab) | Ethereum Sepolia | [`0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb`](https://sepolia.etherscan.io/address/0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb) |
-| KittyLedger (Attestcoin Smart Contract) | Creditcoin CC3 Testnet, 102031 | [`0xA3111Ee555Fb8420DE7A38572521f88888CeE2De`](https://creditcoin-testnet.blockscout.com/address/0xA3111Ee555Fb8420DE7A38572521f88888CeE2De) |
-| KittyViewer | Creditcoin CC3 Testnet, 102031 | [`0xa5196A2915E4878Acd0448cF6eb04ea8B46fec53`](https://creditcoin-testnet.blockscout.com/address/0xa5196A2915E4878Acd0448cF6eb04ea8B46fec53) |
+| KittyLedger (Attestcoin Smart Contract) | Creditcoin CC3 Testnet, 102031 | [`0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276`](https://creditcoin-testnet.blockscout.com/address/0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276) |
+| KittyViewer | Creditcoin CC3 Testnet, 102031 | [`0xFfA85A21eBa3e46EFe3C53c77f1AF4f4Cdddc947`](https://creditcoin-testnet.blockscout.com/address/0xFfA85A21eBa3e46EFe3C53c77f1AF4f4Cdddc947) |
 | KittyUSD | Creditcoin CC3 Testnet, 102031 | [`0x1172ABd45724069749E9EB98A0349177435B284E`](https://creditcoin-testnet.blockscout.com/address/0x1172ABd45724069749E9EB98A0349177435B284E) |
-| KittyCreditLine | Creditcoin CC3 Testnet, 102031 | [`0x9aC5D491d12Ff8BC9340ad5972c5EB2629a89A9a`](https://creditcoin-testnet.blockscout.com/address/0x9aC5D491d12Ff8BC9340ad5972c5EB2629a89A9a) |
-| KittyBadge (ERC-5192) | Creditcoin CC3 Testnet, 102031 | [`0xe9eE766DbD7DEE640636703644505566F64D0663`](https://creditcoin-testnet.blockscout.com/address/0xe9eE766DbD7DEE640636703644505566F64D0663) |
+| KittyCreditLine | Creditcoin CC3 Testnet, 102031 | [`0xB54943A1cEd46aE1bB844260B77896b9A134B1ED`](https://creditcoin-testnet.blockscout.com/address/0xB54943A1cEd46aE1bB844260B77896b9A134B1ED) |
+| KittyBadge (ERC-5192) | Creditcoin CC3 Testnet, 102031 | [`0x17EcDc95Be4f238e26F8f2005ED60D2bd22C1F46`](https://creditcoin-testnet.blockscout.com/address/0x17EcDc95Be4f238e26F8f2005ED60D2bd22C1F46) |
 | Block prover precompile | Creditcoin | `0x0000000000000000000000000000000000000FD2` |
 | ChainInfo precompile | Creditcoin | `0x0000000000000000000000000000000000000fD3` |
 | Deployer / operator | both | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
 
-Deployed from block 5473445 (12 September 2026). The first ledger, `0xc6fe…c2dE` from block 5473022, ran the first circle and all eight attack scenarios; this build additionally bounds `startHeight` by the attested frontier, refuses payments that predate the circle, and records the attestation behind every missed deadline. The first live circle, *Delhi Chit Circle*, settled round 0 end to end on the same day: three Sepolia payments, two batch proofs verified by the block-prover precompile, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin. Round 0 landed in two calls (1 + 2) because the steward's batch timer fired before two payments were attested; the policy now holds for attested roundmates. Every testnet transaction is logged with an explorer link in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md).
+Deployed from block 5473533 (12 September 2026), paired with a fresh vault: a vault marks payouts per circle and round, so it serves exactly one ledger (`scripts/deploy.sh` enforces the pairing). The first ledger, `0xc6fe…c2dE` from block 5473022 with vault `0x1172…284E`, ran the first circle and all eight attack scenarios; this build additionally bounds `startHeight` by the attested frontier, refuses payments that predate the circle, and records the attestation behind every missed deadline. The first live circle, *Delhi Chit Circle*, settled round 0 end to end on the same day: three Sepolia payments, two batch proofs verified by the block-prover precompile, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin. Round 0 landed in two calls (1 + 2) because the steward's batch timer fired before two payments were attested; the policy now holds for attested roundmates. Every testnet transaction is logged with an explorer link in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md).
 
 ## Repository layout
 
