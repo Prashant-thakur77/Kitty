@@ -41,6 +41,7 @@
 
 - [Overview](#overview)
 - [Demo](#demo)
+- [Verify it yourself in five minutes](#verify-it-yourself-in-five-minutes)
 - [How a round settles](#how-a-round-settles)
 - [Attestcoin integration](#attestcoin-integration)
   - [Files using Attestcoin](#files-using-attestcoin)
@@ -109,6 +110,25 @@ Every claim in this README is backed by a transaction on the public testnets. A 
 | A round closed on the attested deadline with a real missed payment and the attestation that proved it | [`0xef146316…`](https://creditcoin-testnet.blockscout.com/tx/0xef146316d55e42f20a54a8d97935d711769d3f4571cf0fd760af4471bd9f01ca) |
 | A Sepolia payout proven back to Creditcoin before the round shows *Paid* | [`0x92344d88…`](https://creditcoin-testnet.blockscout.com/tx/0x92344d886c25f2e14a573f9934407797f0379bdd100bda4e5a5101000174ba88) |
 | A replayed proof rejected by the ledger (`QueryAlreadyProcessed`) and a forged chain key rejected by the precompile itself | recorded in [`web/public/lab-testnet.json`](web/public/lab-testnet.json), shown at `/lab` |
+
+## Verify it yourself in five minutes
+
+No wallet or funds are needed for any of these.
+
+1. Open the [dashboard](https://prashant-thakur77.github.io/Kitty/). The nav shows the latest Sepolia block against the latest block the attestor network has attested on Creditcoin, read live from `0x0FD3`.
+2. Open [circle 4](https://prashant-thakur77.github.io/Kitty/circle/4) (Accra Susu, live). Every proven payment in the members table links to the Creditcoin transaction that carried its Attestcoin proof; click one and find the `BatchVerified` event emitted by the precompile call.
+3. Open a member's [score](https://prashant-thakur77.github.io/Kitty/score/0x8fFb6727EaE2F3C5Ef9F68Ac0ac2dA0caEc2d1Da). The history lists a real missed payment with the attestation that proved the deadline; the score is replayed from ledger events through the on-chain formula.
+4. Open the [attack lab](https://prashant-thakur77.github.io/Kitty/lab). The eight scenarios shown were run against the live precompile; every transaction hash links to an explorer.
+5. Run one proof yourself against the live precompile, from any machine:
+
+   ```bash
+   git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty && pnpm install
+   pnpm verify:live 0x2e6fb78a58bde01ea00469ddf5e5182a82594f58cba67c38f00db2d7b4ed40e8
+   ```
+
+   It fetches the Proof Builder proof for that Sepolia payment, asks `0x0FD2` on CC3 Testnet whether it verifies (`true`), then shows the tampered-bytes and wrong-chain-key negatives reverting.
+
+6. Send `/circle 4` to [@KittyCirclesBot](https://t.me/KittyCirclesBot). The answer is assembled from chain reads only.
 
 ## How a round settles
 
