@@ -77,6 +77,17 @@ Two full rounds settled on 12 September 2026. On the first ledger (`0xc6fe…c2d
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 1 round 1 on the attested deadline + 64: member 2 recorded MISSED with the attestation that proved it | [0xef146316…9f01ca](https://creditcoin-testnet.blockscout.com/tx/0xef146316d55e42f20a54a8d97935d711769d3f4571cf0fd760af4471bd9f01ca) | 362992 |
 | 2026-09-12 | Sepolia | payout circle 1 round 1 (200 tUSD to the best proven record) | [0x7e9b4f03…59941b](https://sepolia.etherscan.io/tx/0x7e9b4f032ce67a8aa10d8a97eea48e2132f5311ddcfe8d25bd47767cf159941b) | 69633 |
 | 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout circle 1 round 1 (proven back through 0x0FD2) | [0xa55fa22b…1c7091](https://creditcoin-testnet.blockscout.com/tx/0xa55fa22bd75de6a8462d4efbad1864b76782269d63ac1df3f2e000c21a1c7091) | 385238 |
+| 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 1 round 2 (final round, nobody paid: three misses recorded, circle completed) | [0x95910561…a49eec](https://creditcoin-testnet.blockscout.com/tx/0x95910561d5bf0bfe69c9cb0035f8286c7e7bb56db05ae94d80648f7ba4a49eec) | 367864 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 1 member 0 | [0xe05a1e1e…164eeb](https://sepolia.etherscan.io/tx/0xe05a1e1e05a356b5722d85cea25b95bec8e8952108f975cd47851b6b32164eeb) | 68757 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 1 member 1 | [0x4fae0e2e…9a6026](https://sepolia.etherscan.io/tx/0x4fae0e2ed17a910f85f3a6fe9827fb5c99f4999ebe2c13733092684bfc9a6026) | 51657 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 1 member 2 | [0xb27ac7e3…af45e1](https://sepolia.etherscan.io/tx/0xb27ac7e36fa2f6ae208ef49c017d48f845c34c5a405c972f417ace7239af45e1) | 51657 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 1 member 3 | [0x70880298…dcbdf9](https://sepolia.etherscan.io/tx/0x708802980b7ab1f2ed48c255679f2d16df2535de711a03e3f9befa55a8dcbdf9) | 51657 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 1 member 4 | [0xbedefda7…6f2102](https://sepolia.etherscan.io/tx/0xbedefda7b7f6760b30f2d29bc648e9190ab4efb7ce90324cbc0740ee1f6f2102) | 51657 |
+| 2026-09-12 | Sepolia | contribute circle 3 round 1 member 0 | [0x9d5b4120…f6b7ca](https://sepolia.etherscan.io/tx/0x9d5b412097803238c75a587f3e8fa3bdf71f5cedc19e465aec1e963c6ff6b7ca) | 51645 |
+| 2026-09-12 | Sepolia | contribute circle 3 round 1 member 1 | [0xb715ab6e…ce92a1](https://sepolia.etherscan.io/tx/0xb715ab6e824e2db770b6b3495d17d037605ed032923c0358b0b093f0aace92a1) | 51645 |
+| 2026-09-12 | Creditcoin CC3 Testnet | recordContributions circle 2 round 1 (batch of 5, the whole five-member round in one call) | [0x233c716f…51f975](https://creditcoin-testnet.blockscout.com/tx/0x233c716f60b56f90a2b5309d583e2f2ee165530654b173453622db4cd051f975) | 918257 |
+| 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 2 round 1 (everyone paid; fixed rotation) | [0x7c95114a…945bed](https://creditcoin-testnet.blockscout.com/tx/0x7c95114a0a2a2632d44d8aa59fbb36bbe8f6863bf47f3618e3044c8a3e945bed) | 354326 |
+| 2026-09-12 | Sepolia | payout circle 2 round 1 (250 tUSD) | [0x27027b07…e4e91a](https://sepolia.etherscan.io/tx/0x27027b07c0766ebf56d1ee2fc6088c540058bba3e5f68cc1d46b5cef49e4e91a) | 69645 |
 
 ## Live precompile verification (no deployment needed)
 
