@@ -18,7 +18,8 @@ export const DEFAULT_BOT_URL = 'https://t.me/KittyCirclesBot';
 export const botCfg = {
   token: process.env.BOT_TOKEN ?? '',
   dryRun: !process.env.BOT_TOKEN || process.env.BOT_DRY_RUN === '1',
-  webAppUrl: (process.env.BOT_WEBAPP_URL ?? DEFAULT_WEBAPP_URL).replace(/\/?$/, '/'),
+  // Inside Telegram the dashboard loads its SDK when opened with ?tg=1, so the Mini App URL carries it.
+  webAppUrl: process.env.BOT_WEBAPP_URL ?? DEFAULT_WEBAPP_URL + '?tg=1',
   pollMs: Number(process.env.BOT_POLL_MS ?? 15_000),
   /** Blocks scanned on the very first start, when state.json has no cursor yet ('all' = from the ledger's deploy block, or genesis). */
   lookbackBlocks: process.env.BOT_LOOKBACK_BLOCKS === 'all' || (!process.env.BOT_LOOKBACK_BLOCKS && worker.mode === 'local') ? Infinity : Number(process.env.BOT_LOOKBACK_BLOCKS ?? 2_000),

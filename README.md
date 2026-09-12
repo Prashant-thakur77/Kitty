@@ -213,7 +213,7 @@ pnpm explain "why did you wait?"      # cited explanation, or the deterministic 
 
 ## Telegram
 
-A circle lives in a group chat, so Kitty does too. [`bot/`](bot/) is a Telegram bot ([@KittyCirclesBot](https://t.me/KittyCirclesBot)) that pushes every proof into the chat and opens the dashboard as a Mini App; [`docs/TELEGRAM.md`](docs/TELEGRAM.md) has the BotFather setup.
+The bot is live as [@KittyCirclesBot](https://t.me/KittyCirclesBot) against the final ledger. A circle lives in a group chat, so Kitty does too. [`bot/`](bot/) is a Telegram bot ([@KittyCirclesBot](https://t.me/KittyCirclesBot)) that pushes every proof into the chat and opens the dashboard as a Mini App; [`docs/TELEGRAM.md`](docs/TELEGRAM.md) has the BotFather setup.
 
 - `/circle 1` — the live circle: round, deadline block against the attested frontier from `0x0FD3`, who is proven, pending or missed, pot, next recipient, explorer links.
 - `/score 0x…` — Kitty Score, tier, counters and the credit limit from `KittyCreditLine.underwrite`.

@@ -94,6 +94,7 @@ What no other Attestcoin contract in this field does:
   (also uploaded to YouTube as unlisted; paste that link in the video field)
 - Deck: https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/Kitty-deck.pdf
 - Release: https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission
+- Telegram bot (live): https://t.me/KittyCirclesBot (`/circle 4`, `/score 0x…`, `/watch circle 4`, `/steward`; opens the dashboard as a Mini App)
 - Integration write-up: `docs/ATTESTCOIN_INTEGRATION.md`
 - Contracts: KittyLedger https://creditcoin-testnet.blockscout.com/address/0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276 · KittyVault https://sepolia.etherscan.io/address/0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84 · all addresses in `deployments.json`
 - Sector: DeFi
