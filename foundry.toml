@@ -23,3 +23,12 @@ creditcoin_testnet = "${CREDITCOIN_RPC_URL}"
 
 [lint]
 lint_on_build = false
+
+[fuzz]
+runs = 256
+
+[invariant]
+runs = 32
+depth = 160
+fail_on_revert = true
+call_override = false

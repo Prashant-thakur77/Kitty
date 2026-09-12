@@ -271,6 +271,9 @@ async function payouts() {
 }
 
 async function tick() {
+  // The operator key may also be used outside this process (seeding scripts, a redeploy); a cached nonce
+  // would then collide, so every tick starts from the node's view of both nonces.
+  ccSigner.reset(); sourceSigner.reset();
   await scanSource();
   await flushBatches();
   await closeRounds();
