@@ -61,6 +61,13 @@ export const MAX_BATCH = 10;
 export const MAX_BATCH_RANGE = 1000;
 /** Prove this many source blocks before the grace window closes rather than wait for a fuller batch. */
 export const URGENT_BLOCKS = 24;
+/**
+ * How far the attestation frontier may trail a roundmate's payment before holding for it stops
+ * being worth it. A payment whose roundmates have paid but are not yet attested is held for them
+ * while the most urgent payment still has more than URGENT_BLOCKS + ATTESTATION_LAG_BLOCKS of
+ * slack, so the whole round lands in one call; closer to the grace window, urgency wins.
+ */
+export const ATTESTATION_LAG_BLOCKS = 64;
 
 /** Payments that cannot be proven yet, because their block is not attested. */
 export const provable = (p: PendingPayment, f: Frontier) => p.block <= f.attestedHeight;
@@ -129,6 +136,21 @@ export function decideBatch(pending: PendingPayment[], frontier: Frontier, opts:
   else if (bestSlack <= URGENT_BLOCKS) reason = 'deadline-risk';
   else if (oldestWaitMs >= opts.waitMs) reason = 'waited';
 
+  // Hold for roundmates: the timer alone must not split a round. If other members of a round in
+  // this batch have already paid on the source chain but their blocks are not attested yet, and the
+  // grace window is still comfortably far, wait so the round settles in one call. Only the timer
+  // yields to this; full, round-complete, deadline-risk and forced still fire.
+  const held: Record<string, number | string | boolean> = {};
+  if (reason === 'waited') {
+    const rounds = new Set(batch.map((p) => `${p.circleId}:${p.round}`));
+    const roundmates = pending.filter((p) => !provable(p, frontier) && rounds.has(`${p.circleId}:${p.round}`));
+    if (roundmates.length > 0 && bestSlack > URGENT_BLOCKS + ATTESTATION_LAG_BLOCKS) {
+      reason = 'wait';
+      held.heldForRoundmates = roundmates.length;
+      held.holdUntilAttested = Math.max(...roundmates.map((p) => p.block));
+    }
+  }
+
   return {
     act: reason !== 'wait',
     chainKey,
@@ -146,6 +168,7 @@ export function decideBatch(pending: PendingPayment[], frontier: Frontier, opts:
       leftBehind: sorted.length - batch.length,
       waitedSeconds: Math.round(oldestWaitMs / 1000),
       stillWaitingForAttestation: pending.length - ready.length,
+      ...held,
     },
   };
 }
@@ -154,9 +177,11 @@ export function decideBatch(pending: PendingPayment[], frontier: Frontier, opts:
 export function explainBatch(d: BatchDecision): string {
   const e = d.evidence;
   if (!d.act) {
-    return e.provable === 0
-      ? `waiting: ${e.pending} payment(s) not yet attested (frontier at source block ${e.attestedHeight})`
-      : `waiting: ${e.queries} query(ies) ready, ${e.blocksOfSlack} blocks of slack, batching for a fuller proof`;
+    if (e.provable === 0) return `waiting: ${e.pending} payment(s) not yet attested (frontier at source block ${e.attestedHeight})`;
+    if (e.heldForRoundmates !== undefined) {
+      return `waiting: ${e.queries} query(ies) ready but ${e.heldForRoundmates} roundmate payment(s) not yet attested (need source block ${e.holdUntilAttested}); ${e.blocksOfSlack} blocks of slack, holding for one call`;
+    }
+    return `waiting: ${e.queries} query(ies) ready, ${e.blocksOfSlack} blocks of slack, batching for a fuller proof`;
   }
   const why = {
     full: 'the batch is full at the protocol maximum of ten queries',

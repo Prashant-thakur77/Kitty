@@ -1,7 +1,7 @@
 // Pure-function tests for the Steward's decision layer. `pnpm test:agent`
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decideBatch, explainBatch, MAX_BATCH, MAX_BATCH_RANGE, URGENT_BLOCKS, slack, provable, type PendingPayment } from '../src/agent/policy.ts';
+import { decideBatch, explainBatch, MAX_BATCH, MAX_BATCH_RANGE, URGENT_BLOCKS, ATTESTATION_LAG_BLOCKS, slack, provable, type PendingPayment } from '../src/agent/policy.ts';
 
 const pay = (o: Partial<PendingPayment> & { n?: number; circle?: number }): PendingPayment => ({
   txHash: '0x' + String(o.n ?? 1).padStart(64, '0'),
@@ -148,4 +148,57 @@ test('equal slack: the larger group wins', () => {
   const d = decideBatch(ps, frontier(1500, 1500), { waitMs: 0, now });
   assert.equal(d.chainKey, 3);
   assert.equal(d.batch.length, 2);
+});
+
+// Round 0 on testnet settled as 1 + 2 because the 45 s timer fired while two roundmates' blocks were
+// still unattested. The hold rule keeps the timer from splitting a round when there is slack to spare.
+test('holds a provable payment while roundmates are unattested and slack is ample', () => {
+  const now = Date.now();
+  const ps = [1, 2, 3].map((n) => pay({ n, block: 98 + 2 * n, closeHeight: 400, seenAt: 0 }));
+  const d = decideBatch(ps, frontier(101, 101), { waitMs: 0, now });
+  assert.equal(d.act, false);
+  assert.equal(d.reason, 'wait');
+  assert.equal(d.evidence.queries, 1, 'only member 0 (block 100) is provable');
+  assert.equal(d.evidence.heldForRoundmates, 2);
+  assert.equal(d.evidence.holdUntilAttested, 104);
+  assert.match(explainBatch(d), /2 roundmate payment\(s\) not yet attested \(need source block 104\)/);
+  assert.match(explainBatch(d), /holding for one call/);
+  // Once the frontier reaches the roundmates, the round fires as one call.
+  const later = decideBatch(ps, frontier(104, 104), { waitMs: 0, now });
+  assert.equal(later.act, true);
+  assert.equal(later.reason, 'round-complete');
+  assert.equal(later.batch.length, 3);
+});
+
+test('does not hold when slack is short', () => {
+  const now = Date.now();
+  // Inside the urgency window: deadline-risk fires regardless of unattested roundmates.
+  const urgent = [1, 2, 3].map((n) => pay({ n, block: 98 + 2 * n, closeHeight: 101 + URGENT_BLOCKS, seenAt: 0 }));
+  const d = decideBatch(urgent, frontier(101, 101), { waitMs: 0, now });
+  assert.equal(d.act, true);
+  assert.equal(d.reason, 'deadline-risk');
+  assert.equal(d.evidence.heldForRoundmates, undefined);
+  // Past urgency but inside the attestation-lag margin (closeHeight 150 → 49 blocks of slack): the
+  // timer wins, so the provable payment goes alone rather than risk the roundmates' grace window.
+  const tight = [1, 2, 3].map((n) => pay({ n, block: 98 + 2 * n, closeHeight: 150, seenAt: 0 }));
+  const t = decideBatch(tight, frontier(101, 101), { waitMs: 0, now });
+  assert.ok(Number(t.evidence.blocksOfSlack) <= URGENT_BLOCKS + ATTESTATION_LAG_BLOCKS);
+  assert.equal(t.act, true);
+  assert.equal(t.reason, 'waited');
+  assert.equal(t.evidence.heldForRoundmates, undefined);
+});
+
+test('the hold never overrides round-complete, full or forced', () => {
+  const now = Date.now();
+  // Circle 1 is complete and provable; circle 2 has one provable payment and one unattested roundmate.
+  const ps = [
+    ...[1, 2, 3].map((n) => pay({ n, circle: 1, block: 100, closeHeight: 400, seenAt: 0 })),
+    pay({ n: 4, circle: 2, block: 100, closeHeight: 400, seenAt: 0 }),
+    pay({ n: 5, circle: 2, block: 120, closeHeight: 400, seenAt: 0 }),
+  ];
+  const d = decideBatch(ps, frontier(101, 101), { waitMs: 0, now });
+  assert.equal(d.act, true);
+  assert.equal(d.reason, 'round-complete');
+  const f = decideBatch([pay({ n: 4, circle: 2, block: 100, closeHeight: 400, seenAt: 0 }), pay({ n: 5, circle: 2, block: 120, closeHeight: 400, seenAt: 0 })], frontier(101, 101), { waitMs: 0, now, force: true });
+  assert.equal(f.reason, 'forced');
 });

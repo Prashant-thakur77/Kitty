@@ -78,6 +78,7 @@ export function Lab() {
         setRecorded({ commit: String(rec.commit ?? ''), date: String(rec.date ?? ''), mode: rec.mode })
       } catch { /* no recorded run shipped: the fallback list with explanations stays */ }
     }
+    if (!cfg.labApi) { setOffline(true); loadRecorded(); return () => { cancelled = true } }   // hosted build: no API to try
     fetch(`${cfg.labApi}/scenarios`).then((r) => r.json()).then((s: Scenario[]) => { if (!cancelled && Array.isArray(s) && s.length) setScenarios(s) }).catch(() => { if (!cancelled) { setOffline(true); loadRecorded() } })
     fetch(`${cfg.labApi}/status`).then((r) => r.json()).then((st) => { if (!cancelled) setStatus(st) }).catch(() => { if (!cancelled) setOffline(true) })
     return () => { cancelled = true }
@@ -85,7 +86,7 @@ export function Lab() {
   useEffect(() => { for (const el of Object.values(logRefs.current)) el?.scrollTo({ top: el.scrollHeight }) }, [logs])
 
   async function run(name: string) {
-    if (running) return
+    if (running || !cfg.labApi) return
     setRunning(name); setLogs((l) => ({ ...l, [name]: [] })); setResults((r) => { const c = { ...r }; delete c[name]; return c })
     try {
       const res = await fetch(`${cfg.labApi}/run/${name}`, { method: 'POST' })

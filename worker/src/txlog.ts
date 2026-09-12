@@ -32,5 +32,11 @@ if (!md.endsWith('\n')) md += '\n';
 const short = `${txHash.slice(0, 10)}…${txHash.slice(-6)}`;
 const status = rc.status === 1 ? '' : ' (reverted)';
 const row = `| ${new Date().toISOString().slice(0, 10)} | ${c.label} | ${action.replace(/\|/g, '\\|')}${status} | [${short}](${c.explorer}${txHash}) | ${rc.gasUsed} |\n`;
-fs.writeFileSync(file, md + row);
-console.log(`appended to docs/TESTNET_LOG.md:\n${row.trim()}`);
+// Insert at the end of the main five-column table (the first blank line after its header), never at EOF: later
+// sections hold three-column tables and GFM would drop the link and gas cells of a row appended there.
+const at = md.indexOf('|---|---|---|---|---|\n');
+let end = md.indexOf('\n\n', at);
+if (end === -1) end = md.length - 1;
+md = md.slice(0, end + 1) + row + md.slice(end + 1);
+fs.writeFileSync(file, md);
+console.log(`added to docs/TESTNET_LOG.md:\n${row.trim()}`);

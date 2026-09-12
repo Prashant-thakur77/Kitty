@@ -12,23 +12,10 @@ Actions to expect, in order: `deploy TestUSD` · `deploy KittyVault` · `deploy 
 `createCircle` · `contribute round R member N` · `recordContributions round R (batch of N)` · `closeRound R` ·
 `payout round R` · `confirmPayout round R` · attack-lab attempts (`replay`, `spoofEmitter`, `wrongChain`, `revertedTx`, `late`, `stealFromSteward`, `fireTheAgent`, `poisonReasoning`).
 
+Circle #1 *Delhi Chit Circle* · round 0: 3 Sepolia payments → 2 batch proofs (1 + 2; the roundmate hold rule from audit round 2 makes the next round a single batch) → early close → 300 tUSD payout → proof-back, all on 12 September 2026. Round 1 in progress (a stranger proved member 0's payment in the fire-the-agent scenario; member 1 pays late; member 2 misses).
+
 | date | chain | action | tx | gas used |
 |---|---|---|---|---|
-
-## Live precompile verification (no deployment needed)
-
-2026-09-08 · Sepolia tx [`0xe3ef81c8…757b8d`](https://sepolia.etherscan.io/tx/0xe3ef81c8196c46c66c0279318d3475075dbb111e7f51865823931e636b757b8d) (FakeVault deployment, block 11656295, index 44)
-→ Proof Builder proof (7 Merkle siblings, 6 continuity roots) → `0x0FD2.verify` on CC3 Testnet = **true**; tampered bytes → "Merkle proof validation failed"; chainKey 3 → "Continuity proof does not match attestation or checkpoint". Command: `pnpm verify:live 0xe3ef81c8196c46c66c0279318d3475075dbb111e7f51865823931e636b757b8d`.
-
-2026-09-08 · **Batch**: the three Sepolia deployment txs (TestUSD, KittyVault @ 11656253; FakeVault @ 11656295) → one `/proof-batch-by-tx/1` call → `0x0FD2.verify(batch)` on CC3 Testnet = **true** with one shared continuity proof (48 roots). Command: `pnpm verify:live 0x9e77a48510f253f834af4538b463a127e3d41bbd23f935b3e12d379c0f5680b8 0x693dfb700f563bfbf41647ea73a3e8e50f3fe18bcf005c7185a355664f9924b3 0xe3ef81c8196c46c66c0279318d3475075dbb111e7f51865823931e636b757b8d`.
-
-## Sepolia deployments
-
-| date | contract | address |
-|---|---|---|
-| 2026-09-08 | TestUSD | https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE |
-| 2026-09-08 | KittyVault (v2, contributor-only payouts; v1 was 0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E) | https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E |
-| 2026-09-08 | FakeVault | https://sepolia.etherscan.io/address/0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb |
 | 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyLedger | [0xfd7ddecc…e88b8c](https://creditcoin-testnet.blockscout.com/tx/0xfd7ddecc5b5975add35a6ba7ff7d9dfb02e3e773f21c16de7464911734e88b8c) | 4732334 |
 | 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyViewer | [0xa20a6e3c…00ed51](https://creditcoin-testnet.blockscout.com/tx/0xa20a6e3c9e1b493ee174511885fa8d9d15194768640ca4b678236b8e6800ed51) | 1214632 |
 | 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyUSD | [0x0d9a3f8b…20e680](https://creditcoin-testnet.blockscout.com/tx/0x0d9a3f8b6cf8584416097eac0da8ce9376dbaad2907018ec80e718c2fb20e680) | 483545 |
@@ -44,3 +31,18 @@ Actions to expect, in order: `deploy TestUSD` · `deploy KittyVault` · `deploy 
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound 0 (everyone paid) | [0xc9ca3583…4cd89c](https://creditcoin-testnet.blockscout.com/tx/0xc9ca3583bdc4143e46838a6005ffca2802b866b472285252ad513e46494cd89c) | 341740 |
 | 2026-09-12 | Sepolia | payout round 0 (300 tUSD to member 0) | [0xe8b660fa…626841](https://sepolia.etherscan.io/tx/0xe8b660face84ebcd2164861a1dacd0621af892f278a442c1fb688b2641626841) | 64821 |
 | 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout round 0 (payout proven back through 0x0FD2) | [0x7bda53a5…3c0da9](https://creditcoin-testnet.blockscout.com/tx/0x7bda53a527732ebab36299206e616c53af38acc60d886d27081a88888f3c0da9) | 372484 |
+
+## Live precompile verification (no deployment needed)
+
+2026-09-08 · Sepolia tx [`0xe3ef81c8…757b8d`](https://sepolia.etherscan.io/tx/0xe3ef81c8196c46c66c0279318d3475075dbb111e7f51865823931e636b757b8d) (FakeVault deployment, block 11656295, index 44)
+→ Proof Builder proof (7 Merkle siblings, 6 continuity roots) → `0x0FD2.verify` on CC3 Testnet = **true**; tampered bytes → "Merkle proof validation failed"; chainKey 3 → "Continuity proof does not match attestation or checkpoint". Command: `pnpm verify:live 0xe3ef81c8196c46c66c0279318d3475075dbb111e7f51865823931e636b757b8d`.
+
+2026-09-08 · **Batch**: the three Sepolia deployment txs (TestUSD, KittyVault @ 11656253; FakeVault @ 11656295) → one `/proof-batch-by-tx/1` call → `0x0FD2.verify(batch)` on CC3 Testnet = **true** with one shared continuity proof (48 roots). Command: `pnpm verify:live 0x9e77a48510f253f834af4538b463a127e3d41bbd23f935b3e12d379c0f5680b8 0x693dfb700f563bfbf41647ea73a3e8e50f3fe18bcf005c7185a355664f9924b3 0xe3ef81c8196c46c66c0279318d3475075dbb111e7f51865823931e636b757b8d`.
+
+## Sepolia deployments
+
+| date | contract | address |
+|---|---|---|
+| 2026-09-08 | TestUSD | https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE |
+| 2026-09-08 | KittyVault (v2, contributor-only payouts; v1 was 0x15D30C27d0E26dCFFe06E76680F55A0A358cf63E) | https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E |
+| 2026-09-08 | FakeVault | https://sepolia.etherscan.io/address/0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb |

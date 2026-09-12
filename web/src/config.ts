@@ -15,7 +15,7 @@ export const cfg = {
   sepoliaExplorer: import.meta.env.VITE_SEPOLIA_EXPLORER ?? 'https://sepolia.etherscan.io',
   creditcoinExplorer: import.meta.env.VITE_CREDITCOIN_EXPLORER ?? 'https://creditcoin-testnet.blockscout.com',
   ledgerDeployBlock: BigInt(import.meta.env.VITE_LEDGER_DEPLOY_BLOCK ?? 0),
-  labApi: import.meta.env.VITE_LAB_API ?? 'http://localhost:8790',
+  labApi: import.meta.env.VITE_LAB_API ?? (import.meta.env.DEV ? 'http://localhost:8790' : ''), // hosted builds have no lab API: pages fall back to the committed recordings without a failed fetch
   repo: import.meta.env.VITE_REPO_URL ?? 'https://github.com/Prashant-thakur77/Kitty',
 }
 export const CHAIN_INFO_PRECOMPILE = '0x0000000000000000000000000000000000000fD3' as const

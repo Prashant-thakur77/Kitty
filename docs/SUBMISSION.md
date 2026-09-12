@@ -36,8 +36,8 @@ money that verifiably moved.
 
 What no other Attestcoin contract in this field does:
 
-- **Settles a whole round in one precompile call.** Payments from every open circle are pooled into
-  one `verifyAndEmit` under a single continuity proof, preflighted for free with the view `verify`,
+- **Settles up to ten payments from every open circle in one precompile call.** Payments from every
+  open circle are pooled into one `verifyAndEmit` under a single continuity proof, preflighted for free with the view `verify`,
   and measured 24% cheaper than singles against the live 0x0FD2.
 - **Has no clock but the attestor network.** Deadlines are Sepolia block heights; a round with a
   missing payment can close only when `is_height_attested(chainKey, deadline + 64)` says so, and
@@ -70,7 +70,9 @@ What no other Attestcoin contract in this field does:
   KittyBadge) trusts KittyVault `0x1172ABd45724069749E9EB98A0349177435B284E` on Sepolia. The first
   circle settled round 0 end to end on 12 September 2026: three Sepolia payments, two batch proofs
   verified by 0x0FD2, an early close, a 300 tUSD payout on Sepolia and its proof back to
-  Creditcoin. Every transaction is linked in `docs/TESTNET_LOG.md`.
+  Creditcoin. Round 0 landed in two calls (1 + 2) because the steward's batch timer fired before two
+  payments were attested; the policy now holds for attested roundmates. Every transaction is linked
+  in `docs/TESTNET_LOG.md`.
 - Verified against the live precompile before deployment: a real Sepolia proof and a real 3-tx
   batch proof both returned `true` from the live 0x0FD2, tampered bytes and a wrong chain key
   reverted (`pnpm verify:live`), and the batch measured 24% cheaper than three singles.
