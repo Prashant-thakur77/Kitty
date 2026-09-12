@@ -16,3 +16,4 @@ web/.env.local
 worker/steward*.json
 docs/kitty-demo*.mp4
 bot/state*.json
+.slither/

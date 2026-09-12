@@ -1,0 +1,6 @@
+{
+  "filter_paths": "lib/|node_modules/|test/",
+  "exclude_informational": true,
+  "exclude_low": true,
+  "detectors_to_exclude": ""
+}

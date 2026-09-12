@@ -11,6 +11,7 @@ An index of everything under `docs/`, one line each. Start with the technical no
 | [`THREAT_MODEL.md`](THREAT_MODEL.md) | Assets, actors, trust assumptions, a threat table with the exact mitigating check and the test or scenario that demonstrates it, the eight attack scenarios mapped to threats, known limits. |
 | [`AUDIT_CHECKLIST.md`](AUDIT_CHECKLIST.md) | A reviewer's checklist by contract and worker component, each item pointing at the function or line and the covering test, with coverage gaps and a findings log. |
 | [`ATTESTCOIN_INTEGRATION.md`](ATTESTCOIN_INTEGRATION.md) | The integration write-up required by the hackathon: environment, the readability pipeline step by step, files and precompile functions used, gas, why not `ASCBase`, testing without the network. |
+| [`SLITHER.md`](SLITHER.md) | Static analysis run and the triage of every finding. |
 | [`GAS.md`](GAS.md) | Contract gas measured in Foundry per operation, kept apart from the live precompile figures. |
 
 ## Decisions

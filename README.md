@@ -443,6 +443,7 @@ Index with one line per file: [`docs/README.md`](docs/README.md).
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Assets, actors, trust assumptions, threat table with the exact mitigating check and its test, the eight attack scenarios, known limits |
 | [`docs/AUDIT_CHECKLIST.md`](docs/AUDIT_CHECKLIST.md) | Reviewer checklist by contract and worker component, each item pointing at the code and the covering test, with a findings log |
 | [`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md) | The hackathon's required integration write-up: pipeline, precompile functions used, files, gas |
+| [`docs/SLITHER.md`](docs/SLITHER.md) | Static analysis (Slither, medium and high) with the triage of every finding |
 | [`docs/GAS.md`](docs/GAS.md) | Contract gas per operation, measured in Foundry, separate from the live precompile figures |
 | [`docs/adr/0001-attestation-as-the-only-clock.md`](docs/adr/0001-attestation-as-the-only-clock.md) | ADR: block-height deadlines, `is_height_attested` as the only clock, the 64-block grace constant |
 | [`docs/adr/0002-money-and-rules-on-different-chains.md`](docs/adr/0002-money-and-rules-on-different-chains.md) | ADR: a dumb vault on Sepolia, a proof-only ledger on Creditcoin, the bounded operator, writability |

@@ -85,4 +85,24 @@ export const chainInfoAbi = [
       },
     ],
   },
+  {
+    // The registry of source chains the attestor network serves. Field order copied from IChainInfo.sol ChainInfoData;
+    // chainName is raw bytes (UTF-8 on CC3 Testnet: "Ethereum Sepolia", "Ethereum Mainnet").
+    type: 'function',
+    name: 'get_supported_chains',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [
+      {
+        name: 'chains',
+        type: 'tuple[]',
+        components: [
+          { name: 'chainKey', type: 'uint64' },
+          { name: 'chainId', type: 'uint64' },
+          { name: 'chainName', type: 'bytes' },
+          { name: 'chainEncoding', type: 'uint8' },
+        ],
+      },
+    ],
+  },
 ] as const satisfies Abi
