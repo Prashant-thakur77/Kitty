@@ -332,7 +332,7 @@ Reviewed against an adversarial model in which the Attestcoin precompiles are tr
 | Score cannot be minted | Only trusted vaults feed volume; credit limits derive from that volume; misses require consent |
 | LP fees are not stranded | Withdrawals are pro-rata over pool value |
 
-Known limits, stated plainly: the vault operator *sends* payouts, and the steward process holds the operator key today, which Attestcoin writability will replace once audited; a payout mis-routed inside the group is not recoverable; loan defaults do not yet feed back into the score; members paying through smart-account wallets are not credited, because the transaction's own `from` must be the member.
+Known limits, stated plainly: the vault operator *sends* payouts, and the steward process holds the operator key today, which Attestcoin writability will replace once audited; a payout mis-routed inside the group is not recoverable; loan defaults do not yet feed back into the score; members paying through smart-account wallets are not credited, because the transaction's own `from` must be the member; a payment that lands after its round has closed is never recorded and its escrow is not refunded by this build (the vault needs a `refundUnrecorded` path gated by an Attestcoin proof of the ledger's `RoundClosed` event, which is writability territory); and the steward's batching timer is tuned to the ~40-block attestation lag, so a much slower attestor would make it fall back to smaller batches rather than miss a grace window.
 
 ## Design notes
 

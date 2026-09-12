@@ -11,6 +11,8 @@ This is the technical integration document required by the BUIDL CTC submission 
 | Block-prover precompile | `0x0000000000000000000000000000000000000FD2` (`INativeQueryVerifier`) |
 | ChainInfo precompile | `0x0000000000000000000000000000000000000fD3` |
 | Proof Builder | `https://prover.cc3-testnet.creditcoin.network` (`/api/v1/attested-height/1`, `/api/v1/proof-batch-by-tx`) |
+| KittyLedger (v2) | `0x65F6848c6A5DDB91D8b4345B806626E05dAF6e09` on CC3 Testnet, deploy block 5473413 (v1 `0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`, block 5473022, ran the first circle and the attack scenarios) |
+| KittyVault | `0x1172ABd45724069749E9EB98A0349177435B284E` on Sepolia, trusted on the ledger for chain key 1 |
 | Packages | `@gluwa/asc-contracts@0.2.1` (Solidity), `@gluwa/usc-sdk@0.18.0` (TypeScript) |
 | Deployed contracts | see `deployments.json` (written by `scripts/deploy.sh`) |
 
