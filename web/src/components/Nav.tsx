@@ -3,11 +3,12 @@ import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import * as Dialog from '@radix-ui/react-dialog'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Wallet, LogOut, Menu, X } from 'lucide-react'
+import { Wallet, LogOut, Menu, X, Send } from 'lucide-react'
 import 'viem/window'
 import { useAttestation } from '../hooks'
 import { useScrolled, EASE_OUT } from './motion'
 import { short, num } from '../lib/format'
+import { useTelegram, TELEGRAM_BOT_URL } from '../lib/telegram'
 
 const LINKS = [
   { to: '/circles', label: 'Circles' },
@@ -49,13 +50,27 @@ function AttestationPill({ className = '' }: { className?: string }) {
   )
 }
 
+/** Compact link to the Kitty bot: proofs, deadline reminders and the Mini App, in Telegram. Hidden inside Telegram itself. */
+function TelegramPill({ className = '' }: { className?: string }) {
+  const { inTelegram } = useTelegram()
+  if (inTelegram) return null
+  return (
+    <a href={TELEGRAM_BOT_URL} target="_blank" rel="noreferrer" className={`pill sky no-underline ${className}`} title="Kitty on Telegram: /circle, /score, proof pushes and deadline reminders, and the Mini App">
+      <Send size={12} /> Telegram
+    </a>
+  )
+}
+
 function WalletControl({ full = false }: { full?: boolean }) {
   const { address, isConnected } = useAccount()
   const { connect, connectors, isPending, error } = useConnect()
   const noWallet = connectors.length === 0 || typeof window.ethereum === 'undefined'
   const { disconnect } = useDisconnect()
+  const { inTelegram } = useTelegram()
   const w = full ? ' w-full justify-center' : ''
   if (isConnected) return <button className={`btn${w}`} onClick={() => disconnect()} aria-label={`Disconnect wallet ${short(address)}`}><LogOut size={15} /> {short(address)}</button>
+  // Telegram Mini Apps have no injected wallet (no MetaMask): read everything here, pay from a wallet browser.
+  if (inTelegram && noWallet) return <span className={`pill sky${full ? ' wrap' : ''}`} title="Telegram Mini Apps cannot inject a wallet. Open this page in MetaMask, Rabby or any wallet browser to pay or prove.">open in a wallet browser to pay</span>
   if (noWallet) return <span className="pill amber" title="Proving from the browser needs any EVM wallet holding a little tCTC on Creditcoin Testnet">no wallet · read-only</span>
   return (
     <>
@@ -83,6 +98,7 @@ export function Nav() {
           <nav className="hidden items-center gap-1 md:flex md:ml-4" aria-label="Primary"><Links group="desktop" /></nav>
           <div className="ml-auto flex items-center gap-3">
             <AttestationPill className="hidden lg:flex" />
+            <TelegramPill className="hidden md:inline-flex" />
             <div className="hidden items-center gap-3 md:flex"><WalletControl /></div>
             <Dialog.Root open={open} onOpenChange={setOpen}>
               <div className="md:hidden">
@@ -129,7 +145,7 @@ export function Nav() {
                         <div className="sheet-foot">
                           <div className="eyebrow mb-2">Attestation</div>
                           <AttestationPill className="flex flex-wrap" />
-                          <div className="mt-3 flex flex-col gap-2"><WalletControl full /></div>
+                          <div className="mt-3 flex flex-col gap-2"><WalletControl full /><TelegramPill className="justify-center" /></div>
                         </div>
                       </motion.div>
                     </Dialog.Content>

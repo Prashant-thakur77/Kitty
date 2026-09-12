@@ -27,6 +27,7 @@
   <a href="#how-a-round-settles">How it works</a> ·
   <a href="#attestcoin-integration">Attestcoin integration</a> ·
   <a href="#kitty-steward">The steward</a> ·
+  <a href="#telegram">Telegram</a> ·
   <a href="#attack-lab">Attack lab</a> ·
   <a href="#security-model">Security model</a> ·
   <a href="docs/">Documentation</a>
@@ -44,6 +45,7 @@
   - [Verified against the live precompile](#verified-against-the-live-precompile)
   - [Gas, measured](#gas-measured)
 - [Kitty Steward](#kitty-steward)
+- [Telegram](#telegram)
 - [Attack lab](#attack-lab)
 - [Kitty Score and credit](#kitty-score-and-credit)
 - [Quick start](#quick-start)
@@ -206,6 +208,23 @@ The decision log and the citation validator are part of the product, not a debug
 ```bash
 pnpm test:agent                       # policy + citation validator, no network
 pnpm explain "why did you wait?"      # cited explanation, or the deterministic fallback
+```
+
+## Telegram
+
+A circle lives in a group chat, so Kitty does too. [`bot/`](bot/) is a Telegram bot ([@KittyCirclesBot](https://t.me/KittyCirclesBot)) that pushes every proof into the chat and opens the dashboard as a Mini App; [`docs/TELEGRAM.md`](docs/TELEGRAM.md) has the BotFather setup.
+
+- `/circle 1` — the live circle: round, deadline block against the attested frontier from `0x0FD3`, who is proven, pending or missed, pot, next recipient, explorer links.
+- `/score 0x…` — Kitty Score, tier, counters and the credit limit from `KittyCreditLine.underwrite`.
+- `/watch 0x…`, `/watch circle 1` — one message per `ContributionRecorded`, `ContributionMissed`, `BatchVerified`, `RoundClosed`, `RoundOpened`, `PayoutConfirmed`, each with its Creditcoin transaction and query id, in the dashboard feed's own words; plus one reminder per round when a watched member has not paid and the attested frontier is within 40 blocks of the deadline.
+- `/steward` — the last five decisions from the steward's log.
+
+The bot holds no key and trusts nothing it is told: every answer is a view call, every push is a ledger event. Without `BOT_TOKEN` it runs dry, watching the ledger and printing what it would send, so it can be demonstrated offline:
+
+```bash
+pnpm test:bot                                                   # message formatting, no network
+KITTY_ENV_FILE=worker/.env.world BOT_WATCH="circle 1" pnpm bot:dry --once
+BOT_SIMULATE="/circle 1; /score 0xB077B088E668386Bc57af87F175d250f459f0791" pnpm bot:dry   # live testnet, read-only
 ```
 
 ## Attack lab

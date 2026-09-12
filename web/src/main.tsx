@@ -8,6 +8,9 @@ import './index.css'
 import App from './App'
 import { wagmiConfig } from './lib/wagmi'
 import { ToastProvider } from './components/Toast'
+import { initTelegram } from './lib/telegram'
+
+initTelegram() // loads the Telegram Mini App SDK only when opened from Telegram
 
 const qc = new QueryClient({ defaultOptions: { queries: { refetchInterval: 8000, retry: 1 } } })
 

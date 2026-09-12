@@ -14,6 +14,7 @@ jobs:
       - run: forge test -vv
       - run: pnpm typecheck
       - run: pnpm test:agent          # steward policy + citation validator, no network
+      - run: pnpm test:bot            # telegram bot message formatting, no network
       - name: attack-lab scenarios (two local anvils, mocked precompiles)
         run: pnpm scenarios
         timeout-minutes: 20

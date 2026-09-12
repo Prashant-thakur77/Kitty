@@ -52,6 +52,19 @@ Two full rounds settled on 12 September 2026. On the first ledger (`0xc6fe…c2d
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound 0 (everyone paid; rotation by score) | [0x53cbb51d…277bbb](https://creditcoin-testnet.blockscout.com/tx/0x53cbb51ddf2337bae79f33870d591a72aefcf8ca930e9edda5a12ac882277bbb) | 354326 |
 | 2026-09-12 | Sepolia | payout round 0 (300 tUSD to member 0) | [0xfee30618…7263c3](https://sepolia.etherscan.io/tx/0xfee3061882b31b7adc8603fd3bdec728b9c777a5760b11ec346ed0e2b87263c3) | 64821 |
 | 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout round 0 (payout proven back through 0x0FD2) | [0x92344d88…74ba88](https://creditcoin-testnet.blockscout.com/tx/0x92344d886c25f2e14a573f9934407797f0379bdd100bda4e5a5101000174ba88) | 386582 |
+| 2026-09-12 | Sepolia | contribute round 1 member 0 (member 2 deliberately misses) | [0x54803275…479df5](https://sepolia.etherscan.io/tx/0x5480327554235a64c7fbfe2ef1d4c791ce6aa33e89c3ff597aa825b0cf479df5) | 85845 |
+| 2026-09-12 | Sepolia | contribute round 1 member 1 (member 2 deliberately misses) | [0xfec5afb1…6371e6](https://sepolia.etherscan.io/tx/0xfec5afb1855d0cfb4a48402ce5808227c5ce3c5b0ce37018298e84d1c66371e6) | 51645 |
+| 2026-09-12 | Creditcoin CC3 Testnet | recordContributions round 1 (batch of 2, verified by 0x0FD2) | [0xb860377b…7f8280](https://creditcoin-testnet.blockscout.com/tx/0xb860377be38597044b4722248519fb6639accbcb9d2ad5c788180f45d97f8280) | 451052 |
+| 2026-09-12 | Creditcoin CC3 Testnet | createCircle 2 (Lagos Susu, 5 members, 50 tUSD, 300 blocks, fixed rotation) | [0x119949b0…7f281d](https://creditcoin-testnet.blockscout.com/tx/0x119949b06b99aa60f40a3adb2e2296058430d382d8cfddf4d1c2063ba57f281d) | 433672 |
+| 2026-09-12 | Creditcoin CC3 Testnet | createCircle 3 (Oaxaca Tanda, 3 members, 100 tUSD, 250 blocks, by score) | [0xf007881f…e6047a](https://creditcoin-testnet.blockscout.com/tx/0xf007881f59c4d98b78ff445336c9afb18c472a1b9e8c1ad2f02f99f27ce6047a) | 357602 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 0 member 0 | [0x1730eb67…0694d1](https://sepolia.etherscan.io/tx/0x1730eb67770129c645d6b79e203ca934c93670c07043043a048e5e69ff0694d1) | 88645 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 0 member 1 | [0xb837410f…3318cb](https://sepolia.etherscan.io/tx/0xb837410f063a400461621ac63af2b197ea6399ab67b7a05be99add108e3318cb) | 71545 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 0 member 2 | [0x4b510ad8…7c16bc](https://sepolia.etherscan.io/tx/0x4b510ad8c6c166141e3204bf2fcb941c7b86c0b76cbfee5ae7d0d0b7fc7c16bc) | 71545 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 0 member 3 | [0xa45e44be…69b3b0](https://sepolia.etherscan.io/tx/0xa45e44bea9082d85eaf5c8157c6fa72719495d56211e2d806108ea0db969b3b0) | 71545 |
+| 2026-09-12 | Sepolia | contribute circle 2 round 0 member 4 | [0x4e610ac0…b716f3](https://sepolia.etherscan.io/tx/0x4e610ac0eccd579385eeba7b62294865c383e4dcffa1c222089fb61787b716f3) | 71545 |
+| 2026-09-12 | Sepolia | contribute circle 3 round 0 member 0 | [0x725e9813…09f32e](https://sepolia.etherscan.io/tx/0x725e9813fe4057a36c43e7db050bd5bd672069a0c91f1b03426063b6d809f32e) | 88633 |
+| 2026-09-12 | Sepolia | contribute circle 3 round 0 member 1 | [0xa66ca7cd…c8eeab](https://sepolia.etherscan.io/tx/0xa66ca7cdc46973d25e6bede4fb8f9fa3b72e2d2fa8262a2555cf6d48e9c8eeab) | 71533 |
+| 2026-09-12 | Sepolia | contribute circle 3 round 0 member 2 | [0x00592a40…61395c](https://sepolia.etherscan.io/tx/0x00592a405cd75036864f18c52c8e47d958b0f9c89afe1153a99607da7d61395c) | 71533 |
 
 ## Live precompile verification (no deployment needed)
 

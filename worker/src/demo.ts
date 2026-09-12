@@ -43,7 +43,9 @@ async function fund() {
   const { token } = contracts();
   const n = Number(opt('members', '3'));
   const eth = ethers.parseEther(opt('eth', cfg.mode === 'local' ? '0' : '0.004')!);
-  for (const w of memberWallets(n)) {
+  const from = Number(opt('from', '0'));   // --from 3 funds only members 3..n-1 (adding seats to a funded set)
+  for (const [i, w] of memberWallets(n).entries()) {
+    if (i < from) continue;
     if (eth > 0n) {
       const t = await sourceSigner.sendTransaction({ to: w.address, value: eth });
       await t.wait();
