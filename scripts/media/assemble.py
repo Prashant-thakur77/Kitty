@@ -16,6 +16,8 @@ for t in timeline:
     t['start'] = offset.get(t['file'], 0.0)
     offset[t['file']] = t['start'] + t['seconds']
 
+# segments that are mostly a page waiting on the steward may be compressed harder than the rest
+MAX_SPEED = {'08_miss': 1.8}
 parts, srt, clock = [], [], 0.0
 for i, t in enumerate(timeline):
     name, sec = t['name'], t['seconds']
@@ -24,7 +26,8 @@ for i, t in enumerate(timeline):
     card = name in ('01_hook', '13_close')  # title cards get a fade
     # when the on-chain actions ran longer than the narration, gently speed the picture up to fit so the
     # voice never falls silent while the screen is still busy (never more than 1.35x)
-    target = max(dur[name] + 0.5, sec / 1.35)
+    cap = MAX_SPEED.get(name, 1.35)
+    target = max(dur[name] + 0.5, sec / cap)
     speed = sec / target
     vf = f"trim=start={t['start']:.3f}:duration={sec:.3f},setpts=PTS-STARTPTS,setpts=PTS/{speed:.4f},scale=1920:1080:flags=lanczos,fps=30,format=yuv420p"
     sec = target

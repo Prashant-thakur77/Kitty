@@ -24,7 +24,8 @@ const labEnv = {
 const sh = (cmd) => execSync(cmd, { cwd: REPO, env: labEnv, stdio: 'pipe' }).toString()
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const attestNow = () => sh(`cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 "setAttestedHeight(uint64,uint64)" 1 $(cast block-number --rpc-url $SEPOLIA_RPC_URL) >/dev/null`)
-const attestTo = (h) => sh(`cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 "setAttestedHeight(uint64,uint64)" 1 ${h} >/dev/null`)
+// mine the source chain up to h first so the attested frontier never runs ahead of the head
+const attestTo = (h) => { const head = Number(sh('cast block-number --rpc-url $SEPOLIA_RPC_URL').trim()); if (h > head) sh(`cast rpc --rpc-url $SEPOLIA_RPC_URL anvil_mine ${'0x' + (h - head).toString(16)} >/dev/null`); return sh(`cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 "setAttestedHeight(uint64,uint64)" 1 ${h} >/dev/null`) }
 
 fs.mkdirSync(OUT, { recursive: true })
 const browser = await chromium.launch()

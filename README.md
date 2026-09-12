@@ -280,12 +280,16 @@ Faucets: Sepolia ETH from [Alchemy](https://www.alchemy.com/faucets/ethereum-sep
 | KittyVault v2 | Ethereum Sepolia, chainKey 1 | [`0x1172ABd45724069749E9EB98A0349177435B284E`](https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E) |
 | TestUSD | Ethereum Sepolia | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://sepolia.etherscan.io/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
 | FakeVault (attack lab) | Ethereum Sepolia | [`0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb`](https://sepolia.etherscan.io/address/0xf6f984c6aa6806a8afcc8713a2adea7fa05cf1fb) |
-| KittyLedger, KittyViewer, KittyUSD, KittyCreditLine, KittyBadge | Creditcoin CC3 Testnet, 102031 | written to [`deployments.json`](deployments.json) by `scripts/deploy.sh` |
+| KittyLedger (Attestcoin Smart Contract) | Creditcoin CC3 Testnet, 102031 | [`0xc6fe7fd411681E07a44523f87F6aB0805903c2dE`](https://creditcoin-testnet.blockscout.com/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE) |
+| KittyViewer | Creditcoin CC3 Testnet, 102031 | [`0xf6F984C6AA6806a8aFCc8713A2ADEA7Fa05cF1fb`](https://creditcoin-testnet.blockscout.com/address/0xf6F984C6AA6806a8aFCc8713A2ADEA7Fa05cF1fb) |
+| KittyUSD | Creditcoin CC3 Testnet, 102031 | [`0x1172ABd45724069749E9EB98A0349177435B284E`](https://creditcoin-testnet.blockscout.com/address/0x1172ABd45724069749E9EB98A0349177435B284E) |
+| KittyCreditLine | Creditcoin CC3 Testnet, 102031 | [`0x536930D5c1a44Ad54F7964a4f860706dA5aaEBE0`](https://creditcoin-testnet.blockscout.com/address/0x536930D5c1a44Ad54F7964a4f860706dA5aaEBE0) |
+| KittyBadge (ERC-5192) | Creditcoin CC3 Testnet, 102031 | [`0xF80Bfd97bf6F437b0f6f1d554D03B0df161e1CE3`](https://creditcoin-testnet.blockscout.com/address/0xF80Bfd97bf6F437b0f6f1d554D03B0df161e1CE3) |
 | Block prover precompile | Creditcoin | `0x0000000000000000000000000000000000000FD2` |
 | ChainInfo precompile | Creditcoin | `0x0000000000000000000000000000000000000fD3` |
 | Deployer / operator | both | [`0xD793169c516c9F9A334218608fbF6E1338b3DE56`](https://creditcoin-testnet.blockscout.com/address/0xD793169c516c9F9A334218608fbF6E1338b3DE56) |
 
-Every testnet transaction is logged with an explorer link in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md).
+Deployed from block 5473022 (12 September 2026). The first live circle, *Delhi Chit Circle*, settled round 0 end to end on the same day: three Sepolia payments, two batch proofs verified by the block-prover precompile, an early close, a 300 tUSD payout on Sepolia and its proof back to Creditcoin. Every testnet transaction is logged with an explorer link in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md).
 
 ## Repository layout
 

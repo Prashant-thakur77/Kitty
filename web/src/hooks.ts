@@ -15,7 +15,7 @@ export function useAttestation() {
     args: [BigInt(cfg.sourceChainKey)], query: { refetchInterval: 8000 },
   })
   const attested = data?.exists ? data.height : undefined
-  return { head, attested, lag: head !== undefined && attested !== undefined ? Number(head - attested) : undefined }
+  return { head, attested, lag: head !== undefined && attested !== undefined ? Math.max(0, Number(head - attested)) : undefined }
 }
 
 /** For each payment height, ask 0x0FD3 which attestation covers it (find_lowest_attested_after). ONE multicall, never per-row hooks. */
