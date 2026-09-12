@@ -5,6 +5,7 @@ import { Circles } from './pages/Circles'
 import { CirclePage } from './pages/Circle'
 import { ScorePage } from './pages/Score'
 import { Lab } from './pages/Lab'
+import { Steward } from './pages/Steward'
 import { Borrow } from './pages/Borrow'
 import { Architecture } from './pages/Architecture'
 import { Presentation } from './pages/Presentation'
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/score" element={<ScorePage />} />
         <Route path="/score/:address" element={<ScorePage />} />
         <Route path="/borrow" element={<Borrow />} />
+        <Route path="/steward" element={<Steward />} />
         <Route path="/lab" element={<Lab />} />
         <Route path="/architecture" element={<Architecture />} />
         <Route path="/presentation" element={<Presentation />} />

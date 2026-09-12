@@ -124,15 +124,15 @@ Add to the attack lab, alongside the five existing scenarios:
 |---|---|
 | A1 cross-circle batching | done — pooled across circles behind `agent/policy.ts`, 8 unit tests |
 | A2 free preflight | done — worker and browser both ask the view `verify` before spending gas |
-| A3 attestation bounds | done — ChainInfo usage went from 2 of 11 functions to 8 |
+| A3 attestation bounds | done; interface widened to 8 functions and tested against the mock; the dashboard reads bounds and lowest-after; 5 of 11 on the hot path |
 | A4 per-circle chain key | done — circles settle from Sepolia or Ethereum mainnet; the vault allowlist is keyed by chain |
-| A5 batch payout confirmation | done — `confirmPayouts` under one continuity proof |
+| A5 batch payout confirmation | done at contract level; the steward uses the single path since payouts are one per round |
 | B Layer 1 | already structural; now demonstrated rather than asserted |
 | B Layer 2 | done — deterministic policy plus a decision log every entry of which carries chain state |
 | B Layer 3 | done — cited reasoning with a validator that strips unverifiable *and* uncited figures; degrades to the deterministic sentence with no API key |
 | C three scenarios | done — all eight lab scenarios pass; `pnpm scenarios` runs them and exits with the tally |
 
-100 Foundry tests, 20 agent unit tests, 8 attack scenarios, all in CI.
+103 Foundry tests, 26 agent unit tests, 8 attack scenarios, all in CI.
 
 ## 6. Schedule (9–13 Sept)
 

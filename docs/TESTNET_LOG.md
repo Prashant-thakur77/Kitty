@@ -10,7 +10,7 @@ Explorers: Sepolia — https://sepolia.etherscan.io · Creditcoin CC3 Testnet �
 
 Actions to expect, in order: `deploy TestUSD` · `deploy KittyVault` · `deploy KittyLedger` · `fund member N` ·
 `createCircle` · `contribute round R member N` · `recordContributions round R (batch of N)` · `closeRound R` ·
-`payout round R` · `confirmPayout round R` · attack-lab attempts (`replay`, `spoofEmitter`, `wrongChain`, `revertedTx`, `late`).
+`payout round R` · `confirmPayout round R` · attack-lab attempts (`replay`, `spoofEmitter`, `wrongChain`, `revertedTx`, `late`, `stealFromSteward`, `fireTheAgent`, `poisonReasoning`).
 
 | date | chain | action | tx | gas used |
 |---|---|---|---|---|

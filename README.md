@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://github.com/Prashant-thakur77/Kitty/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Prashant-thakur77/Kitty/ci.yml?branch=main&style=flat-square&label=ci&color=4FD1A3"></a>
-  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry_tests-100_passing-4FD1A3?style=flat-square">
-  <img alt="Attack scenarios" src="https://img.shields.io/badge/attack_scenarios-8_%2F_8_rejected-4FD1A3?style=flat-square">
+  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry_tests-103_passing-4FD1A3?style=flat-square">
+  <img alt="Attack scenarios" src="https://img.shields.io/badge/attack_scenarios-8_%2F_8_passing-4FD1A3?style=flat-square">
   <img alt="Creditcoin" src="https://img.shields.io/badge/Creditcoin-CC3_Testnet-7DB6E8?style=flat-square">
   <img alt="Attestcoin" src="https://img.shields.io/badge/Attestcoin-0x0FD2_%C2%B7_0x0FD3-7DB6E8?style=flat-square">
   <img alt="Solidity" src="https://img.shields.io/badge/solidity-0.8.30-E2B15C?style=flat-square">
@@ -15,6 +15,12 @@
 <p align="center">
   <b>Kitty</b> is a rotating savings circle — a chit fund, a susu, a tanda — where the money stays in stablecoins on Ethereum and the rules live on Creditcoin, fed only by transactions the <b>Attestcoin Protocol</b> has cryptographically verified. No treasurer. No oracle operator. No bridge. The output is a credit history a lender can underwrite against, for people the banking system has never seen.
 </p>
+
+**What no other Attestcoin contract in this field does**
+
+- **Settles a whole round in one precompile call.** Payments from every open circle are pooled into one `verifyAndEmit` under a single continuity proof, preflighted for free with the view `verify`, and measured 24% cheaper than singles against the live 0x0FD2 ([measured](#gas-measured)).
+- **Has no clock but the attestor network.** Deadlines are Sepolia block heights; a round with a missing payment can close only when `is_height_attested(chainKey, deadline + 64)` says so, and the Ethereum payout is proven back before the round shows *Paid*.
+- **Does not care who submits.** Fire the steward and a stranger's proof still settles the round; the steward's only on-ledger power is a proof.
 
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
@@ -83,6 +89,7 @@ Chapters: 0:00 Hook · 0:08 Problem · 0:36 Solution · 1:02 A live circle on Cr
 | Live dashboard | https://prashant-thakur77.github.io/Kitty/ (GitHub Pages, from `main`) |
 | Deck | [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf), also on the [release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission); `/presentation` on the dashboard is the live version |
 | Attack lab | `/lab`, eight live scenarios |
+| Steward | `/steward`, the steward's decision log and citation validator, live |
 | Source | https://github.com/Prashant-thakur77/Kitty |
 
 ## How a round settles
@@ -113,11 +120,11 @@ Kitty was built to use the protocol deeply rather than minimally. The full techn
 | **Batch verification across circles** | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | Up to ten queries under one continuity proof, pooled from every open circle. The continuity proof is checked once. |
 | **Free preflight** | precompile view `verify`, both overloads, from the worker and from the browser | A proof that would fail is never submitted; a bad batch costs nothing. |
 | **Attested-height clock** | `is_height_attested(chainKey, deadline + grace)` in `closeRound`; `onTime = height ≤ deadline` | No timestamps, no admin. The attestor network decides when a round ends. |
-| **Attestation bounds** | `get_attestation_bounds`, `find_lowest_attested_after`, `get_supported_chains`, `get_chain_by_key` | The exact block that will cover a payment comes from the precompile, not arithmetic. 8 of the ChainInfo precompile's 11 functions are used. |
+| **Attestation bounds** | `find_lowest_attested_after` and `get_attestation_bounds` from the dashboard (which attestation covers a payment, whether the deadline is covered), `get_chain_by_key` at circle creation, `is_height_attested` as the clock, `get_latest_attestation_height_and_hash` for the lag indicator | 5 of the ChainInfo precompile's 11 functions on the hot path; the 8-function interface in `IChainInfo.sol` is exercised against the mock in [`test/KittyMultiChain.t.sol`](test/KittyMultiChain.t.sol). |
 | **Per-circle chain key** | validated at creation against the on-chain registry; the trusted-vault allowlist is keyed by chain | A circle settles from Sepolia (key 1) or Ethereum mainnet (key 3). A vault trusted on one chain is not trusted on another. |
 | **Query-id replay protection** | `keccak(chainKey ‖ height ‖ txIndex)`, byte-identical to `ASCBase`, shared by every entry point, plus in-batch duplicate detection | The same proof can never count twice. |
 | **Receipt status** | `receiptStatus == 1` before any log is read | The precompile proves inclusion, not success. |
-| **Emitter and calldata binding** | `log.address_ == vault`, `tx.to == vault`, `tx.from == member` | A proof of someone else's transaction that merely contains a vault log is rejected. |
+| **Emitter and transaction binding** | `log.address_ == vault`, `tx.to == vault`, `tx.from == member` | A proof of someone else's transaction that merely contains a vault log is rejected. |
 | **Proof-back of payouts** | `confirmPayout` and batch `confirmPayouts` on the `PaidOut` transaction | *Paid* is never an operator's claim. |
 | **Browser-side proving** | Proof Builder is CORS-open; `ProvePanel` fetches the batch proof and submits from the member's wallet | The ledger checks the proof, never the caller. The steward is a convenience, not a dependency. |
 
@@ -137,6 +144,7 @@ Every file that touches the protocol: precompiles `0x0FD2` and `0x0FD3`, `@gluwa
 | [`worker/src/agent/policy.ts`](worker/src/agent/policy.ts) | Batch policy: cross-circle pooling, one chain key per call, urgency over thrift |
 | [`worker/src/verify-live.ts`](worker/src/verify-live.ts) | Real proof against the live precompile, with tamper and wrong-chain negatives |
 | [`web/src/lib/prover.ts`](web/src/lib/prover.ts), [`web/src/components/ProvePanel.tsx`](web/src/components/ProvePanel.tsx) | Browser-side proving against the Proof Builder |
+| [`web/src/hooks.ts`](web/src/hooks.ts) | `find_lowest_attested_after`, `get_attestation_bounds`, `get_latest_attestation_height_and_hash` via wagmi |
 | [`test/`](test), [`test/fixtures/`](test/fixtures) | Precompiles mocked at their real addresses with `vm.etch`; genuine Proof Builder bytes as a fixture |
 | [`scripts/local-e2e.sh`](scripts/local-e2e.sh), [`scripts/scenarios.sh`](scripts/scenarios.sh) | Two anvils, precompiles mocked with `anvil_setCode`, the full loop and every attack scenario |
 
@@ -181,12 +189,12 @@ The worker is an agent in three layers, and authority decreases as you move towa
 | Layer | Holds | What it does |
 |---|---|---|
 | **1 · The ledger** | final say | A verified proof, receipt status 1, a trusted emitter, the right sender and target, the exact amount, the current round, an unseen query id. Fail any one and nothing happens, whoever asked. |
-| **2 · Deterministic decisions** | timing only | Prove now or wait for a fuller batch? Batching is measurably cheaper, but a payment that misses its grace window costs its owner 120 score points. Urgency beats thrift and thrift beats impatience. Every decision is logged with the chain state behind it. [`policy.ts`](worker/src/agent/policy.ts), 8 unit tests. |
+| **2 · Deterministic decisions** | timing only | Prove now or wait for a fuller batch? Batching is measurably cheaper, but a payment that misses its grace window costs its owner 120 score points. Urgency beats thrift and thrift beats impatience. Every decision is logged with the chain state behind it. [`policy.ts`](worker/src/agent/policy.ts), 14 unit tests. |
 | **3 · Cited reasoning** | none | Claude explains the decision log in plain language. Every figure it states must be marked and must appear in the log; [`citations.ts`](worker/src/agent/citations.ts) removes any sentence with an unverifiable *or uncited* figure before display. 12 unit tests. |
 
 Two properties follow, and both are demonstrated in the attack lab rather than asserted.
 
-- **The steward's key is worth nothing.** It has no role, no ownership, no allowance. Its entire action space is submitting a proof, and the functions it calls are callable by anyone.
+- **The steward's Creditcoin key is worth nothing.** No role, no ownership, no allowance; everything it calls on the ledger is callable by anyone. On Sepolia this build runs the vault-operator key in the same process: that is the one privileged action in the system, it is bounded by `KittyVault` to addresses that have paid into the circle, and it is exactly the action Attestcoin writability removes.
 - **The model is optional.** With no API key the steward prints the deterministic sentence from layer 2 and behaves identically.
 
 ```bash
@@ -205,7 +213,7 @@ Eight scenarios, each of which pushes a real transaction through proof, precompi
 | Same proof, chain key 3 | `WrongChain(3, 1)` |
 | Included but reverted source transaction | `SourceTxFailed()` |
 | Payment after the deadline block | Accepted, `onTime = false`, score −20 |
-| Steal the steward's key: take a pot, trust a vault, close a round early, bind a circle to your own vault | `NotOperator()`, `OwnableUnauthorizedAccount(…)`, `RoundStillOpenOnSource(…)`, `VaultNotTrusted(…)` |
+| Steal the steward's on-ledger powers: a fresh key tries to take a pot, trust a vault, close a round early, bind a circle to its own vault | `NotOperator()`, `OwnableUnauthorizedAccount(…)`, `RoundStillOpenOnSource(…)`, `VaultNotTrusted(…)` |
 | Fire the agent: a wallet with no role, membership or history submits the round's proof | Accepted. The ledger checks the proof, not the caller |
 | Poison the reasoning: one cited fact and three invented figures | All three stripped before display |
 
@@ -219,7 +227,7 @@ The last scenario found a genuine bug during development: stripping non-digits f
 
 `creditScore(member)` = 500 + 15·onTime − 20·late − 120·missed, clamped to 300–850, with tiers A ≥ 700, B ≥ 600, C ≥ 500, D below. Every input is a proven transaction or an attested deadline, and nobody can be penalised for a circle they did not consent to.
 
-The score is used, not just displayed. `KittyCreditLine` underwrites purely from it: tier A may borrow 100% of proven contribution volume, B 50%, C 20%, D nothing. `KittyBadge` is an ERC-5192 soulbound token whose on-chain SVG renders the current score live. A member can also export a bundle of proof receipts that any lender can re-verify against the precompile without trusting Kitty.
+The score is used, not just displayed. `KittyCreditLine` underwrites purely from it: tier A may borrow 100% of proven contribution volume, B 50%, C 20%, D nothing. `KittyBadge` is an ERC-5192 soulbound token whose on-chain SVG renders the current score live. A member can also export a bundle of proof receipts that any lender can re-verify against the precompile without trusting Kitty (`pnpm receipts <address> receipts.json`; every row carries the source tx, proven height, query id and Creditcoin tx, re-checkable with `pnpm verify:live <sourceTx>`).
 
 <p align="center">
   <img src="docs/assets/score.png" alt="What a lender sees" width="100%">
@@ -233,8 +241,8 @@ Requirements: Foundry, Node 22 with pnpm, and Docker is not needed. The first fo
 git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty
 pnpm install && pnpm --dir web install
 
-forge test              # 100 tests: ledger, vault, invites, rotation, viewer, credit line, badge, multi-chain, batch payouts, real prover bytes
-pnpm test:agent         # 20 tests: batch policy and citation validator
+forge test              # 103 tests: ledger, vault, invites, rotation, viewer, credit line, badge, multi-chain, batch payouts, real prover bytes
+pnpm test:agent         # 26 tests: batch policy and citation validator
 pnpm scenarios          # 8 attack scenarios end to end
 pnpm e2e:local          # two full rounds, a missed payment, a payout proven back, a replay rejected
 pnpm judge              # forge + agent tests + scenarios + e2e, then a real proof checked by the live 0x0FD2 (~5 min)
@@ -306,23 +314,23 @@ Reviewed against an adversarial model in which the Attestcoin precompiles are tr
 | Member X paid round R | Proof verified by `0x0FD2`; receipt status 1; exactly one `Contributed` log from a vault trusted on that chain; tx `to` = vault, `from` = member; exact amount; current round |
 | Payment was on time | Proven source block height ≤ deadline height |
 | Member Y missed round R | Deadline plus a 64-block grace window attested; no proven payment; and Y consented to the circle by invite, organising, `acceptMembership`, or a prior payment |
-| Recipient Z was paid | `PaidOut` proven by `0x0FD2` with matching recipient and amount; the vault pays only contributors of that circle |
-| Recipient Z deserved the pot | Z paid this round and had not received before; otherwise the pot rolls forward |
+| Recipient Z was paid | `PaidOut` proven by `0x0FD2` with matching recipient and amount; the vault pays only an address that has paid into that circle |
+| Recipient Z deserved the pot | Z paid this round and had not received before; otherwise the pot rolls forward, and in the final round it goes to a paying member (`FallbackRecipient`) so escrow never strands |
 | The same proof cannot count twice | Query id shared by every entry point, in-batch duplicate check, per-(circle, round, member) guard |
 | A proof from another chain cannot count | Chain key per circle, validated against the registry; the vault allowlist is keyed by chain |
 | An invite is genuine | Organiser's EIP-191 signature over (ledger, chainId, circleId, invitee, nonce); single-use nonces; OpenZeppelin ECDSA |
 | Score cannot be minted | Only trusted vaults feed volume; credit limits derive from that volume; misses require consent |
 | LP fees are not stranded | Withdrawals are pro-rata over pool value |
 
-Known limits, stated plainly: the vault operator *sends* payouts, which Attestcoin writability will replace once audited; a payout mis-routed inside the group is not recoverable; loan defaults do not yet feed back into the score; members paying through smart-account wallets are not credited, because the transaction's own `from` must be the member.
+Known limits, stated plainly: the vault operator *sends* payouts, and the steward process holds the operator key today, which Attestcoin writability will replace once audited; a payout mis-routed inside the group is not recoverable; loan defaults do not yet feed back into the score; members paying through smart-account wallets are not credited, because the transaction's own `from` must be the member.
 
 ## Design notes
 
 - **Why not inherit `ASCBase`?** Its `execute` drops the chain key and the source block height before calling app logic. Kitty needs both, for chain binding and height-based deadlines, and needs the batch overload, so the ledger re-implements the same verify → dedupe → act pipeline with identical query-id derivation.
 - **Why block heights instead of timestamps?** Attested height is the one clock every party can verify. A timestamp is an opinion; an attested block is a fact.
-- **Why a 64-block grace window?** A payment mined at the deadline block is attested at the same moment its round becomes closable. Without a window, a rival could close the round before the proof lands.
+- **Why a 64-block grace window?** A payment mined at the deadline block is attested at the same moment its round becomes closable. Without a window, a rival could close the round before the proof lands. A proof that lands after a round has closed cannot be recorded; the steward proves as soon as a payment's block is attested, well inside the window.
 - **Why can anyone submit a proof?** Because the ledger's checks are complete without knowing who is calling. That is what lets a member finish a round from the browser when the steward is switched off.
-- **Why is the model advisory only?** Every winner of a comparable AI track limited the agent structurally. Kitty goes further: the agent's only power is to submit proofs, and its explanations are filtered by a validator that removes any figure the chain cannot back.
+- **Why is the model advisory only?** The 2026 Convergence winners in CRE & AI and Autonomous Agents, and the 2025 Chromion DeFi winner, all made the agent propose and the contract dispose. Kitty goes further: the agent's only power is to submit proofs, and its explanations are filtered by a validator that removes any figure the decision log cannot back.
 - **What was hard.** `forge script` cannot simulate Creditcoin blocks; deployment uses `forge create`. The SDK's gas fallback underestimates batch calls; the worker floors it. Hosted Sepolia RPCs cap log ranges; the worker scans in 50-block windows. Back-to-back sends on a fast chain race the node's nonce; the worker uses `NonceManager` and resets it after any failed send.
 
 ## Roadmap

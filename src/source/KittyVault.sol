@@ -28,8 +28,8 @@ contract KittyVault is Ownable, ReentrancyGuard {
     /// @notice One payout per (circle, round). Guards the operator against double release.
     mapping(uint256 => mapping(uint32 => bool)) public paidOut;
 
-    /// @notice Anyone who ever paid into a circle. Payouts may only go to contributors of that circle,
-    ///         so a misbehaving operator can at worst mis-route inside the group, never outside it.
+    /// @notice Anyone who ever paid into a circle. Payouts may only go to an address that has paid into
+    ///         that circle, which bounds a misbehaving operator to the circle's own contributors.
     mapping(uint256 => mapping(address => bool)) public contributor;
 
     /// @dev keccak256("Contributed(uint256,uint32,address,uint256)")

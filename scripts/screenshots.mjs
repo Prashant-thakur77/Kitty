@@ -1,6 +1,6 @@
 // Captures dashboard screenshots for the README with Playwright.
 // usage: node scripts/screenshots.mjs [baseUrl]   (default http://localhost:5173)
-import { chromium } from '/tmp/claude-1000/-home-prashant-projects/3b50f59b-ab57-437c-8c55-4bbd4d928618/scratchpad/shots/node_modules/playwright/index.mjs'
+import { chromium } from 'playwright'
 const base = process.argv[2] ?? 'http://localhost:5173'
 const shots = [
   ['landing', '/'],

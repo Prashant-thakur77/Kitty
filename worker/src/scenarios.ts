@@ -50,7 +50,7 @@ export const SCENARIOS: ScenarioMeta[] = [
     name: 'wrongChain',
     title: 'Wrong chain key',
     expected: 'WrongChain',
-    description: 'A valid proof submitted with chainKey 3 (Ethereum mainnet on CC3 testnet). The ledger is pinned to chainKey 1.',
+    description: 'Each circle stores its own chain key, validated against get_chain_by_key; a batch under another key reverts WrongChain(got, want).',
   },
   {
     name: 'revertedTx',
@@ -62,7 +62,7 @@ export const SCENARIOS: ScenarioMeta[] = [
     name: 'stealFromSteward',
     title: 'Steal the steward’s key',
     expected: 'every privileged call reverts',
-    description: 'Takes a key with the steward’s exact powers and tries to move a pot, trust a vault, and close a round early. The steward has no role, no ownership and no allowance, so its key is worth nothing.',
+    description: 'Takes a fresh key with the steward’s on-ledger powers and tries to move a pot, trust a vault, close a round early and bind a circle to its own vault. The steward has no ledger role, so its key is worth nothing.',
   },
   {
     name: 'fireTheAgent',

@@ -18,6 +18,7 @@ export function Nav() {
       <NavLink to="/circles" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Circles</NavLink>
       <NavLink to="/score" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Score</NavLink>
       <NavLink to="/borrow" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Borrow</NavLink>
+      <NavLink to="/steward" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Steward</NavLink>
       <NavLink to="/lab" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Attack lab</NavLink>
       <NavLink to="/architecture" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Architecture</NavLink>
       <NavLink to="/presentation" className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>Present</NavLink>
@@ -41,7 +42,7 @@ export function Nav() {
             {isConnected ? (
               <button className="btn" onClick={() => disconnect()}><LogOut size={15} /> {short(address)}</button>
             ) : noWallet ? (
-              <span className="pill amber" title="Proving from the browser needs any EVM wallet holding a little tCTC on Creditcoin Testnet">no wallet · install MetaMask to prove from the browser</span>
+              <span className="pill amber" title="Proving from the browser needs any EVM wallet holding a little tCTC on Creditcoin Testnet">no wallet · read-only</span>
             ) : (
               <>
                 <button className="btn btn-mint" disabled={isPending} onClick={() => connect({ connector: connectors[0] })}><Wallet size={15} /> Connect</button>

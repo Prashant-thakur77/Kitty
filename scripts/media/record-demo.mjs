@@ -2,7 +2,7 @@
 // Prereqs: WORLD_ROUND1=0 scripts/local-world.sh (round 0 done, round 1 open) · pnpm lab:api · pnpm --dir web dev
 //          narration clips + durations.json from scripts/media/narrate.py
 // Usage:   node scripts/media/record-demo.mjs <narrationDir> <outDir>
-import { chromium } from '/tmp/claude-1000/-home-prashant-projects/3b50f59b-ab57-437c-8c55-4bbd4d928618/scratchpad/shots/node_modules/playwright/index.mjs'
+import { chromium } from 'playwright'
 import { execSync, spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -130,7 +130,7 @@ await segment('04_circle', async () => {
 
 // ── 5 · pay (terminal) ──
 await segment('05_pay', async () => {
-  await terminal('kitty — members pay on Sepolia', 'pnpm demo contribute --skip 2', 'pnpm -s demo contribute --skip 2', { lineDelay: 160 })
+  await terminal('kitty — members pay on Sepolia', 'pnpm demo contribute --circle 1 --skip 2', 'pnpm -s demo contribute --circle 1 --skip 2', { lineDelay: 160 })
 })
 
 // ── 6 · prove (terminal) ──
@@ -142,7 +142,7 @@ await segment('06_prove', async () => {
 // ── 7 · close + payout + proof-back (circle page, actions in the background) ──
 await segment('07_close_a', async () => {
   await open(base + '/circle/1')
-  const p = spawn('bash', ['-c', 'pnpm -s demo contribute --skip 0,1 && cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 "setAttestedHeight(uint64,uint64)" 1 $(cast block-number --rpc-url $SEPOLIA_RPC_URL) >/dev/null && pnpm -s worker --once'], { cwd: REPO, env: labEnv, stdio: 'ignore' })
+  const p = spawn('bash', ['-c', 'pnpm -s demo contribute --circle 1 --skip 0,1 && cast send --rpc-url $CREDITCOIN_RPC_URL --private-key $PRIVATE_KEY 0x0000000000000000000000000000000000000fD3 "setAttestedHeight(uint64,uint64)" 1 $(cast block-number --rpc-url $SEPOLIA_RPC_URL) >/dev/null && pnpm -s worker --once'], { cwd: REPO, env: labEnv, stdio: 'ignore' })
   await glide(760, 330, 30)
   await pace(12000, 0, async () => { await scrollTo(560, 1000); await glide(1150, 640, 30) })   // rotation panel while the steward works
   await new Promise((r) => p.on('exit', r))
@@ -155,7 +155,7 @@ await segment('07_close_b', async () => {
 
 // ── 8 · miss (circle page, then score page of the member who missed) ──
 await segment('08_miss', async () => {
-  sh('pnpm -s demo contribute --skip 2')
+  sh('pnpm -s demo contribute --circle 1 --skip 2')
   const closeAt = sh(`cast call --rpc-url $CREDITCOIN_RPC_URL ${env.VITE_KITTY_LEDGER_ADDRESS} "closeHeight(uint256,uint32)(uint64)" 1 2`).trim().split(' ')[0]
   await scrollTo(0, 800); await glide(700, 330, 20)
   await pace(7000, 0, async () => { attestTo(closeAt); sh('pnpm -s worker --once') })
@@ -163,28 +163,40 @@ await segment('08_miss', async () => {
   await pace(19000, 0, async () => { await open(base + `/score/${M2}`); await glide(420, 520, 30) })
 })
 
-// ── 9 · steward (terminal: decision log + cited explanation) ──
+// ── 9 · steward (the /steward page: decision log, then ask it a question) ──
 await segment('09_steward', async () => {
-  const dump = `node -e 'const l=JSON.parse(require("fs").readFileSync("worker/steward.world.json","utf8")).slice(-6);for(const e of l){console.log(e.at.slice(11,19)+"  "+e.kind.padEnd(7)+" "+e.summary);const ev=Object.entries(e.evidence).slice(0,5).map(([k,v])=>k+"="+v).join("  ");console.log("          "+ev);for(const t of (e.txs||[]).slice(0,1))console.log("          "+t.chain+" tx "+t.hash)}' && echo && pnpm -s explain "what did you do this round, and why?"`
-  await terminal('kitty — steward · decision log', 'pnpm explain "what did you do this round, and why?"', dump, { lineDelay: 140, maxLines: 40 })
+  await open(base + '/steward')
+  await glide(520, 420, 30)
+  await pace(6000, 0, async () => { await scrollTo(420, 1200); await glide(520, 620, 40) })
+  await pace(13000, 0, async () => {
+    await scrollTo(0, 800)
+    const input = page.locator('input[placeholder]').first()
+    const bb = await input.boundingBox(); if (bb) await glide(bb.x + 40, bb.y + bb.height / 2, 20)
+    await input.click(); await input.fill('')
+    await page.keyboard.type('what did you do this round, and why?', { delay: 45 })
+    const ask = page.getByRole('button', { name: /^Ask/ }).first()
+    const ab = await ask.boundingBox(); if (ab) await glide(ab.x + ab.width / 2, ab.y + ab.height / 2, 20)
+    await ask.click()
+    await sleep(2500); await glide(1090, 640, 30)
+  })
 })
 
 // ── 10 · attack lab (live runs) ──
-const runScenario = async (i, wait) => {
-  const run = page.getByRole('button', { name: /^Run$/ })
-  const b = run.nth(i); await b.scrollIntoViewIfNeeded(); const bb = await b.boundingBox()
+const runScenario = async (title, wait) => {
+  const card = page.locator('section.panel', { hasText: title })
+  const b = card.getByRole('button', { name: /^Run/ }).first(); await b.scrollIntoViewIfNeeded(); const bb = await b.boundingBox()
   if (bb) await glide(bb.x + bb.width / 2, bb.y + bb.height / 2, 20)
   await b.click({ timeout: 60000 })   // buttons disable while a scenario runs, so this naturally waits its turn
   await sleep(wait)
 }
 await segment('10_attack_a', async () => {
   await open(base + '/lab')
-  await runScenario(0, 3000)    // replay
-  await runScenario(1, 5000)    // spoofEmitter
+  await runScenario('Replay a proven contribution', 3000)
+  await runScenario('Spoofed emitter', 5000)
 })
 await segment('10_attack_b', async () => {
-  await runScenario(5, 4000)    // stealFromSteward
-  await runScenario(6, 5000)    // fireTheAgent
+  await runScenario('Steal the steward', 4000)
+  await runScenario('Fire the agent', 5000)
 })
 
 // ── 11 · credit ──
@@ -207,7 +219,7 @@ await segment('12_depth', async () => {
 
 // ── 13 · close card ──
 await segment('13_close', async () => {
-  await open(`${CARDS}/title.html?eyebrow=${encodeURIComponent('BUIDL CTC 2026 Fall · DeFi track')}&title=${encodeURIComponent('Savings circles where every payment is <em>proven</em>, not promised.')}&sub=${encodeURIComponent('Run by an agent whose only power is proof.')}&footr=${encodeURIComponent('100 contract tests · 20 agent tests · 8 attack scenarios · live-precompile verified')}&on=24`)
+  await open(`${CARDS}/title.html?eyebrow=${encodeURIComponent('BUIDL CTC 2026 Fall · DeFi track')}&title=${encodeURIComponent('Savings circles where every payment is <em>proven</em>, not promised.')}&sub=${encodeURIComponent('Run by an agent whose only power is proof.')}&footr=${encodeURIComponent('103 contract tests · 26 agent tests · 8 attack scenarios · live-precompile verified')}&on=24`)
 })
 
 if (page) await page.close()
