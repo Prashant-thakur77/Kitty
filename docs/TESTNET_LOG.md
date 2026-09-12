@@ -106,6 +106,13 @@ Every transaction of the 12 September 2026 campaign, across four ledger deployme
 | 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout circle 2 round 2 (proven back through 0x0FD2) | [0x228a69a5…5a07ab](https://creditcoin-testnet.blockscout.com/tx/0x228a69a5f1b963a95f2357d044c9596bba3615450b8bf3afbd66f36c255a07ab) | 382998 |
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 2 round 3 on the attested deadline (nobody paid: five misses recorded with the attestation) | [0xfdfc01cf…12c3d1](https://creditcoin-testnet.blockscout.com/tx/0xfdfc01cf8467a6fbd2f7fc431a922d6ddacc3ec5927705c1e6740a197912c3d1) | 384104 |
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 2 round 4 (final round on the attested deadline, nobody paid; circle completed) | [0x34f13553…e53f34](https://creditcoin-testnet.blockscout.com/tx/0x34f13553dad1f17e68243ca451889f08ef56d8045712dfcf7b80bdb1c2e53f34) | 384104 |
+| 2026-09-12 | Creditcoin CC3 Testnet | createCircle 4 (Accra Susu, 3 members, 100 tUSD, 6000-block rounds, by score) | [0xcb2ff5b3…0db7ae](https://creditcoin-testnet.blockscout.com/tx/0xcb2ff5b3d116ae64b0c91bf39e8a10789be396817f6b27f65efcf66e520db7ae) | 357602 |
+| 2026-09-12 | Sepolia | contribute circle 4 round 0 member 0 | [0x85286c43…543163](https://sepolia.etherscan.io/tx/0x85286c43b18fd90c49e1ac2952e2fbc238a233e71928b7a68aac29a0df543163) | 105733 |
+| 2026-09-12 | Sepolia | contribute circle 4 round 0 member 1 | [0x8cc7755a…a29944](https://sepolia.etherscan.io/tx/0x8cc7755a3b48ab86b62fe30e0a250de00d5b408d79f269c0536ea40791a29944) | 71533 |
+| 2026-09-12 | Sepolia | contribute circle 4 round 0 member 2 | [0x6bd1fc7b…1341f8](https://sepolia.etherscan.io/tx/0x6bd1fc7ba08f4ce931e51df511ee6fe8014f694c8b78baa1d55566c55b1341f8) | 71533 |
+| 2026-09-12 | Creditcoin CC3 Testnet | recordContributions circle 4 round 0 (the whole round, batch of 3, in one call) | [0x7dd69e6b…410909](https://creditcoin-testnet.blockscout.com/tx/0x7dd69e6b1ef391b3ea37b96b8b458173eb9ff89405edfc333b020cf0b2410909) | 735165 |
+| 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 4 round 0 (everyone paid; by score) | [0x61484a17…2d3f27](https://creditcoin-testnet.blockscout.com/tx/0x61484a17627ac47fc1b8d66d23c15db797848675b6ff5a572199640efc2d3f27) | 354326 |
+| 2026-09-12 | Sepolia | payout circle 4 round 0 (300 tUSD) | [0x960e6d03…d56337](https://sepolia.etherscan.io/tx/0x960e6d03037fba930fd65888462749b3108dc7e6ca665df7e9912697e9d56337) | 64821 |
 
 ## Live precompile verification (no deployment needed)
 
