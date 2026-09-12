@@ -255,7 +255,15 @@ batch proof: 3 tx over blocks 11656253–11656295 · ONE continuity proof (48 ro
 0x0FD2.verify(BATCH of 3, one shared continuity proof) = true
 ```
 
-Reproduce on any Sepolia transaction with `pnpm verify:live <txhash> [<txhash> …]`.
+The same path holds for Ethereum mainnet, which CC3 Testnet attests under chain key 3. A real mainnet transaction (block 25959168, index 0) on 12 September 2026:
+
+```
+0x0FD2.verify(chainKey 3, height 25959168) = true
+0x0FD2.verify(tampered txBytes)  = reverted: "Merkle proof validation failed"
+0x0FD2.verify(wrong chainKey 1)  = reverted: "Continuity proof does not match attestation or checkpoint"
+```
+
+So a circle created with chain key 3 would settle from Ethereum mainnet with no change to the ledger; the per-circle chain key and the chain-keyed vault allowlist exist for exactly that. Reproduce on any Sepolia transaction with `pnpm verify:live <txhash> [<txhash> …]`, or on mainnet with `SOURCE_CHAIN_KEY=3 SEPOLIA_RPC_URL=<mainnet rpc> pnpm verify:live <txhash>`.
 
 ### Gas, measured
 

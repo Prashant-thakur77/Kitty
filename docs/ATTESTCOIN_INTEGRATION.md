@@ -123,6 +123,10 @@ This is the technical integration document required by the BUIDL CTC submission 
 | `src/asc/KittyCreditLine.sol`, `src/asc/KittyBadge.sol` | Consumers of proof-derived state (score, record) — lending and a live-rendered soulbound badge |
 | `test/`, `scripts/local-e2e.sh` | Precompiles mocked at their real addresses (`vm.etch` / `anvil_setCode`) |
 
+## Multi-chain, exercised live
+
+CC3 Testnet attests Ethereum mainnet under chain key 3 as well as Sepolia under chain key 1 (`get_supported_chains()` on 0x0FD3 returns both). On 12 September 2026 `SOURCE_CHAIN_KEY=3 pnpm verify:live 0x8a528ce7…` fetched the Proof Builder proof for mainnet transaction 0x8a528ce7ab78bab42530b9d168555850d122c737007981ec10ea4c6c9ec5b8ae (block 25959168, index 0) and the live 0x0FD2 returned `true`; the tampered-bytes and wrong-chain-key (1) negatives both reverted. A circle created with chain key 3 and a vault trusted for that key settles from mainnet with no change to the ledger.
+
 ## Protocol coverage
 
 One row per protocol function, with where Kitty calls it. Line numbers refer to the current

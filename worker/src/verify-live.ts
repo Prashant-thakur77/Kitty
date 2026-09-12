@@ -1,6 +1,7 @@
 /**
- * pnpm verify:live <sepoliaTxHash>
- * Fetches the Attestcoin proof for a real Sepolia transaction from the Proof Builder, decodes the
+ * pnpm verify:live <txHash>                       (Sepolia, chain key 1)
+ * SOURCE_CHAIN_KEY=3 SEPOLIA_RPC_URL=<mainnet rpc> pnpm verify:live <txHash>   (Ethereum mainnet, chain key 3)
+ * Fetches the Attestcoin proof for a real source-chain transaction from the Proof Builder, decodes the
  * prover bytes the way KittyLedger does, and asks the LIVE block-prover precompile (0x0FD2) on
  * Creditcoin CC3 Testnet to verify it — plus two negative checks (tampered bytes, wrong chain key).
  * A view call: needs no funds, no deployment. Judges can run this against any Sepolia tx.
@@ -19,7 +20,7 @@ let rc = await sourceProvider.getTransactionReceipt(tx);
 for (let i = 0; !rc && i < 5; i++) { await new Promise((r) => setTimeout(r, 1500)); rc = await sourceProvider.getTransactionReceipt(tx); }
 if (!rc) throw new Error('tx not found on the source chain');
 const ah = await (await fetch(`${cfg.proofBuilderUrl}/api/v1/attested-height/${cfg.chainKey}`)).json();
-log(`tx in Sepolia block ${rc.blockNumber} · proof builder attested height ${ah.attestedHeight}`);
+log(`tx in source block ${rc.blockNumber} (chain key ${cfg.chainKey}) · proof builder attested height ${ah.attestedHeight}`);
 if (Number(ah.attestedHeight) < rc.blockNumber) { log(`block not attested yet (${rc.blockNumber - Number(ah.attestedHeight)} blocks to go) — try again in a few minutes`); process.exit(2); }
 
 const res = await fetch(`${cfg.proofBuilderUrl}/api/v1/proof-by-tx/${cfg.chainKey}/${tx}`);
@@ -43,7 +44,8 @@ log(`0x0FD2.calculateTxIndex = ${await pre.calculateTxIndex(mp)}`);
 log(`0x0FD2.verify(chainKey ${p.chainKey}, height ${p.headerNumber}) = ${await pre.verify(p.chainKey, p.headerNumber, p.txBytes, mp, cp)}`);
 const bad = p.txBytes.slice(0, -2) + (p.txBytes.endsWith('00') ? '01' : '00');
 log(`0x0FD2.verify(tampered txBytes)  = ${await pre.verify(p.chainKey, p.headerNumber, bad, mp, cp).catch(reason)}`);
-log(`0x0FD2.verify(wrong chainKey 3)  = ${await pre.verify(3, p.headerNumber, p.txBytes, mp, cp).catch(reason)}`);
+const otherKey = cfg.chainKey === 3 ? 1 : 3;
+log(`0x0FD2.verify(wrong chainKey ${otherKey})  = ${await pre.verify(otherKey, p.headerNumber, p.txBytes, mp, cp).catch(reason)}`);
 
 /** Batch mode: one Proof Builder call, one continuity proof, one precompile call for up to 10 txs — exactly what KittyLedger.recordContributions does. */
 async function batchMode(hs: string[]) {
