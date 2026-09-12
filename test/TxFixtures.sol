@@ -47,6 +47,29 @@ library TxFixtures {
         return encode(member, vault, 1, evs);
     }
 
+    /// A contribution whose log names `member` but whose transaction was sent by `sender` (a relayer or a
+    /// smart-account paying on the member's behalf): the ledger must refuse it with SenderMismatch.
+    function contributionSentBy(address sender, address vault, address member, uint256 circleId, uint32 round, uint256 amount)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        VaultEvent[] memory evs = new VaultEvent[](1);
+        evs[0] = VaultEvent(CONTRIBUTED_SIG, vault, circleId, round, member, amount);
+        return encode(sender, vault, 1, evs);
+    }
+
+    /// A contribution whose transaction targets `target` instead of the vault (a proxy or router in front of it).
+    function contributionTo(address target, address vault, address member, uint256 circleId, uint32 round, uint256 amount)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        VaultEvent[] memory evs = new VaultEvent[](1);
+        evs[0] = VaultEvent(CONTRIBUTED_SIG, vault, circleId, round, member, amount);
+        return encode(member, target, 1, evs);
+    }
+
     function payout(address vault, address operator, address recipient, uint256 circleId, uint32 round, uint256 amount)
         internal
         pure

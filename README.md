@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Prashant-thakur77/Kitty/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Prashant-thakur77/Kitty/ci.yml?branch=main&style=flat-square&label=ci&color=4FD1A3"></a>
-  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry_tests-106_passing-4FD1A3?style=flat-square">
+  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry_tests-162_passing-4FD1A3?style=flat-square">
   <img alt="Attack scenarios" src="https://img.shields.io/badge/attack_scenarios-8_%2F_8_passing-4FD1A3?style=flat-square">
   <img alt="Creditcoin" src="https://img.shields.io/badge/Creditcoin-CC3_Testnet-7DB6E8?style=flat-square">
   <img alt="Attestcoin" src="https://img.shields.io/badge/Attestcoin-0x0FD2_%C2%B7_0x0FD3-7DB6E8?style=flat-square">
@@ -51,6 +51,7 @@
 - [Quick start](#quick-start)
 - [Deployments](#deployments)
 - [Repository layout](#repository-layout)
+- [Documentation](#documentation)
 - [Security model](#security-model)
 - [Design notes](#design-notes)
 - [Roadmap](#roadmap)
@@ -266,7 +267,7 @@ Requirements: Foundry, Node 22 with pnpm, and Docker is not needed. The first fo
 git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty
 pnpm install && pnpm --dir web install
 
-forge test              # 106 tests: ledger, vault, invites, rotation, viewer, credit line, badge, multi-chain, batch payouts, real prover bytes
+forge test              # 162 tests: ledger, vault, invites, rotation, viewer, credit line, badge, multi-chain, batch payouts, real prover bytes
 pnpm test:agent         # 29 tests: batch policy and citation validator
 pnpm scenarios          # 8 attack scenarios end to end
 pnpm e2e:local          # two full rounds, a missed payment, a payout proven back, a replay rejected
@@ -333,6 +334,33 @@ web/                          Vite + React + wagmi dashboard
 scripts/                      deploy.sh · local-setup.sh · local-world.sh · local-e2e.sh · scenarios.sh · media/
 docs/                         integration write-up, plans, submission material, testnet log, deck (the demo video is a release asset)
 ```
+
+## Documentation
+
+Index with one line per file: [`docs/README.md`](docs/README.md).
+
+| Document | Description |
+|---|---|
+| [`docs/TECH.md`](docs/TECH.md) | Technical note: the core insight, the nineteen checks from a Sepolia payment to Creditcoin state, the attestation clock, rotation, the score, the steward's three layers, batch policy, measured gas, Attestcoin coverage, limits |
+| [`docs/specs/PROTOCOL.md`](docs/specs/PROTOCOL.md) | Protocol specification: data model, state machines, the complete `KittyLedger` and `KittyVault` interfaces, event and error catalogues, query-id derivation, numbered invariants |
+| [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Assets, actors, trust assumptions, threat table with the exact mitigating check and its test, the eight attack scenarios, known limits |
+| [`docs/AUDIT_CHECKLIST.md`](docs/AUDIT_CHECKLIST.md) | Reviewer checklist by contract and worker component, each item pointing at the code and the covering test, with a findings log |
+| [`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md) | The hackathon's required integration write-up: pipeline, precompile functions used, files, gas |
+| [`docs/GAS.md`](docs/GAS.md) | Contract gas per operation, measured in Foundry, separate from the live precompile figures |
+| [`docs/adr/0001-attestation-as-the-only-clock.md`](docs/adr/0001-attestation-as-the-only-clock.md) | ADR: block-height deadlines, `is_height_attested` as the only clock, the 64-block grace constant |
+| [`docs/adr/0002-money-and-rules-on-different-chains.md`](docs/adr/0002-money-and-rules-on-different-chains.md) | ADR: a dumb vault on Sepolia, a proof-only ledger on Creditcoin, the bounded operator, writability |
+| [`docs/adr/0003-batch-proofs-and-the-roundmate-hold.md`](docs/adr/0003-batch-proofs-and-the-roundmate-hold.md) | ADR: one continuity proof for up to ten payments, the batch policy, the hold rule |
+| [`docs/adr/0004-consent-grace-and-fallback-recipient.md`](docs/adr/0004-consent-grace-and-fallback-recipient.md) | ADR: who can be marked missed, how a round with missing payments closes, where an unclaimed pot goes |
+| [`docs/adr/0005-one-vault-per-ledger.md`](docs/adr/0005-one-vault-per-ledger.md) | ADR: why a ledger redeploy pairs with a fresh vault and why a payment cannot predate its circle |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Runbook: env keys, `deploy.sh`, seeding, the worker and its state files, the lab API, recording, `txlog`, recovery procedures, local worlds, CI, Pages |
+| [`docs/USER_SCENARIOS.md`](docs/USER_SCENARIOS.md) | Every dashboard flow for members, organisers, lenders and reviewers, with UI states and on-chain effects |
+| [`docs/DEMO_RUNBOOK.md`](docs/DEMO_RUNBOOK.md) | The recording-day script for the testnet demo |
+| [`docs/TELEGRAM.md`](docs/TELEGRAM.md) | The Telegram bot and Mini App |
+| [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md) | Every testnet transaction with explorer link and gas |
+| [`docs/SUBMISSION.md`](docs/SUBMISSION.md) | The DoraHacks submission fields |
+| [`docs/STRATEGY.md`](docs/STRATEGY.md), [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md), [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md), [`docs/AGENT_PLAN.md`](docs/AGENT_PLAN.md) | Strategy, sourcing, build order and the v2 agent plan |
+| [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf) | The deck, printed from `/presentation` |
+| [`.env.example`](.env.example) | Environment variable template |
 
 ## Security model
 

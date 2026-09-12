@@ -1,0 +1,10 @@
+import { chromium } from 'playwright'
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] })
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 })
+await page.goto(`http://127.0.0.1:5187/story?chapter=${process.argv[2] || 1}&hud=0`, { waitUntil: 'networkidle' })
+await page.waitForFunction(() => !!window.kittyStory && !!document.querySelector('canvas'))
+await page.evaluate(() => window.kittyStory.seek(Number(new URL(location.href).searchParams.get('chapter')), 8))
+await page.waitForTimeout(1000)
+const fps = await page.evaluate(() => new Promise((r) => { let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 3000) requestAnimationFrame(f); else r(n / 3) }; requestAnimationFrame(f) }))
+console.log('fps', fps.toFixed(1))
+await browser.close()

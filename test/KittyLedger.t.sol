@@ -256,6 +256,28 @@ contract KittyLedgerTest is Test {
         assertTrue(ledger.getContribution(circleId, 0, alice).onTime);
     }
 
+    function test_rejectsPaymentSentByAnotherAddress() public {
+        // The log says alice paid, but the transaction's own sender is a relayer: no credit for alice.
+        address relayer = address(0xBEEF);
+        bytes[] memory txs = new bytes[](1);
+        txs[0] = TxFixtures.contributionSentBy(relayer, vault, alice, circleId, 0, AMOUNT);
+        INativeQueryVerifier.MerkleProof[] memory proofs = new INativeQueryVerifier.MerkleProof[](1);
+        proofs[0] = TxFixtures.merkle(7);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.SenderMismatch.selector, relayer, alice));
+        ledger.recordContributions(CHAIN_KEY, _h(1_010), txs, proofs, TxFixtures.continuity());
+    }
+
+    function test_rejectsPaymentRoutedThroughAnotherContract() public {
+        // The event comes from the trusted vault, but the transaction's `to` is a router in front of it.
+        address router = address(0xCAFE);
+        bytes[] memory txs = new bytes[](1);
+        txs[0] = TxFixtures.contributionTo(router, vault, alice, circleId, 0, AMOUNT);
+        INativeQueryVerifier.MerkleProof[] memory proofs = new INativeQueryVerifier.MerkleProof[](1);
+        proofs[0] = TxFixtures.merkle(8);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.TxNotToVault.selector, router, vault));
+        ledger.recordContributions(CHAIN_KEY, _h(1_010), txs, proofs, TxFixtures.continuity());
+    }
+
     function test_rejectsDoubleContributionByMember() public {
         _record(_one(alice), _h(1_010), 0);
         (bytes[] memory txs, INativeQueryVerifier.MerkleProof[] memory proofs) = _batch(_one(alice), _h(1_011), 0);
