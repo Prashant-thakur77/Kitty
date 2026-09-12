@@ -259,6 +259,8 @@ The score is used, not just displayed. `KittyCreditLine` underwrites purely from
   <img src="docs/assets/score.png" alt="What a lender sees" width="100%">
 </p>
 
+*Above: a real member of the live circles after missing round 1 of the Delhi Chit Circle on 12 September 2026. The miss carries the attestation that proved the deadline (`attested @ 11687610`), the score fell from 560 to 440, and every row links to the Creditcoin transaction.*
+
 ## Quick start
 
 Requirements: Foundry, Node 22 with pnpm, and Docker is not needed. The first four commands run offline against two local anvils with the precompiles mocked at their real addresses; `pnpm judge` runs them all and then reaches the live CC3 Testnet precompile (internet, no .env needed).
