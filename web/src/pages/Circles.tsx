@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useReadContracts } from 'wagmi'
-import { CircleDashed, ArrowRight } from 'lucide-react'
+import { CircleDashed, ArrowRight, Plus } from 'lucide-react'
 import { useAttestation, useCircleCount } from '../hooks'
 import { cfg } from '../config'
 import { ledgerAbi } from '../lib/abi'
@@ -41,11 +41,16 @@ export function Circles() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <Reveal>
-        <div className="eyebrow">Ledger</div>
-        <h1 className="text-3xl">Circles on Creditcoin</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
-          {countPending ? <Skeleton w={120} h={12} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : <>{n} circle{n === 1 ? '' : 's'} · newest last</>}
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="eyebrow">Ledger</div>
+            <h1 className="text-3xl">Circles on Creditcoin</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
+              {countPending ? <Skeleton w={120} h={12} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : <>{n} circle{n === 1 ? '' : 's'} · newest last</>}
+            </p>
+          </div>
+          <Link to="/create" className="btn btn-mint no-underline"><Plus size={15} /> Create a circle</Link>
+        </div>
       </Reveal>
       {loading ? (
         <div className="mt-5 grid gap-3 md:grid-cols-2" aria-busy="true" aria-label="Loading circles">
@@ -56,8 +61,8 @@ export function Circles() {
           <Empty
             icon={<CircleDashed size={22} />}
             title="No circles yet"
-            body={<>This ledger has not opened a circle. Create one with <code className="mono">pnpm demo create</code> from the repo, or let the worker create the demo world.</>}
-            action={{ label: <>See how a circle works <ArrowRight size={14} className="arrow" /></>, to: '/architecture', primary: true }}
+            body={<>This ledger has not opened a circle. Create one from your wallet, with <code className="mono">pnpm demo create</code> from the repo, or let the worker create the demo world. <Link to="/architecture">See how a circle works</Link>.</>}
+            action={{ label: <>Create a circle <ArrowRight size={14} className="arrow" /></>, to: '/create', primary: true }}
           />
         </Reveal>
       ) : (

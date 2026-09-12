@@ -143,10 +143,11 @@ One row per protocol function, with where Kitty calls it. Line numbers refer to 
 | `ChainInfo` | `get_chain_by_key` | circle creation, `_initCircle`, `KittyLedger.sol:790` |
 | `ChainInfo` | `get_latest_attestation_height_and_hash` | `_initCircle`, `KittyLedger.sol:796`: round 0's deadline must lie beyond the attested frontier (`InvalidCircle("round 0 already attested")`); `worker/src/worker.ts:72`, `worker/src/api.ts:43`, `web/src/hooks.ts:14` |
 | `ChainInfo` | `get_attestation_bounds` | `web/src/hooks.ts`: whether a deadline is covered, or the latest attested block below it |
-| `ChainInfo` | `find_highest_attested_before`, `get_attestation_genesis_height`, `get_supported_chains` | declared in `src/interfaces/IChainInfo.sol`, tested against the mock in `test/KittyMultiChain.t.sol:236-263`; not on the hot path |
+| `ChainInfo` | `get_supported_chains` | `web/src/pages/Create.tsx`: the chain picker on the create page lists the chains the attestor network serves, read live from the precompile, and disables the ones whose vault is not trusted |
+| `ChainInfo` | `find_highest_attested_before`, `get_attestation_genesis_height` | declared in `src/interfaces/IChainInfo.sol`, tested against the mock in `test/KittyMultiChain.t.sol:236-263`; not on the hot path |
 | `ChainInfo` | `get_checkpoint_for_height`, `get_latest_checkpoint_height_and_hash`, `get_attestation_height_for_digest` | not used; continuity proofs come from the Proof Builder |
 
-Five of the ChainInfo precompile's eleven functions are on the hot path, four of them inside
+Six of the ChainInfo precompile's eleven functions are on the hot path, four of them inside
 `KittyLedger.sol` itself; the eight-function interface in `IChainInfo.sol` is exercised end to end
 against the mock. Query ids: `_computeQueryId` in `KittyLedger.sol` (lines 763-775) is byte-identical to `readability/ASCBase.sol` lines 94-112 in
 `@gluwa/asc-contracts@0.2.1`, so a query processed by Kitty is the same id any `ASCBase` contract

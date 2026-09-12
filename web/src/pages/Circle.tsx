@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useAccount, useReadContract, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, usePublicClient, useReadContract, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { waitForTransactionReceipt } from 'wagmi/actions'
 import { wagmiConfig } from '../lib/wagmi'
 import * as Dialog from '@radix-ui/react-dialog'
@@ -18,6 +18,9 @@ import { chainName } from '../lib/verifier'
 import { ProofFeed } from '../components/ProofFeed'
 import { RotationWheel, RoundTimeline, WheelLegend } from '../components/RotationWheel'
 import { Reveal } from '../components/motion'
+import { InvitePanel } from '../components/InvitePanel'
+import { useToast } from '../components/Toast'
+import { revertReason, simulateLedger } from '../lib/tx'
 
 type Urgency = 'calm' | 'attention' | 'urgent' | 'proven'
 
@@ -35,6 +38,8 @@ export function CirclePage() {
   const payments = useVaultPayments(circleId, circle?.currentRound, circle?.startHeight)
   const bounds = useDeadlineBounds(circle?.chainKey ?? BigInt(cfg.sourceChainKey), deadline)
   const { writeContractAsync, isPending } = useWriteContract()
+  const ccClient = usePublicClient({ chainId: creditcoinTestnet.id })
+  const { toast, update } = useToast()
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
   const [msg, setMsg] = useState('')
   const [modal, setModal] = useState<'closed' | 'confirm' | 'sent'>('closed')
@@ -44,6 +49,8 @@ export function CirclePage() {
   const zero = '0x0000000000000000000000000000000000000000'
   const allowance = useReadContract({ chainId: sepolia.id, address: cfg.token, abi: usdAbi, functionName: 'allowance', args: [address ?? zero, cfg.vault], query: { enabled: !!address && !!cfg.token } })
   const balance = useReadContract({ chainId: sepolia.id, address: cfg.token, abi: usdAbi, functionName: 'balanceOf', args: [address ?? zero], query: { enabled: !!address && !!cfg.token } })
+  // Consent: a listed member is only penalised for a circle they accepted (redeemed an invite, organised it, accepted, or paid).
+  const accepted = useReadContract({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'accepted', args: [circleId, address ?? zero], query: { enabled: !!address && !!cfg.ledger } })
 
   const myIdx = useMemo(() => (address && circle ? circle.members.findIndex((m) => m.toLowerCase() === address.toLowerCase()) : -1), [address, circle])
   if (!cfg.ledger) return <main className="mx-auto max-w-6xl px-4 py-8"><div className="panel p-5" style={{ color: 'var(--muted)' }}>Ledger not deployed yet.</div></main>
@@ -64,6 +71,8 @@ export function CirclePage() {
   const iPaidOnSepolia = !!address && payments.some((p) => p.member.toLowerCase() === address.toLowerCase())
   const urgency: Urgency = !active ? 'calm' : iProved || iPaidOnSepolia ? 'proven' : deadlineAttested || full ? 'urgent' : blocksToAttested !== undefined && blocksToAttested <= 20 ? 'attention' : 'calm'
   const byScore = circle.rotation === 1
+  const isOrganiser = !!address && circle.organiser.toLowerCase() === address.toLowerCase()
+  const needsConsent = active && myIdx >= 0 && accepted.data === false
   // ByScore: the pot goes to the best current score among members who have not received yet (ties → earlier member)
   const recipient = byScore
     ? circle.members.reduce<{ m?: `0x${string}`; s: number }>((acc, m, i) => {
@@ -96,13 +105,28 @@ export function CirclePage() {
   async function closeRound() {
     try { await ensure(creditcoinTestnet.id); const h = await writeContractAsync({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'closeRound', args: [circleId] }); setMsg(`closeRound sent on Creditcoin · ${h.slice(0, 12)}…`); setTimeout(refetch, 5000) } catch (e) { setMsg((e as Error).message.split('\n')[0]) }
   }
+  async function acceptMembership() {
+    const t = toast({ title: 'Simulating acceptMembership', description: 'Dry run against the ledger before your wallet is asked…', tone: 'sky', busy: true, duration: 0 })
+    try {
+      setMsg('')
+      try { await simulateLedger(ccClient!, address!, 'acceptMembership', [circleId]) } catch (e) { update(t, { title: 'Ledger would reject', description: `${revertReason(e)}. Nothing submitted.`, tone: 'rose', busy: false, duration: 9000 }); return }
+      update(t, { title: 'Confirm in your wallet', description: `Accepting membership of "${circle!.name}" on Creditcoin…`, tone: 'sky', busy: true, duration: 0 })
+      await ensure(creditcoinTestnet.id)
+      const h = await writeContractAsync({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'acceptMembership', args: [circleId] })
+      update(t, { title: 'Submitted to Creditcoin', description: `${h.slice(0, 14)}… · waiting for the receipt`, tone: 'sky', busy: true, duration: 0 })
+      const rc = await waitForTransactionReceipt(wagmiConfig, { hash: h, chainId: creditcoinTestnet.id })
+      if (rc.status !== 'success') { update(t, { title: 'Reverted on chain', description: `${h.slice(0, 14)}…`, tone: 'rose', busy: false, duration: 9000 }); return }
+      update(t, { title: 'Membership accepted', description: 'From now on a missed deadline in this circle is recorded against your address.', tone: 'mint', busy: false, duration: 7000 })
+      accepted.refetch()
+    } catch (e) { update(t, { title: 'Transaction failed', description: revertReason(e), tone: 'rose', busy: false, duration: 8000 }) }
+  }
 
   // Members with a payment mined on Sepolia this round (any amount) but no proof on Creditcoin yet — the band must not call them unpaid.
   const paidCount = new Set(payments.map((p) => p.member.toLowerCase())).size
   const proven = round?.contributions ?? 0
   const paidUnattested = active && round && paidCount > proven ? paidCount - proven : 0
-  const headline = !active ? 'CIRCLE COMPLETE' : iProved ? `PROVEN · BLOCK ${num(mine!.height)}` : iPaidOnSepolia ? 'PAID · PROOF PENDING' : myIdx >= 0 ? `PAY ${usd(circle.contribution)}` : full ? 'EVERYONE PAID' : deadlineAttested ? 'DEADLINE ATTESTED' : paidUnattested > 0 ? `${paidCount} PAID · ${proven} PROVEN` : `${proven} OF ${n} PROVEN`
-  const sub = !active ? 'Every member has received a pot.' : paidUnattested > 0 && !deadlineAttested && !iProved && !iPaidOnSepolia && myIdx < 0 ? `${paidUnattested} payment${paidUnattested === 1 ? '' : 's'} mined on Sepolia, waiting for the attestor network${blocksToAttested !== undefined ? ` · ${blocksToAttested} blocks until the deadline is attested` : ''}` : deadlineAttested ? 'The deadline plus the 64-block grace window is attested on Creditcoin. Anyone can close the round; missing members are recorded.' : deadlinePassed ? `Deadline passed; payments now count as late. ${blocksToClose} blocks of grace before the round can close.` : blocksToAttested !== undefined ? `${blocksToAttested} Sepolia blocks until the deadline is attested` : 'Waiting for attestation data…'
+  const headline = !active ? 'CIRCLE COMPLETE' : circle.open ? `OPEN · ${n} OF ${circle.maxMembers}` : iProved ? `PROVEN · BLOCK ${num(mine!.height)}` : iPaidOnSepolia ? 'PAID · PROOF PENDING' : myIdx >= 0 ? `PAY ${usd(circle.contribution)}` : full ? 'EVERYONE PAID' : deadlineAttested ? 'DEADLINE ATTESTED' : paidUnattested > 0 ? `${paidCount} PAID · ${proven} PROVEN` : `${proven} OF ${n} PROVEN`
+  const sub = !active ? 'Every member has received a pot.' : circle.open ? 'Invites are open. No payment can be recorded until the organiser closes invites; the member list and rotation order are fixed then.' : paidUnattested > 0 && !deadlineAttested && !iProved && !iPaidOnSepolia && myIdx < 0 ? `${paidUnattested} payment${paidUnattested === 1 ? '' : 's'} mined on Sepolia, waiting for the attestor network${blocksToAttested !== undefined ? ` · ${blocksToAttested} blocks until the deadline is attested` : ''}` : deadlineAttested ? 'The deadline plus the 64-block grace window is attested on Creditcoin. Anyone can close the round; missing members are recorded.' : deadlinePassed ? `Deadline passed; payments now count as late. ${blocksToClose} blocks of grace before the round can close.` : blocksToAttested !== undefined ? `${blocksToAttested} Sepolia blocks until the deadline is attested` : 'Waiting for attestation data…'
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
@@ -120,14 +144,16 @@ export function CirclePage() {
             <div className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>{sub}</div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {active && myIdx >= 0 && !iProved && !iPaidOnSepolia && <button className="btn btn-mint" disabled={isPending} onClick={() => setModal('confirm')}>Contribute {usd(circle.contribution)}</button>}
-            {active && myIdx >= 0 && ((balance.data as bigint | undefined) ?? 0n) < circle.contribution && <button className="btn" onClick={mintDemo}>Get demo tUSD</button>}
+            {active && !circle.open && myIdx >= 0 && !iProved && !iPaidOnSepolia && <button className="btn btn-mint" disabled={isPending} onClick={() => setModal('confirm')}>Contribute {usd(circle.contribution)}</button>}
+            {active && !circle.open && myIdx >= 0 && ((balance.data as bigint | undefined) ?? 0n) < circle.contribution && <button className="btn" onClick={mintDemo}>Get demo tUSD</button>}
+            {needsConsent && <button className="btn" disabled={isPending} onClick={acceptMembership} title="Consent to this circle on Creditcoin">Accept membership</button>}
             {active && (full || deadlineAttested) && round?.status === 0 && <button className="btn" disabled={isPending} onClick={closeRound}>Close round on Creditcoin</button>}
             {!address && <span className="self-center text-xs" style={{ color: 'var(--muted)' }}>Connect a member wallet to pay.</span>}
             {address && myIdx < 0 && <span className="self-center text-xs" style={{ color: 'var(--muted)' }}>This wallet is not a member.</span>}
           </div>
         </div>
         <div className="mt-5"><BlockProgress start={start} deadline={dl} now={head} attested={attested} /></div>
+        {needsConsent && <p className="mt-3 text-xs" style={{ color: 'var(--amber)' }}>You were listed by the organiser but have not consented yet. Only consented members can be marked missed; accepting (or paying once) records your consent on Creditcoin.</p>}
         {msg && <p className="mt-3 text-xs" style={{ color: 'var(--amber)' }}>{msg}</p>}
       </section>
 
@@ -137,6 +163,9 @@ export function CirclePage() {
         <Stat label="Proven" value={`${round?.contributions ?? 0} / ${n}`} />
         <Stat label="Deadline · Sepolia block" value={num(dl)} sub={bounds ? (bounds.isAttested ? `deadline attested · covering block ${num(bounds.childHeight)}` : `latest attested ${num(bounds.parentHeight)} · waiting for ${num(dl)}`) : deadlineAttested ? 'grace over — closable' : deadlinePassed ? `late until block ${num(closeHeight)}` : `attested head ${num(attested)}`} tone="sky" />
       </div>
+
+      {circle.open && isOrganiser && <Reveal i={1} className="mt-4"><InvitePanel circleId={circleId} circle={circle} onChange={() => setTimeout(refetch, 1500)} /></Reveal>}
+      {circle.open && !isOrganiser && <div className="mt-4 panel p-4 text-sm" style={{ color: 'var(--muted)' }}>This circle is open for invites ({n} of {circle.maxMembers} seats taken). The organiser <span className="mono">{short(circle.organiser)}</span> signs invite links; a link is redeemed at <span className="mono">/join/{String(circleId)}</span> by the invited wallet. No payment can be recorded until invites are closed.</div>}
 
       <Reveal i={1} className="mt-4 grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start">
         <Section title={byScore ? 'Rotation · by Kitty Score' : 'Rotation · fixed order'} right={byScore ? <Tag tone="mint">best record first</Tag> : <Tag tone="muted">hover a member</Tag>}>

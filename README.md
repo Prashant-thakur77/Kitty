@@ -229,7 +229,7 @@ Kitty was built to use the protocol deeply rather than minimally. The full techn
 | **Batch verification across circles** | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | Up to ten queries under one continuity proof, pooled from every open circle. The continuity proof is checked once. |
 | **Free preflight** | precompile view `verify`, both overloads, from the worker and from the browser | A proof that would fail is never submitted; a bad batch costs nothing. |
 | **Attested-height clock** | `is_height_attested(chainKey, deadline + grace)` in `closeRound`; `onTime = height ≤ deadline` | No timestamps, no admin. The attestor network decides when a round ends. |
-| **ChainInfo as the clock and the evidence** | `is_height_attested(chainKey, deadline + 64)` gates every deadline close; `find_lowest_attested_after` records *which* attestation proved each missed deadline (stored on the round, carried by `ContributionMissed` and `RoundClosed`); `get_chain_by_key` and `get_latest_attestation_height_and_hash` at circle creation (registry check, and round 0 must end beyond the attested frontier); `get_attestation_bounds` in the dashboard | Five of the ChainInfo precompile's eleven functions on the hot path, four of them inside the ledger. The eight-function interface in `IChainInfo.sol` is exercised against the mock in [`test/KittyMultiChain.t.sol`](test/KittyMultiChain.t.sol). |
+| **ChainInfo as the clock and the evidence** | `is_height_attested(chainKey, deadline + 64)` gates every deadline close; `find_lowest_attested_after` records *which* attestation proved each missed deadline (stored on the round, carried by `ContributionMissed` and `RoundClosed`); `get_chain_by_key` and `get_latest_attestation_height_and_hash` at circle creation (registry check, and round 0 must end beyond the attested frontier); `get_attestation_bounds` in the dashboard; `get_supported_chains` drives the chain picker on `/create` | Six of the ChainInfo precompile's eleven functions on the hot path, four of them inside the ledger. The eight-function interface in `IChainInfo.sol` is exercised against the mock in [`test/KittyMultiChain.t.sol`](test/KittyMultiChain.t.sol). |
 | **Per-circle chain key** | validated at creation against the on-chain registry; the trusted-vault allowlist is keyed by chain | A circle settles from Sepolia (key 1) or Ethereum mainnet (key 3). A vault trusted on one chain is not trusted on another. |
 | **Query-id replay protection** | `keccak(chainKey ‖ height ‖ txIndex)`, byte-identical to `ASCBase`, shared by every entry point, plus in-batch duplicate detection | The same proof can never count twice. |
 | **Receipt status** | `receiptStatus == 1` before any log is read | The precompile proves inclusion, not success. |
@@ -408,6 +408,14 @@ pnpm worker                               # attestation wait → batch proof →
 ```
 
 Faucets: Sepolia ETH from [Alchemy](https://www.alchemy.com/faucets/ethereum-sepolia); tCTC from the `/faucet` command in the `#testnet-faucet` channel of the Creditcoin Discord.
+
+### Create a circle from the browser
+
+The dashboard can open circles without the CLI. `/create` (also the *Create a circle* button on `/circles`) takes a name, either a list of 2 to 10 member addresses or an open circle with a member cap, the installment in tUSD, the round length in Sepolia blocks (with the approximate hours shown) and the rotation rule; the source chain is picked from what the ChainInfo precompile `get_supported_chains()` reports, with chains greyed out where the ledger does not trust the vault, and the start height defaults to the latest attested Sepolia height plus 20 because the ledger refuses a circle whose first round would already be over on the attested frontier. Every write is simulated first, so a revert shows its decoded custom error in a toast before the wallet is asked to sign.
+
+For an open circle, the organiser's circle page shows an *Invites* panel: it asks the wallet to `personal_sign` the invite hash (the EIP-191 digest that `inviteDigest` checks on chain) and produces a `/join/:circleId?invitee=…&nonce=…&sig=…` link that only the invited wallet can redeem, once. `/join` shows the circle summary, verifies the signature against the organiser client-side and calls `redeemInvite`; *Close invites* fixes the member list. Members listed by address see an *Accept membership* button on the circle page; only consenting members can be marked missed.
+
+The creating, redeeming and accepting wallets need a little tCTC on Creditcoin Testnet for gas ([faucet docs](https://docs.creditcoin.org/wallets/using-testnet-faucet)); the page says so when the connected wallet holds none.
 
 ## Deployments
 

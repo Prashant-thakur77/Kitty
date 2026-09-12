@@ -6,6 +6,8 @@ import { EASE_OUT } from './components/motion'
 import { Landing } from './pages/Landing'
 import { Circles } from './pages/Circles'
 import { CirclePage } from './pages/Circle'
+import { Create } from './pages/Create'
+import { Join } from './pages/Join'
 import { ScorePage } from './pages/Score'
 import { Lab } from './pages/Lab'
 import { Steward } from './pages/Steward'
@@ -70,6 +72,8 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/circles" element={<Circles />} />
             <Route path="/circle/:id" element={<CirclePage />} />
+            <Route path="/create" element={<Create />} />
+            <Route path="/join/:circleId" element={<Join />} />
             <Route path="/score" element={<ScorePage />} />
             <Route path="/score/:address" element={<ScorePage />} />
             <Route path="/borrow" element={<Borrow />} />

@@ -145,7 +145,7 @@ export function Nav() {
                         <div className="sheet-foot">
                           <div className="eyebrow mb-2">Attestation</div>
                           <AttestationPill className="flex flex-wrap" />
-                          <div className="mt-3 flex flex-col gap-2"><WalletControl full /><TelegramPill className="justify-center" /></div>
+                          <div className="mt-3 flex flex-col gap-2"><WalletControl full /><Link to="/create" className="btn w-full justify-center no-underline">Create a circle</Link><TelegramPill className="justify-center" /></div>
                         </div>
                       </motion.div>
                     </Dialog.Content>
