@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useBlockNumber, usePublicClient, useReadContract, useReadContracts } from 'wagmi'
 import { cfg, CHAIN_INFO_PRECOMPILE, ZERO32 } from './config'
 import { chainInfoAbi, ledgerAbi, vaultAbi } from './lib/abi'
@@ -16,6 +16,33 @@ export function useAttestation() {
   })
   const attested = data?.exists ? data.height : undefined
   return { head, attested, lag: head !== undefined && attested !== undefined ? Number(head - attested) : undefined }
+}
+
+/** For each payment height, ask 0x0FD3 which attestation covers it (find_lowest_attested_after). ONE multicall, never per-row hooks. */
+export function useCoveringAttestations(chainKey: bigint, heights: bigint[]) {
+  const key = heights.map(String).join(',')
+  const uniq = useMemo(() => Array.from(new Set(heights.map(String))).map(BigInt), [key]) // eslint-disable-line react-hooks/exhaustive-deps
+  const q = useReadContracts({
+    contracts: uniq.map((h) => ({ ...cc, address: CHAIN_INFO_PRECOMPILE, abi: chainInfoAbi, functionName: 'find_lowest_attested_after', args: [chainKey, h] } as const)),
+    query: { enabled: uniq.length > 0, refetchInterval: 8000 },
+  })
+  return useMemo(() => {
+    const m = new Map<bigint, { height: bigint; exists: boolean }>()
+    uniq.forEach((h, i) => {
+      const r = q.data?.[i]?.result as { height: bigint; exists: boolean } | undefined
+      if (r) m.set(h, { height: r.height, exists: r.exists })
+    })
+    return m
+  }, [uniq, q.data])
+}
+
+/** get_attestation_bounds around a deadline: the exact covering block, or the latest attested below it. */
+export function useDeadlineBounds(chainKey: bigint, deadline: bigint | undefined) {
+  const { data } = useReadContract({
+    ...cc, address: CHAIN_INFO_PRECOMPILE, abi: chainInfoAbi, functionName: 'get_attestation_bounds',
+    args: [chainKey, deadline ?? 0n], query: { enabled: deadline !== undefined, refetchInterval: 8000 },
+  })
+  return data as { parentHeight: bigint; parentHash: `0x${string}`; parentIsAttestation: boolean; childHeight: bigint; childHash: `0x${string}`; childIsAttestation: boolean; isAttested: boolean } | undefined
 }
 
 export function useCircleCount() {
@@ -58,7 +85,7 @@ export function useScore(address: `0x${string}` | undefined) {
   const enabled = enabledLedger() && !!address
   const score = useReadContract({ ...cc, address: cfg.ledger, abi: ledgerAbi, functionName: 'creditScore', args: [address ?? '0x0000000000000000000000000000000000000000'], query: { enabled } })
   const record = useReadContract({ ...cc, address: cfg.ledger, abi: ledgerAbi, functionName: 'getRecord', args: [address ?? '0x0000000000000000000000000000000000000000'], query: { enabled } })
-  return { score: score.data as readonly [number, string] | undefined, record: record.data as Record_ | undefined }
+  return { score: score.data as readonly [number, string] | undefined, record: record.data as Record_ | undefined, isLoading: score.isLoading, error: score.error }
 }
 
 export type FeedItem = { kind: string; text: string; tx: `0x${string}`; block: bigint; qid?: string; args: Record<string, unknown> }
@@ -138,7 +165,7 @@ export const isProven = (c?: Contribution) => !!c && c.queryId !== ZERO32
 
 export type VaultPayment = { member: `0x${string}`; amount: bigint; tx: `0x${string}`; block: bigint }
 
-/** Contributed events on the Sepolia vault for one (circle, round). Scans from the round's opening block. */
+/** Contributed events on the Sepolia vault for one (circle, round). Scans from the circle's start block: a round opened early has payments before its nominal block. */
 export function useVaultPayments(circleId: bigint | undefined, round: number | undefined, fromBlock: bigint | undefined) {
   const client = usePublicClient({ chainId: sepolia.id })
   const { data: head } = useBlockNumber({ chainId: sepolia.id, watch: true })

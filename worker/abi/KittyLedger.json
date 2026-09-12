@@ -1375,6 +1375,31 @@
   },
   {
     "type": "event",
+    "name": "FallbackRecipient",
+    "inputs": [
+      {
+        "name": "circleId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "round",
+        "type": "uint32",
+        "indexed": true,
+        "internalType": "uint32"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "InviteRedeemed",
     "inputs": [
       {

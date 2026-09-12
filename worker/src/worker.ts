@@ -77,8 +77,32 @@ async function flushBatches() {
     const [circleIdS, roundS] = key.split(':');
     const circleId = BigInt(circleIdS);
     const round = Number(roundS);
-    const circle = await ledger.getCircle(circleId);
-    if (Number(circle.currentRound) !== round || Number(circle.status) !== 0 || circle.open) {
+    // Anyone can call KittyVault.contribute with any circle id, so a payment to a circle the ledger
+    // has never heard of must be quarantined here, not retried forever: the throw would end tick()
+    // before closeRounds/payouts and pin lastSourceBlock behind the stray payment.
+    let circle;
+    try {
+      circle = await ledger.getCircle(circleId);
+    } catch (e) {
+      const why = revertReason(e, ledger.interface);
+      if (why.startsWith('UnknownCircle')) {
+        for (const p of list) state.recorded[p.txHash] = true;
+        pending.delete(key);
+        log(`ignoring ${list.length} payment(s) to unknown circle ${circleId}`);
+        continue;
+      }
+      throw e;
+    }
+    if (Number(circle.status) !== 0 || round < Number(circle.currentRound)) {
+      // The ledger can never accept these (circle completed, or the round already closed): quarantine.
+      for (const p of list) state.recorded[p.txHash] = true;
+      log(`skip ${key}: ledger is on round ${circle.currentRound}${Number(circle.status) !== 0 ? ' (circle completed)' : ''} — ${list.length} payment(s) can never be recorded`);
+      pending.delete(key);
+      continue;
+    }
+    if (round > Number(circle.currentRound) || circle.open) {
+      // A future round, or invites still open: the payment may become recordable later, so keep it
+      // unmarked and let the next scan pick it up again.
       log(`skip ${key}: ledger is on round ${circle.currentRound}${circle.open ? ' (invites still open)' : ''}`);
       pending.delete(key);
       continue;
@@ -92,6 +116,13 @@ async function flushBatches() {
     for (const p of [...list].sort((a, b) => a.block - b.block)) {
       const k = p.member.toLowerCase();
       if (!members.has(k)) { state.recorded[p.txHash] = true; log(`ignoring payment from non-member ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
+      // Before the duplicate check: otherwise a member's corrected payment would be dropped as a
+      // 'duplicate' of the wrong-amount one, and the batch would revert with WrongAmount every tick.
+      if (p.amount !== circle.contribution) {
+        state.recorded[p.txHash] = true;
+        log(`ignoring wrong-amount payment by ${p.member}: ${Number(p.amount) / 1e6} tUSD, installment is ${Number(circle.contribution) / 1e6} (${p.txHash.slice(0, 12)}…)`);
+        continue;
+      }
       if (seen.has(k)) { state.recorded[p.txHash] = true; log(`ignoring duplicate payment by ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
       const already = await ledger.getContribution(circleId, round, p.member);
       if (already.queryId !== ethers.ZeroHash) { state.recorded[p.txHash] = true; continue; }
@@ -136,7 +167,9 @@ async function flushBatches() {
     }
   } catch (e) {
     ccSigner.reset(); // a failed send must not leave a nonce gap
-    log(`✗ batch failed: ${revertReason(e, ledger.interface)}`);
+    const why = revertReason(e, ledger.interface);
+    log(`✗ batch failed: ${why}`);
+    record({ kind: 'error', summary: `batch failed: ${why}`, evidence: { ...decision.evidence, revert: why } });
   }
 
   // 4. Drop everything the ledger now knows.

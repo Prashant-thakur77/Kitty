@@ -9,7 +9,7 @@ import { cfg } from '../config'
 import { ledgerAbi, usdAbi, vaultAbi } from '../lib/abi'
 import { creditcoinTestnet, sepolia } from '../lib/wagmi'
 import { short, usd, num } from '../lib/format'
-import { useAttestation, useCircle, useRoundDetail, useRounds, useLedgerEvents, useVaultPayments, isProven } from '../hooks'
+import { useAttestation, useCircle, useRoundDetail, useRounds, useLedgerEvents, useVaultPayments, useDeadlineBounds, isProven } from '../hooks'
 import { ProvePanel } from '../components/ProvePanel'
 import { ReverifyModal } from '../components/ReverifyModal'
 import { ROUND_STATUS } from '../lib/types'
@@ -29,7 +29,9 @@ export function CirclePage() {
   const detail = useRoundDetail(circleId, circle?.currentRound, circle?.members)
   const rounds = useRounds(circleId, circle?.members.length ?? 0)
   const { items: feed } = useLedgerEvents({ circleId })
-  const payments = useVaultPayments(circleId, circle?.currentRound, circle ? circle.startHeight + BigInt(circle.currentRound) * circle.roundBlocks : undefined)
+  // Scan from the circle's start: closeRound opens round r+1 as soon as round r closes early, so its payments land before the nominal block. Contributed is indexed by (circleId, round) so the query stays small.
+  const payments = useVaultPayments(circleId, circle?.currentRound, circle?.startHeight)
+  const bounds = useDeadlineBounds(circle?.chainKey ?? BigInt(cfg.sourceChainKey), deadline)
   const { writeContractAsync, isPending } = useWriteContract()
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
   const [msg, setMsg] = useState('')
@@ -126,7 +128,7 @@ export function CirclePage() {
         <Stat label="Installment" value={usd(circle.contribution)} />
         <Stat label="Pot this round" value={usd(round?.pot)} tone="mint" />
         <Stat label="Proven" value={`${round?.contributions ?? 0} / ${n}`} />
-        <Stat label="Deadline · Sepolia block" value={num(dl)} sub={deadlineAttested ? 'grace over — closable' : deadlinePassed ? `late until block ${num(closeHeight)}` : `attested head ${num(attested)}`} tone="sky" />
+        <Stat label="Deadline · Sepolia block" value={num(dl)} sub={bounds ? (bounds.isAttested ? `deadline attested · covering block ${num(bounds.childHeight)}` : `latest attested ${num(bounds.parentHeight)} · waiting for ${num(dl)}`) : deadlineAttested ? 'grace over — closable' : deadlinePassed ? `late until block ${num(closeHeight)}` : `attested head ${num(attested)}`} tone="sky" />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -184,7 +186,7 @@ export function CirclePage() {
         </Section>
       </div>
 
-      {active && round?.status === 0 && <div className="mt-4"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} onDone={refetch} /></div>}
+      {active && round?.status === 0 && <div className="mt-4"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} chainKey={circle.chainKey} contribution={circle.contribution} onDone={refetch} /></div>}
       <div className="mt-4"><ProofFeed items={feed} /></div>
 
       {reverify && <ReverifyModal tx={reverify.tx} member={reverify.member} onClose={() => setReverify(null)} />}

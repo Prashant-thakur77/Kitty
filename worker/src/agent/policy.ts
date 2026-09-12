@@ -54,6 +54,11 @@ export interface BatchDecision {
 
 /** Attestcoin verifies at most ten queries under one shared continuity proof. */
 export const MAX_BATCH = 10;
+/**
+ * The Proof Builder batch endpoint rejects spans of 1000+ blocks with BatchSpanTooLarge (verified
+ * against prover.cc3-testnet); leftovers go in a later call.
+ */
+export const MAX_BATCH_RANGE = 1000;
 /** Prove this many source blocks before the grace window closes rather than wait for a fuller batch. */
 export const URGENT_BLOCKS = 24;
 
@@ -94,12 +99,25 @@ export function decideBatch(pending: PendingPayment[], frontier: Frontier, opts:
 
   // Most urgent first, then oldest, so a full batch always carries the payments that matter most.
   const sorted = [...best].sort((a, b) => slack(a, frontier) - slack(b, frontier) || a.block - b.block);
-  const batch = sorted.slice(0, MAX_BATCH);
+  // Greedy fill: at most ten queries, and never a span the Proof Builder would refuse. Whatever is
+  // left behind is still pending and goes in a later call.
+  const batch: PendingPayment[] = [];
+  for (const p of sorted) {
+    if (batch.length >= MAX_BATCH) break;
+    if (batch.length) {
+      const lo = Math.min(p.block, ...batch.map((b) => b.block));
+      const hi = Math.max(p.block, ...batch.map((b) => b.block));
+      if (hi - lo >= MAX_BATCH_RANGE) continue;
+    }
+    batch.push(p);
+  }
 
+  // A round counts as completed only if this batch carries a payment from every member of it:
+  // the number goes into the citable decision log, so it must describe this call, not the backlog.
   const completes = [...new Set(batch.map((p) => `${p.circleId}:${p.round}`))].filter((key) => {
     const [cid, r] = key.split(':');
-    const inRound = best.filter((p) => String(p.circleId) === cid && p.round === Number(r));
-    return inRound.length >= inRound[0].circleSize;
+    const inRound = batch.filter((p) => String(p.circleId) === cid && p.round === Number(r));
+    return new Set(inRound.map((p) => p.member.toLowerCase())).size >= inRound[0].circleSize;
   });
   const circles = new Set(batch.map((p) => String(p.circleId))).size;
   const oldestWaitMs = now - Math.min(...batch.map((p) => p.seenAt));
@@ -124,6 +142,8 @@ export function decideBatch(pending: PendingPayment[], frontier: Frontier, opts:
       sourceHead: frontier.sourceHead,
       blocksOfSlack: Number.isFinite(bestSlack) ? bestSlack : -1,
       roundsCompleted: completes.length,
+      blockSpan: Math.max(...batch.map((p) => p.block)) - Math.min(...batch.map((p) => p.block)),
+      leftBehind: sorted.length - batch.length,
       waitedSeconds: Math.round(oldestWaitMs / 1000),
       stillWaitingForAttestation: pending.length - ready.length,
     },

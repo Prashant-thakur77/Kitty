@@ -444,15 +444,61 @@ contract KittyLedgerTest is Test {
         chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64);
         ledger.closeRound(id);
         assertEq(ledger.getRound(id, 0).recipient, alice);
-        // round 1 (last): alice pays again, bob never → nobody eligible; last round so pot stays on the round
+        // round 1 (last): alice pays again, bob never → nobody eligible under the normal rule. On the final
+        // round the pot cannot roll forward, so it goes to a member who paid (alice) rather than stranding.
         txs[0] = TxFixtures.contribution(vault, alice, id, 1, AMOUNT);
         proofs[0] = TxFixtures.merkle(9002);
         ledger.recordContributions(CHAIN_KEY, _h(START + ROUND_BLOCKS + 10), txs, proofs, TxFixtures.continuity());
         chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS + 64);
+        vm.expectEmit(true, true, true, true);
+        emit KittyLedger.FallbackRecipient(id, 1, alice);
         ledger.closeRound(id);
-        assertEq(ledger.getRound(id, 1).recipient, address(0));
-        assertEq(ledger.getRound(id, 1).pot, AMOUNT, "last round keeps the unassigned pot (escrow stays in the vault)");
+        assertEq(ledger.getRound(id, 1).recipient, alice, "final round falls back to a member who paid");
+        assertEq(ledger.getRound(id, 1).pot, AMOUNT, "pot stays on the round for the recipient");
         assertEq(uint8(ledger.getCircle(id).status), uint8(KittyLedger.CircleStatus.Completed));
+        assertEq(ledger.getRecord(alice).received, 2);
+    }
+
+    function test_finalRound_fallbackPaysAPayer() public {
+        // 3-member Fixed circle; alice never pays, bob and carol pay every round.
+        address[] memory two = new address[](2);
+        two[0] = bob;
+        two[1] = carol;
+        uint64[] memory hs = new uint64[](2);
+
+        hs[0] = 1_010;
+        hs[1] = 1_011;
+        _record(two, hs, 0);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + ROUND_BLOCKS + 64);
+        ledger.closeRound(circleId);
+        assertEq(ledger.getRound(circleId, 0).recipient, bob);
+
+        hs[0] = START + ROUND_BLOCKS + 10;
+        hs[1] = START + ROUND_BLOCKS + 11;
+        _record(two, hs, 1);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 2 * ROUND_BLOCKS + 64);
+        ledger.closeRound(circleId);
+        assertEq(ledger.getRound(circleId, 1).recipient, carol);
+
+        // round 2 (last): both payers already received; rotation from index 2 ignoring receivedPot → carol
+        hs[0] = START + 2 * ROUND_BLOCKS + 10;
+        hs[1] = START + 2 * ROUND_BLOCKS + 11;
+        _record(two, hs, 2);
+        chainInfo.setAttestedHeight(CHAIN_KEY, START + 3 * ROUND_BLOCKS + 64);
+        vm.expectEmit(true, true, true, true);
+        emit KittyLedger.FallbackRecipient(circleId, 2, carol);
+        ledger.closeRound(circleId);
+        KittyLedger.Round memory rd = ledger.getRound(circleId, 2);
+        assertEq(rd.recipient, carol, "first payer in rotation order from index 2");
+        assertEq(rd.pot, 2 * AMOUNT);
+        assertTrue(ledger.getContribution(circleId, 2, rd.recipient).queryId != bytes32(0), "recipient paid round 2");
+        assertEq(uint8(ledger.getCircle(circleId).status), uint8(KittyLedger.CircleStatus.Completed));
+        assertEq(ledger.getRecord(carol).received, 2);
+
+        // the vault pays whatever recipient the round holds; the proof closes the loop as usual
+        bytes memory tx_ = TxFixtures.payout(vault, operator, carol, circleId, 2, 2 * AMOUNT);
+        ledger.confirmPayout(CHAIN_KEY, START + 3 * ROUND_BLOCKS + 70, tx_, TxFixtures.merkle(7777), TxFixtures.continuity());
+        assertEq(uint8(ledger.getRound(circleId, 2).status), uint8(KittyLedger.RoundStatus.Paid));
     }
 
     function test_extraContributedLogFromUntrustedEmitterIsIgnored() public {

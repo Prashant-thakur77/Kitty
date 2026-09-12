@@ -1,13 +1,15 @@
 import { NavLink, Link } from 'react-router-dom'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Wallet, LogOut } from 'lucide-react'
+import 'viem/window'
 import { useAttestation } from '../hooks'
 import { useScrolled } from './motion'
 import { short, num } from '../lib/format'
 
 export function Nav() {
   const { address, isConnected } = useAccount()
-  const { connect, connectors, isPending } = useConnect()
+  const { connect, connectors, isPending, error } = useConnect()
+  const noWallet = connectors.length === 0 || typeof window.ethereum === 'undefined'
   const { disconnect } = useDisconnect()
   const { head, attested, lag } = useAttestation()
   const scrolled = useScrolled()
@@ -38,8 +40,13 @@ export function Nav() {
             </div>
             {isConnected ? (
               <button className="btn" onClick={() => disconnect()}><LogOut size={15} /> {short(address)}</button>
+            ) : noWallet ? (
+              <span className="pill amber" title="Proving from the browser needs any EVM wallet holding a little tCTC on Creditcoin Testnet">no wallet · install MetaMask to prove from the browser</span>
             ) : (
-              <button className="btn btn-mint" disabled={isPending} onClick={() => connect({ connector: connectors[0] })}><Wallet size={15} /> Connect</button>
+              <>
+                <button className="btn btn-mint" disabled={isPending} onClick={() => connect({ connector: connectors[0] })}><Wallet size={15} /> Connect</button>
+                {error && <span className="max-w-[26ch] text-xs leading-tight" style={{ color: 'var(--amber)' }}>{(error as { shortMessage?: string }).shortMessage ?? error.message}</span>}
+              </>
             )}
           </div>
         </div>

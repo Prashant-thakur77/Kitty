@@ -13,7 +13,10 @@ if (hashes.length === 0 || hashes.some((h) => !/^0x[0-9a-fA-F]{64}$/.test(h))) {
 if (hashes.length > 1) { await batchMode(hashes); process.exit(0); }
 const tx = hashes[0];
 
-const rc = await sourceProvider.getTransactionReceipt(tx);
+// Public Sepolia RPCs are load-balanced and a backend occasionally answers null for an old receipt,
+// so ask a few times before concluding the transaction does not exist.
+let rc = await sourceProvider.getTransactionReceipt(tx);
+for (let i = 0; !rc && i < 5; i++) { await new Promise((r) => setTimeout(r, 1500)); rc = await sourceProvider.getTransactionReceipt(tx); }
 if (!rc) throw new Error('tx not found on the source chain');
 const ah = await (await fetch(`${cfg.proofBuilderUrl}/api/v1/attested-height/${cfg.chainKey}`)).json();
 log(`tx in Sepolia block ${rc.blockNumber} · proof builder attested height ${ah.attestedHeight}`);

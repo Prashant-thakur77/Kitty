@@ -13,19 +13,15 @@ if (process.env.KITTY_ENV_FILE) dotenv.config({ path: path.resolve(ROOT, process
 
 export type Mode = 'testnet' | 'local';
 
-function need(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env ${name} (see .env.example)`);
-  return v;
-}
-
 export const cfg = {
   mode: (process.env.KITTY_MODE ?? 'testnet') as Mode,
   chainKey: Number(process.env.SOURCE_CHAIN_KEY ?? 1),
-  sepoliaRpc: need('SEPOLIA_RPC_URL'),
-  creditcoinRpc: need('CREDITCOIN_RPC_URL'),
+  sepoliaRpc: process.env.SEPOLIA_RPC_URL ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+  creditcoinRpc: process.env.CREDITCOIN_RPC_URL ?? 'https://rpc.cc3-testnet.creditcoin.network',
   proofBuilderUrl: process.env.PROOF_BUILDER_URL ?? 'https://prover.cc3-testnet.creditcoin.network',
-  privateKey: need('PRIVATE_KEY'),
+  // Empty when unset or not a 32-byte hex string, so read-only entry points (verify-live, receipts)
+  // load with no .env at all; contracts() is where a signing key becomes mandatory.
+  privateKey: ethers.isHexString(process.env.PRIVATE_KEY, 32) ? process.env.PRIVATE_KEY! : '',
   vault: process.env.KITTY_VAULT_ADDRESS ?? '',
   ledger: process.env.KITTY_LEDGER_ADDRESS ?? '',
   token: process.env.TEST_USD_ADDRESS ?? '',
@@ -37,14 +33,18 @@ export const cfg = {
 
 export const sourceProvider = new ethers.JsonRpcProvider(cfg.sepoliaRpc);
 export const ccProvider = new ethers.JsonRpcProvider(cfg.creditcoinRpc);
-export const sourceWallet = new ethers.Wallet(cfg.privateKey, sourceProvider);
-export const ccWallet = new ethers.Wallet(cfg.privateKey, ccProvider);
+// A throwaway key stands in when PRIVATE_KEY is absent: view calls still work, and nothing that
+// signs gets past contracts() below.
+const signingKey = cfg.privateKey || ethers.Wallet.createRandom().privateKey;
+export const sourceWallet = new ethers.Wallet(signingKey, sourceProvider);
+export const ccWallet = new ethers.Wallet(signingKey, ccProvider);
 // NonceManager keeps a local nonce counter, so back-to-back transactions never race a node whose
 // pending count lags a just-mined block (seen on anvil with --block-time and on public RPCs).
 export const sourceSigner = new ethers.NonceManager(sourceWallet);
 export const ccSigner = new ethers.NonceManager(ccWallet);
 
 export function contracts() {
+  if (!cfg.privateKey) throw new Error('Set PRIVATE_KEY in .env (see .env.example); needed for deploy, demo, worker and scenarios');
   if (!cfg.vault || !cfg.ledger || !cfg.token) throw new Error('Set KITTY_VAULT_ADDRESS, KITTY_LEDGER_ADDRESS, TEST_USD_ADDRESS in .env (run scripts/deploy.sh)');
   return {
     vault: new ethers.Contract(cfg.vault, vaultAbi, sourceSigner),

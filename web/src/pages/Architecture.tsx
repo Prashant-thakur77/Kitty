@@ -7,7 +7,7 @@ const NODES = [
   { k: 'prove', t: 'Prove (batch)', chain: 'worker', d: 'One Proof Builder call returns up to 10 Merkle proofs sharing a single continuity proof for the round.', file: 'worker/src/proofs.ts', tone: 'sky' },
   { k: 'verify', t: 'Verify', chain: '0x0FD2', d: 'KittyLedger.recordContributions calls verifyAndEmit(batch) once. Query ids are derived exactly as ASCBase does and marked processed first.', file: 'src/asc/KittyLedger.sol', tone: 'mint' },
   { k: 'decode', t: 'Decode + bind', chain: 'EvmV1Decoder', d: 'Receipt status must be 1. Exactly one Contributed log, emitted by the registered vault. The tx’s own to/from must be the vault/member. Amount and round must match.', file: 'src/asc/KittyLedger.sol', tone: 'mint' },
-  { k: 'clock', t: 'Clock', chain: '0x0FD3', d: 'On time iff proven height ≤ deadline height. closeRound is allowed early when full, else only when is_height_attested(deadline).', file: 'src/interfaces/IChainInfo.sol', tone: 'amber' },
+  { k: 'clock', t: 'Clock', chain: '0x0FD3', d: 'On time iff proven height ≤ deadline height. closeRound is allowed early when full, else only when is_height_attested(chainKey, deadline + 64).', file: 'src/interfaces/IChainInfo.sol', tone: 'amber' },
   { k: 'score', t: 'Score + payout proof', chain: 'Creditcoin', d: 'Missed/late/on-time write the Kitty Score. The Ethereum payout is proven back before a round shows Paid.', file: 'src/asc/KittyLedger.sol', tone: 'mint' },
 ]
 
@@ -32,7 +32,7 @@ export function Architecture() {
         <h2 className="text-xl">Why not inherit ASCBase?</h2>
         <p className="mt-2 max-w-[75ch] text-sm" style={{ color: 'var(--muted)' }}>The stock base contract’s <span className="mono">execute</span> drops <span className="mono">chainKey</span> and the source block height before calling app logic. Kitty needs both — chain binding and height-based deadlines — and needs the batch overload of the precompile. So KittyLedger re-implements the same verify → dedupe → act pipeline with identical query-id derivation and adds <span className="mono">recordContributions</span>.</p>
         <div className="mt-4 grid gap-2 md:grid-cols-3 text-sm">
-          {[['Block prover', '0x0000…0FD2', 'verifyAndEmit (single + batch), calculateTxIndex'], ['ChainInfo', '0x0000…0fD3', 'is_height_attested, get_latest_attestation_height_and_hash'], ['Proof Builder', 'prover.cc3-testnet', '/api/v1/proof-batch-by-tx, /attested-height/1']].map(([a, b, c]) => (
+          {[['Block prover', '0x0000…0FD2', 'verifyAndEmit (single + batch), calculateTxIndex'], ['ChainInfo', '0x0000…0fD3', 'is_height_attested, get_chain_by_key, get_latest_attestation_height_and_hash, find_lowest_attested_after, get_attestation_bounds'], ['Proof Builder', 'prover.cc3-testnet', '/api/v1/proof-batch-by-tx, /attested-height/1']].map(([a, b, c]) => (
             <div key={a} className="panel-2 p-3"><div className="eyebrow">{a}</div><div className="mono">{b}</div><div className="text-xs" style={{ color: 'var(--muted)' }}>{c}</div></div>
           ))}
         </div>

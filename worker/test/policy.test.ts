@@ -1,7 +1,7 @@
 // Pure-function tests for the Steward's decision layer. `pnpm test:agent`
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decideBatch, explainBatch, MAX_BATCH, URGENT_BLOCKS, slack, provable, type PendingPayment } from '../src/agent/policy.ts';
+import { decideBatch, explainBatch, MAX_BATCH, MAX_BATCH_RANGE, URGENT_BLOCKS, slack, provable, type PendingPayment } from '../src/agent/policy.ts';
 
 const pay = (o: Partial<PendingPayment> & { n?: number; circle?: number }): PendingPayment => ({
   txHash: '0x' + String(o.n ?? 1).padStart(64, '0'),
@@ -83,4 +83,69 @@ test('provable and slack read the attestation frontier, not the clock', () => {
   assert.equal(provable(pay({ block: 100 }), frontier(99, 99)), false);
   assert.equal(provable(pay({ block: 100 }), frontier(100, 100)), true);
   assert.equal(slack(pay({ closeHeight: 1064 }), frontier(1000, 1040)), 24);
+});
+
+test('never pools payments more than 1000 blocks apart', () => {
+  const now = Date.now();
+  const ps = [pay({ n: 1, block: 100, closeHeight: 5000, seenAt: now }), ...Array.from({ length: 9 }, (_, i) => pay({ n: i + 2, block: 1500 + i, closeHeight: 5000, seenAt: now }))];
+  let remaining = ps;
+  let calls = 0;
+  while (remaining.length) {
+    const d = decideBatch(remaining, frontier(2000, 2000), { waitMs: 0, now, force: true });
+    assert.equal(d.act, true);
+    const blocks = d.batch.map((p) => p.block);
+    assert.ok(Math.max(...blocks) - Math.min(...blocks) < MAX_BATCH_RANGE, `span ${Math.max(...blocks) - Math.min(...blocks)} must stay under ${MAX_BATCH_RANGE}`);
+    if (calls === 0) assert.ok(Number(d.evidence.leftBehind) > 0, 'the first call leaves the far-apart payment behind');
+    const taken = new Set(d.batch.map((p) => p.txHash));
+    remaining = remaining.filter((p) => !taken.has(p.txHash));
+    calls++;
+  }
+  assert.equal(calls, 2, 'two calls: the block-100 payment cannot share a continuity proof with the 1500s');
+});
+
+test('a full batch only counts rounds it fully contains', () => {
+  const now = Date.now();
+  const ps = [
+    ...[1, 2, 3].map((n) => pay({ n, circle: 1, circleSize: 3, closeHeight: 5000, seenAt: now })),
+    ...Array.from({ length: 8 }, (_, i) => pay({ n: 10 + i, circle: 2, circleSize: 8, closeHeight: 4000, seenAt: now })),
+  ];
+  const d = decideBatch(ps, frontier(1500, 1500), { waitMs: 0, now });
+  assert.equal(d.reason, 'full');
+  assert.equal(d.batch.length, MAX_BATCH);
+  assert.equal(d.evidence.roundsCompleted, 1, 'circle 2 (8 of 8) is in the batch; circle 1 has only 2 of 3');
+});
+
+test('duplicate payments by one member do not complete a round', () => {
+  const now = Date.now();
+  const ps = [1, 2, 3].map((n) => pay({ n, member: '0xaa', seenAt: now }));
+  const d = decideBatch(ps, frontier(1500, 1500), { waitMs: 999_999, now });
+  assert.notEqual(d.reason, 'round-complete');
+  assert.equal(d.evidence.roundsCompleted, 0);
+});
+
+test('fires once the batching window has elapsed', () => {
+  const d = decideBatch([pay({ n: 1, seenAt: 0 })], frontier(910, 910), { waitMs: 45_000, now: 46_000 });
+  assert.equal(d.act, true);
+  assert.equal(d.reason, 'waited');
+  assert.match(explainBatch(d), /waited 46s/);
+});
+
+test('a forced single pass fires whatever is provable', () => {
+  const now = Date.now();
+  const d = decideBatch([pay({ n: 1, seenAt: now })], frontier(910, 910), { waitMs: 999_999, now, force: true });
+  assert.equal(d.act, true);
+  assert.equal(d.reason, 'forced');
+  assert.match(explainBatch(d), /single pass requested/);
+});
+
+test('equal slack: the larger group wins', () => {
+  const now = Date.now();
+  const ps = [
+    pay({ n: 1, chainKey: 1, closeHeight: 2000, seenAt: now }),
+    pay({ n: 2, chainKey: 3, closeHeight: 2000, seenAt: now }),
+    pay({ n: 3, chainKey: 3, closeHeight: 2000, seenAt: now }),
+  ];
+  const d = decideBatch(ps, frontier(1500, 1500), { waitMs: 0, now });
+  assert.equal(d.chainKey, 3);
+  assert.equal(d.batch.length, 2);
 });

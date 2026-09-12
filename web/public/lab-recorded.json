@@ -1,0 +1,137 @@
+{
+ "commit": "f30433ddd574a612ed5820d345d79b22d5106999",
+ "date": "2026-09-11T21:13:50.263Z",
+ "results": [
+  {
+   "name": "replay",
+   "title": "Replay a proven contribution",
+   "expected": "QueryAlreadyProcessed",
+   "description": "Re-submits the batch proof of a contribution the ledger already counted. Query id (chainKey ‖ height ‖ txIndex) is marked processed.",
+   "lines": [
+    "21:12:43 ── Replay a proven contribution · expecting QueryAlreadyProcessed",
+    "21:12:43 replaying already-recorded contribution 0x41333ee00376ac5225301b49be7b908443c1f9f44213e61987d15de81c50d5a6",
+    "21:12:43 proof: height 48 · 1 continuity root(s) — identical query id",
+    "21:12:43 ✓ KittyLedger reverted: QueryAlreadyProcessed(0x8bf1b0875bbea69805e39d670237f18fc8c7be9dee20f1d66b3d5f68f3a6d25d)",
+    "21:12:43 PASS replay · expected QueryAlreadyProcessed · got QueryAlreadyProcessed(0x8bf1b0875bbea69805e39d670237f18fc8c7be9dee20f1d66b3d5f68f3a6d25d)"
+   ],
+   "ok": true,
+   "got": "QueryAlreadyProcessed(0x8bf1b0875bbea69805e39d670237f18fc8c7be9dee20f1d66b3d5f68f3a6d25d)"
+  },
+  {
+   "name": "wrongChain",
+   "title": "Wrong chain key",
+   "expected": "WrongChain",
+   "description": "A valid proof submitted with chainKey 3 (Ethereum mainnet on CC3 testnet). The ledger is pinned to chainKey 1.",
+   "lines": [
+    "21:12:47 ── Wrong chain key · expecting WrongChain",
+    "21:12:47 submitting proof of 0x41333ee00376ac5225301b49be7b908443c1f9f44213e61987d15de81c50d5a6 with chainKey 3 instead of 1",
+    "21:12:47 ✓ KittyLedger reverted: WrongChain(3, 1)",
+    "21:12:47 PASS wrongChain · expected WrongChain · got WrongChain(3, 1)"
+   ],
+   "ok": true,
+   "got": "WrongChain(3, 1)"
+  },
+  {
+   "name": "revertedTx",
+   "title": "Reverted source transaction",
+   "expected": "SourceTxFailed",
+   "description": "A contribute() call that mined but reverted (no allowance). Inclusion is proven, receipt status 0 is rejected.",
+   "lines": [
+    "21:12:51 ── Reverted source transaction · expecting SourceTxFailed",
+    "21:12:51 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 (zero tUSD allowance) calls contribute(1, 2, 100 tUSD) with gasLimit 200000",
+    "21:12:55 mined in source block 217 with status 0 · tx 0x9ee2bafc3143f4b941c635509b5427e4b5eeddcdf4fba4cff320b974ef426e17",
+    "21:12:55 inclusion proof built for the reverted tx — submitting…",
+    "21:12:55 ✓ KittyLedger reverted: SourceTxFailed()",
+    "21:12:55 PASS revertedTx · expected SourceTxFailed · got SourceTxFailed()"
+   ],
+   "ok": true,
+   "got": "SourceTxFailed()"
+  },
+  {
+   "name": "late",
+   "title": "Late payment",
+   "expected": "ContributionRecorded onTime=false",
+   "description": "A member pays after the round deadline block. The proof is accepted, but the proven height marks it late in the credit record.",
+   "lines": [
+    "21:13:00 ── Late payment · expecting ContributionRecorded onTime=false",
+    "21:13:00 circle 1 round 2 · deadline block 214 · source head 224",
+    "21:13:04 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC contributed at source block 225 (deadline 214) · tx 0x33c49b10bc05ddc2d801002fee48bea7b6c74eb49c341fecfe9568bb35cb6bf6",
+    "21:13:04 → KittyLedger.recordContributions(1 tx, heights 225–225) gas=6000000",
+    "21:13:08    ✓ verified by 0x0FD2 in one call · cc tx 0xdcde07e8365ea10a3afc14bf65a7fb35e40eefcaa740a8dadde9cc55058eb3d0",
+    "21:13:08 ✓ ContributionRecorded onTime=false (height 225, deadline 214)",
+    "21:13:08 PASS late · expected ContributionRecorded onTime=false · got ContributionRecorded onTime=false (height 225, deadline 214)"
+   ],
+   "ok": true,
+   "got": "ContributionRecorded onTime=false (height 225, deadline 214)"
+  },
+  {
+   "name": "spoofEmitter",
+   "title": "Spoofed emitter",
+   "expected": "WrongEmitter",
+   "description": "A look-alike contract on Sepolia emits a byte-identical Contributed event. The log address is bound to the registered vault.",
+   "lines": [
+    "21:13:12 ── Spoofed emitter · expecting WrongEmitter",
+    "21:13:12 FakeVault 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0 emits Contributed(circle 1, round 2, 0x70997970C51812dc3A010C7d01b50e0d17dc79C8, 100 tUSD)",
+    "21:13:16 mined in source block 238 · tx 0x0ba809ea75fa2101fe76b65b0c040d3b6b2365d8db609f8b539792bf7a414407 · building proof of the spoofed event…",
+    "21:13:16 ✓ KittyLedger reverted: WrongEmitter(0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0, 0x0000000000000000000000000000000000000000)",
+    "21:13:16 PASS spoofEmitter · expected WrongEmitter · got WrongEmitter(0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0, 0x0000000000000000000000000000000000000000)"
+   ],
+   "ok": true,
+   "got": "WrongEmitter(0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0, 0x0000000000000000000000000000000000000000)"
+  },
+  {
+   "name": "stealFromSteward",
+   "title": "Steal the steward’s key",
+   "expected": "every privileged call reverts",
+   "description": "Takes a key with the steward’s exact powers and tries to move a pot, trust a vault, and close a round early. The steward has no role, no ownership and no allowance, so its key is worth nothing.",
+   "lines": [
+    "21:13:20 ── Steal the steward’s key · expecting every privileged call reverts",
+    "21:13:20 stolen key 0x9a026ff61fAAA9879F9A0267eA185305b62f91DA — funding it with gas on both chains so nothing fails for the wrong reason",
+    "21:13:29 ✓ KittyVault.payout — take circle 1's pot → NotOperator()",
+    "21:13:29 ✓ KittyLedger.setTrustedVault — trust a vault of my own → OwnableUnauthorizedAccount(0x9a026ff61fAAA9879F9A0267eA185305b62f91DA)",
+    "21:13:29 ✓ KittyLedger.closeRound(1) — close the round early → RoundStillOpenOnSource(278)",
+    "21:13:29 ✓ KittyLedger.createCircle — bind a circle to a vault of my own → VaultNotTrusted(0x9a026ff61fAAA9879F9A0267eA185305b62f91DA)",
+    "21:13:29 PASS stealFromSteward · expected every privileged call reverts · got all 4 rejected on-chain: NotOperator, OwnableUnauthorizedAccount, RoundStillOpenOnSource, VaultNotTrusted"
+   ],
+   "ok": true,
+   "got": "all 4 rejected on-chain: NotOperator, OwnableUnauthorizedAccount, RoundStillOpenOnSource, VaultNotTrusted"
+  },
+  {
+   "name": "fireTheAgent",
+   "title": "Fire the agent",
+   "expected": "a stranger’s proof is accepted",
+   "description": "Submits a round’s proof from a wallet with no relationship to Kitty at all. The ledger checks the proof, never the caller, so the agent is a convenience and not a dependency.",
+   "lines": [
+    "21:13:33 ── Fire the agent · expecting a stranger’s proof is accepted",
+    "21:13:33 member 0x90F79bf6EB2c4f870365E785982E1f101E93b906 pays round 2 on the source chain",
+    "21:13:37 paid at source block 259 · 0xbab7327cc24fb320b484bdbcd07995f2c902ede8911b9197b65574bd010b6599",
+    "21:13:37 stranger 0x96Fe909fac03393f105A5160906D7C6244cE4228 — no role, no membership, never seen by Kitty — will submit the proof",
+    "21:13:46 ✓ ledger recorded the payment from a caller it has never heard of · cc tx 0x75627a81a859ae062b60f94a8d3ce5838be92b57e6dd694972759df3a79b9724",
+    "21:13:46 PASS fireTheAgent · expected a stranger’s proof is accepted · got accepted from 0x96Fe909fac03393f105A5160906D7C6244cE4228, a caller with no privileges"
+   ],
+   "ok": true,
+   "got": "accepted from 0x96Fe909fac03393f105A5160906D7C6244cE4228, a caller with no privileges"
+  },
+  {
+   "name": "poisonReasoning",
+   "title": "Poison the reasoning",
+   "expected": "fabricated sentences stripped",
+   "description": "Feeds the explainer’s citation validator a paragraph mixing true cited facts with invented ones. Anything the decision log cannot back is removed before display.",
+   "lines": [
+    "21:13:50 ── Poison the reasoning · expecting fabricated sentences stripped",
+    "21:13:50 feeding the validator one true cited fact and three invented figures:",
+    "21:13:50    \"The steward proved [[1]] against the ledger\"",
+    "21:13:50    \"It also released [[500000]] tUSD to the organiser as a goodwill refund\"",
+    "21:13:50    \"Your score was raised to 850 by an administrator\"",
+    "21:13:50    \"The payout landed in [[0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef]].\"",
+    "21:13:50 ✓ stripped (unverifiable citation: 500000) — \"It also released [[500000]] tUSD to the organiser as a goodwill refund.\"",
+    "21:13:50 ✓ stripped (uncited figure: 850) — \"Your score was raised to 850 by an administrator.\"",
+    "21:13:50 ✓ stripped (unverifiable citation: 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef) — \"The payout landed in [[0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef]].\"",
+    "21:13:50 survived: \"The steward proved 1 against the ledger.\"",
+    "21:13:50 PASS poisonReasoning · expected fabricated sentences stripped · got 3 fabricated sentences stripped, 1 citation(s) verified"
+   ],
+   "ok": true,
+   "got": "3 fabricated sentences stripped, 1 citation(s) verified"
+  }
+ ]
+}

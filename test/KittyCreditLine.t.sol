@@ -28,6 +28,7 @@ contract KittyCreditLineTest is Test {
     address vault = address(0xFA11);
     address alice = address(0xA11CE);
     address lp = address(0x1);
+    address lp2 = address(0x2);
     uint256 circles;
 
     function setUp() public {
@@ -267,5 +268,43 @@ contract KittyCreditLineTest is Test {
         credit.deposit(0);
         vm.stopPrank();
         assertEq(credit.totalDeposits(), 5e6);
+    }
+
+    /// @dev alice borrows the whole 20 kUSD limit and repays 21 (5% fee) so the pool holds 101 kUSD
+    ///      against lp's 100 units before anyone else joins.
+    function _poolWithFee() internal {
+        _provenOnTime(AMOUNT, 1); // limit 20 kUSD
+        _fundPool(100e6);
+        vm.startPrank(alice);
+        credit.borrow(20e6);
+        usd.mint(alice, 1e6);
+        usd.approve(address(credit), 21e6);
+        credit.repay(21e6);
+        vm.stopPrank();
+        assertApproxEqAbs(credit.entitlement(lp), 101e6, 1);
+    }
+
+    function test_secondLpDoesNotCaptureEarlierFees() public {
+        _poolWithFee();
+
+        usd.mint(lp2, 100e6);
+        vm.startPrank(lp2);
+        usd.approve(address(credit), 100e6);
+        credit.deposit(100e6);
+        vm.stopPrank();
+
+        assertApproxEqAbs(credit.entitlement(lp), 101e6, 1);
+        assertApproxEqAbs(credit.entitlement(lp2), 100e6, 1);
+    }
+
+    function test_fullExitAfterFees() public {
+        _poolWithFee();
+
+        uint256 ent = credit.entitlement(lp);
+        vm.prank(lp);
+        credit.withdraw(ent);
+        assertEq(credit.deposits(lp), 0);
+        assertEq(credit.totalDeposits(), 0);
+        assertEq(usd.balanceOf(lp), 101e6);
     }
 }

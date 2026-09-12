@@ -181,6 +181,9 @@ contract KittyLedger is Ownable {
     event CircleChainSet(uint256 indexed circleId, uint64 indexed chainKey);
     event MembershipAccepted(uint256 indexed circleId, address indexed member);
     event PotCarriedOver(uint256 indexed circleId, uint32 indexed fromRound, uint256 amount);
+    /// @notice The final round had no member who both paid and had not yet received, so the pot went
+    ///         to a member who paid this round (ignoring prior receipt) instead of stranding in escrow.
+    event FallbackRecipient(uint256 indexed circleId, uint32 indexed round, address indexed recipient);
 
     // ───────────────────────────── Errors ─────────────────────────────
 
@@ -430,13 +433,20 @@ contract KittyLedger is Ownable {
             }
         }
 
-        // The pot goes only to someone who paid this round. If nobody eligible, it rolls forward.
-        address recipient = _pickRecipient(circleId, c, r);
+        // The pot goes only to someone who paid this round. If nobody eligible, it rolls forward —
+        // except on the final round, where it goes to a member who paid so escrow never strands.
+        address recipient = _pickRecipient(circleId, c, r, false);
+        bool usedFallback;
+        if (recipient == address(0) && uint256(r) + 1 == n) {
+            recipient = _pickRecipient(circleId, c, r, true);
+            usedFallback = recipient != address(0);
+        }
         rd.status = RoundStatus.Closed;
         rd.recipient = recipient;
         if (recipient != address(0)) {
             receivedPot[circleId][recipient] = true;
             _records[recipient].received += 1;
+            if (usedFallback) emit FallbackRecipient(circleId, r, recipient);
         } else if (uint256(r) + 1 < n && rd.pot > 0) {
             _rounds[circleId][r + 1].pot += rd.pot;
             emit PotCarriedOver(circleId, r, rd.pot);
@@ -775,20 +785,29 @@ contract KittyLedger is Ownable {
     }
 
     /// @dev Fixed: members[r]. ByScore: best current score among members who have not received a pot.
-    function _pickRecipient(uint256 circleId, Circle storage c, uint32 r) internal view returns (address best) {
+    ///      Always requires a proven payment this round; `ignoreReceived` lifts only the
+    ///      has-not-received filter (used for the final-round fallback).
+    function _pickRecipient(uint256 circleId, Circle storage c, uint32 r, bool ignoreReceived)
+        internal
+        view
+        returns (address best)
+    {
         uint256 n = c.members.length;
         if (c.rotation == Rotation.Fixed) {
             // classic order, but skip anyone who has already received or did not pay this round
             for (uint256 k; k < n; ++k) {
                 address m = c.members[(uint256(r) + k) % n];
-                if (!receivedPot[circleId][m] && _contributions[circleId][r][m].queryId != bytes32(0)) return m;
+                if ((ignoreReceived || !receivedPot[circleId][m]) && _contributions[circleId][r][m].queryId != bytes32(0)) {
+                    return m;
+                }
             }
             return address(0);
         }
         uint16 bestScore;
         for (uint256 i; i < n; ++i) {
             address m = c.members[i];
-            if (receivedPot[circleId][m] || _contributions[circleId][r][m].queryId == bytes32(0)) continue;
+            if (!ignoreReceived && receivedPot[circleId][m]) continue;
+            if (_contributions[circleId][r][m].queryId == bytes32(0)) continue;
             (uint16 sc,) = creditScore(m);
             if (best == address(0) || sc > bestScore) {
                 best = m;

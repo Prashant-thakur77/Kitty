@@ -20,8 +20,9 @@ import {KittyLedger} from "./KittyLedger.sol";
 ///           tier D (<500)  →   0%
 ///         capped at `CAP` (5,000 kUSD). A member with zero proven installments gets 0.
 ///
-/// @dev Deliberately minimal: a flat 5% fee is added to the debt at borrow time, no time accrual,
-///      no interest paid to LPs (fees stay in the pool as extra liquidity). Not a production lender.
+/// @dev Deliberately minimal: a flat 5% fee is added to the debt at borrow time, no time accrual.
+///      Fees repaid by borrowers stay in the pool and raise every LP's entitlement; `deposits` and
+///      `totalDeposits` are share units, not kUSD. Not a production lender.
 contract KittyCreditLine is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -56,10 +57,15 @@ contract KittyCreditLine is ReentrancyGuard {
 
     // ───────────────────────────── Liquidity providers ─────────────────────────────
 
+    /// @notice Deposit `amount` kUSD and receive share units at the current pool price, so a late LP
+    ///         cannot capture fees earned before they joined. Units round down (the safe direction).
     function deposit(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        deposits[msg.sender] += amount;
-        totalDeposits += amount;
+        uint256 value = poolValue();
+        uint256 units = (totalDeposits == 0 || value == 0) ? amount : amount * totalDeposits / value;
+        if (units == 0) revert ZeroAmount();
+        deposits[msg.sender] += units;
+        totalDeposits += units;
         ASSET.safeTransferFrom(msg.sender, address(this), amount);
         emit Deposited(msg.sender, amount);
     }
