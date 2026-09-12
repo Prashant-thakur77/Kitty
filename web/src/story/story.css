@@ -1,0 +1,48 @@
+/* /story: a full-viewport stage above the app chrome, captions in the editorial voice, a minimal HUD. */
+.story { position: fixed; inset: 0; z-index: 40; background: var(--bg); overflow: hidden; }
+.story .t3, .story > div[style*="position: relative"] { position: absolute; inset: 0; }
+
+/* caption overlay (a drei Html fullscreen layer): eyebrow top-left, captions lower third, progress line, fade, vignette.
+   drei only writes z-index when the anchor moves on screen; this layer never moves, so it takes its z-index from here. */
+.story-overlay-wrap { z-index: 30 !important; }
+.story-overlay { position: absolute; inset: 0; pointer-events: none; user-select: none; font-family: var(--body); }
+.story-vignette { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(4, 8, 6, .55) 100%), linear-gradient(180deg, transparent 62%, rgba(6, 10, 8, .72) 100%); }
+.story-eyebrow { position: absolute; left: 56px; top: 44px; font-size: 13px; letter-spacing: .16em; color: var(--muted); }
+.story-eyebrow span { color: var(--dim); margin: 0 .2em; }
+.story-captions { position: absolute; left: 0; right: 0; bottom: 8.5%; display: grid; place-items: center; }
+.story-caption {
+  grid-area: 1 / 1; max-width: 26ch; text-align: center; text-wrap: balance;
+  font-family: var(--display); font-weight: 400; font-size: clamp(30px, 3.4vw, 62px); line-height: 1.1; letter-spacing: -.018em; color: var(--ink);
+  text-shadow: 0 2px 24px rgba(4, 8, 6, .9), 0 0 60px rgba(4, 8, 6, .8);
+  will-change: opacity, transform;
+}
+.story-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255, 255, 255, .06); }
+.story-bar-fill { height: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--mint), var(--mint-2)); box-shadow: 0 0 12px var(--mint-glow); }
+.story-fade { position: absolute; inset: 0; background: var(--bg); opacity: 1; }
+
+/* 3D labels: the site's .t3-label, at a size that reads at 1080p */
+.story-label { font-size: 13px; padding: .36rem .85rem; will-change: opacity, transform; }
+.story-score { text-align: center; white-space: nowrap; }
+.story-score .eyebrow { font-size: 12px; }
+.story-score-n { font-size: 40px; line-height: 1; color: var(--mint-2); text-shadow: 0 0 24px var(--mint-glow); }
+
+/* HUD */
+.story-hud {
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 999px; background: color-mix(in srgb, var(--panel) 82%, transparent); border: 1px solid var(--line); backdrop-filter: blur(10px);
+  font-size: 13px; color: var(--muted);
+}
+.story-hud-home { color: var(--muted); padding: 0 8px; font-weight: 600; }
+.story-hud-chapters { display: flex; gap: 4px; }
+.story-hud-ch { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; padding: .4rem .7rem; border-radius: 999px; cursor: pointer; }
+.story-hud-ch span { font-weight: 400; opacity: .8; }
+.story-hud-ch.active { color: var(--mint); background: var(--mint-soft); }
+.story-hud-play { border: 0; background: #172119; color: var(--ink); width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 12px; }
+.story-hud-time { min-width: 9ch; text-align: right; padding-right: 6px; font-size: 12px; }
+
+/* text fallback */
+.story-text { position: absolute; inset: 0; display: grid; place-content: center; padding: 24px; text-align: center; }
+.story-text ol { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 14px; }
+.story-text li { font-family: var(--display); font-size: clamp(26px, 3.2vw, 48px); line-height: 1.12; color: var(--dim); transition: color .4s; text-wrap: balance; max-width: 26ch; }
+.story-text li.now { color: var(--ink); }
+.story-text li.past { color: var(--muted); }

@@ -17,7 +17,9 @@ for t in timeline:
     offset[t['file']] = t['start'] + t['seconds']
 
 # segments that are mostly a page waiting on the steward may be compressed harder than the rest
-MAX_SPEED = {'08_miss': 1.8}
+MAX_SPEED = {'08_miss': 1.8, '04_enable': 1.5}
+# the 3D story chapters carry their own on-screen captions
+NO_CAPTIONS = {'02_problem', '03_split', '04_enable'}
 parts, srt, clock = [], [], 0.0
 for i, t in enumerate(timeline):
     name, sec = t['name'], t['seconds']
@@ -38,7 +40,7 @@ for i, t in enumerate(timeline):
     parts.append(seg)
     # caption: the narration text, wrapped into ≤2-line cues spread across the clip
     words = text[name].split()
-    cues = textwrap.wrap(text[name], 78)
+    cues = [] if name in NO_CAPTIONS else textwrap.wrap(text[name], 78)
     per = dur[name] / max(1, len(cues))
     for j, cue in enumerate(cues):
         a, b = clock + j * per, clock + min((j + 1) * per, dur[name])

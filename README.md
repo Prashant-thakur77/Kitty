@@ -77,9 +77,9 @@ Everything a member does is a plain deposit on the chain where they already hold
 
 ## Demo
 
-A five-minute narrated walkthrough (5:23): **[download the mp4](https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4)** from the [v2-submission release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission). It is recorded live in Chromium against a local two-chain world, with every on-chain action executed during the take.
+A five-minute narrated walkthrough (4:54): **[download the mp4](https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4)** from the [v2-submission release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission). The first three chapters are a 3D explainer rendered from the app's own `/story` route; everything after is the production dashboard against the live testnets, with a real circle member's wallet paying on Sepolia and proving the payment on Creditcoin from the browser during the take (both transactions are in the log below).
 
-Chapters: 0:00 Hook · 0:08 Problem · 0:36 Solution · 1:02 A live circle on Creditcoin · 1:22 Members pay on Sepolia · 1:40 One batch proof, free preflight, 0x0FD2 · 2:09 Round closes early, rotation · 2:33 Payout proven back · 2:46 A missed payment, attested deadline + 64-block grace · 3:16 The steward's decision log · 3:38 Attack lab: replay, spoofed emitter · 3:58 Steal the steward's key, fire the agent · 4:23 What a lender sees · 4:41 Attestcoin depth · 5:08 Close.
+Chapters: 0:00 Hook · 0:10 The problem (3D) · 0:45 The split, money on Ethereum and rules on Creditcoin (3D) · 1:19 What Creditcoin makes possible (3D) · 1:39 Live on testnet, wallet connected · 1:54 A circle: attested-block deadline, rotation, history · 2:10 Paying from the browser, a real Sepolia transaction · 2:25 Proving it yourself: 0x0FD3 bounds, Proof Builder, free preflight, 0x0FD2, a real Creditcoin transaction · 2:51 The steward: eight payments from two circles in one call · 3:12 Attack lab recorded against the live precompile · 3:43 What a lender sees · 4:00 The Telegram bot · 4:17 Attestcoin depth · 4:40 Close.
 
 <p align="center">
   <img src="docs/assets/demo-prove.gif" alt="The steward proves a round in one batch call" width="49%">

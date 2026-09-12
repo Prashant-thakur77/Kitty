@@ -86,7 +86,7 @@ What no other Attestcoin contract in this field does:
 
 - Repository: https://github.com/Prashant-thakur77/Kitty
 - Live dashboard: https://prashant-thakur77.github.io/Kitty/
-- Demo video (5:23): https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4
+- Demo video (4:54): https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4
   (also uploaded to YouTube as unlisted; paste that link in the video field)
 - Deck: https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/Kitty-deck.pdf
 - Release: https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission

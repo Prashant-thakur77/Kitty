@@ -111,7 +111,12 @@ export function ScorePage() {
                         <tr key={i}>
                           <td><Tag tone={h.kind === 'ContributionMissed' ? 'rose' : h.kind === 'ContributionRecorded' ? (h.args.onTime ? 'mint' : 'amber') : 'sky'}>{h.kind === 'ContributionRecorded' ? (h.args.onTime ? 'on time' : 'late') : h.kind === 'ContributionMissed' ? 'missed' : h.kind === 'RoundClosed' ? 'received pot' : 'payout proven'}</Tag></td>
                           <td className="mono">#{String(h.args.circleId)} · r{String(h.args.round)}</td>
-                          <td className="mono">{h.args.sourceHeight ? String(h.args.sourceHeight) : h.args.deadlineHeight ? `deadline ${String(h.args.deadlineHeight)}` : '—'}</td>
+                          <td className="mono">
+                            {h.args.sourceHeight ? String(h.args.sourceHeight) : h.args.deadlineHeight ? `deadline ${String(h.args.deadlineHeight)}` : '—'}
+                            {h.kind === 'ContributionMissed' && Number(h.args.attestedHeight ?? 0) > 0 && (
+                              <span className="pill mono ml-2" style={{ padding: '0 .4rem', fontSize: 10, fontWeight: 500, verticalAlign: '1px' }} title={`Attestation that proved the deadline had passed: block ${String(h.args.attestedHeight)} · hash ${String(h.args.attestedHash ?? '')}`}>attested @ {String(h.args.attestedHeight)}</span>
+                            )}
+                          </td>
                           <td className="mono"><a href={`${cfg.creditcoinExplorer}/tx/${h.tx}`} target="_blank" rel="noreferrer">{h.tx.slice(0, 12)}…</a></td>
                         </tr>
                       ))}

@@ -6,6 +6,7 @@ import { CountUp, Reveal, Spotlight } from '../components/motion'
 import { Canvas3D, useCan3D } from '../three/Canvas3D'
 import { RotationWheel } from '../components/RotationWheel'
 import { cfg } from '../config'
+import { COUNTS } from '../lib/counts'
 
 // three.js lives in its own chunk: Canvas3D fetches it only when the hero decides to render
 const heroScene = () => import('../three/HeroScene')
@@ -53,7 +54,7 @@ export function Landing() {
           <div>
             <Reveal i={0}>
               <Link to="/lab" className="pill mint live no-underline" style={{ fontSize: 13, padding: '.3rem .8rem .3rem .7rem' }}>
-                Attack lab open · 8 scenarios, 0 exploits <ArrowRight size={13} />
+                Attack lab open · {COUNTS.scenarios} scenarios, 0 exploits <ArrowRight size={13} />
               </Link>
             </Reveal>
             <Reveal i={1}>

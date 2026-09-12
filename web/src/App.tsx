@@ -12,6 +12,7 @@ import { Steward } from './pages/Steward'
 import { Borrow } from './pages/Borrow'
 import { Architecture } from './pages/Architecture'
 import { Presentation } from './pages/Presentation'
+import { Story } from './pages/Story'
 import { cfg } from './config'
 
 /** A thin mint bar at the very top that runs while one page leaves and the next arrives. */
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="/lab" element={<Lab />} />
             <Route path="/architecture" element={<Architecture />} />
             <Route path="/presentation" element={<Presentation />} />
+            <Route path="/story" element={<Story />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </motion.div>

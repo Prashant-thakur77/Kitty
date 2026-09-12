@@ -95,13 +95,17 @@ const s = (v: unknown) => (typeof v === 'string' && v.startsWith('0x') && v.leng
 const usd6 = (v: unknown) => (Number(v as bigint) / 1e6).toLocaleString()
 /** Human round label: 1-indexed. The 0-based on-chain index is appended as a trailing `(rN)` chip. */
 const r1 = (v: unknown) => Number(v) + 1
+/** v2 ledger evidence: the attestation that proved a deadline. 0 means an early close (everyone paid before the deadline), so nothing is appended. */
+const att = (h: unknown) => (typeof h === 'bigint' ? h > 0n : Number(h ?? 0) > 0)
+const attestedSuffix = (a: Record<string, unknown>) => (att(a.attestedHeight) ? ` · attested @ ${a.attestedHeight}` : '')
+const provenBySuffix = (a: Record<string, unknown>) => (att(a.attestedHeight) ? ` · proven by attestation @ ${a.attestedHeight} ${String(a.attestedHash ?? '').slice(0, 10)}…` : '')
 
 export function describe(name: string, a: Record<string, unknown>): string {
   switch (name) {
     case 'ContributionRecorded': return `Proven: ${s(a.member)} paid ${usd6(a.amount)} tUSD for round ${r1(a.round)} at Sepolia block ${a.sourceHeight} (${a.onTime ? 'on time' : 'LATE'}) (r${a.round})`
     case 'BatchVerified': return `0x0FD2 verified ${a.count} tx in ONE call · Sepolia blocks ${a.fromHeight}–${a.toHeight}`
-    case 'ContributionMissed': return `Missed: ${s(a.member)} did not pay round ${r1(a.round)} by attested block ${a.deadlineHeight} (r${a.round})`
-    case 'RoundClosed': return `Round ${r1(a.round)} closed → ${s(a.recipient)} receives ${usd6(a.pot)} tUSD (${a.missedCount} missed) (r${a.round})`
+    case 'ContributionMissed': return `Missed: ${s(a.member)} did not pay round ${r1(a.round)} by attested block ${a.deadlineHeight}${provenBySuffix(a)} (r${a.round})`
+    case 'RoundClosed': return `Round ${r1(a.round)} closed → ${s(a.recipient)} receives ${usd6(a.pot)} tUSD (${a.missedCount} missed)${attestedSuffix(a)} (r${a.round})`
     case 'RoundOpened': return `Round ${r1(a.round)} open · pay by Sepolia block ${a.deadlineHeight} (r${a.round})`
     case 'PayoutConfirmed': return `Payout proven: ${s(a.recipient)} received ${usd6(a.amount)} tUSD on Ethereum`
     case 'CircleCreated': return `Circle "${a.name}" created · ${(a.members as string[]).length} members · ${usd6(a.contribution)} tUSD/round`
