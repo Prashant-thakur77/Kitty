@@ -12,7 +12,7 @@ Actions to expect, in order: `deploy TestUSD` · `deploy KittyVault` · `deploy 
 `createCircle` · `contribute round R member N` · `recordContributions round R (batch of N)` · `closeRound R` ·
 `payout round R` · `confirmPayout round R` · attack-lab attempts (`replay`, `spoofEmitter`, `wrongChain`, `revertedTx`, `late`, `stealFromSteward`, `fireTheAgent`, `poisonReasoning`).
 
-Circle #1 *Delhi Chit Circle* · round 0: 3 Sepolia payments → 2 batch proofs (1 + 2; the roundmate hold rule from audit round 2 makes the next round a single batch) → early close → 300 tUSD payout → proof-back, all on 12 September 2026. Round 1 in progress (a stranger proved member 0's payment in the fire-the-agent scenario; member 1 pays late; member 2 misses).
+Two full rounds settled on 12 September 2026. On the first ledger (`0xc6fe…c2dE`): 3 Sepolia payments → 2 batch proofs (1 + 2, before the roundmate hold rule) → early close → 300 tUSD payout → proof-back; then all eight attack scenarios, including a real late payment after the attested deadline. On the final ledger (`0xC2A1…F276`, paired with vault `0xa27e…DA84`): 3 payments → **one batch proof for the whole round** → early close → 300 tUSD payout → proof-back. Rows are in chronological order.
 
 | date | chain | action | tx | gas used |
 |---|---|---|---|---|
@@ -48,6 +48,10 @@ Circle #1 *Delhi Chit Circle* · round 0: 3 Sepolia payments → 2 batch proofs 
 | 2026-09-12 | Sepolia | contribute round 0 member 1 (final vault) | [0xbff79eb5…ecfa1d](https://sepolia.etherscan.io/tx/0xbff79eb5e3bebeac93a127416578e5bbdffd38a8504f211155f0542107ecfa1d) | 71533 |
 | 2026-09-12 | Sepolia | contribute round 0 member 2 (final vault) | [0x02b511aa…1dd204](https://sepolia.etherscan.io/tx/0x02b511aa9ead2c612d06ac13861ad4f09a33874738a573a22df3bcc6cf1dd204) | 71533 |
 | 2026-09-12 | Creditcoin CC3 Testnet | deploy KittyLedger (final) | [0x21994599…7ac7f5](https://creditcoin-testnet.blockscout.com/tx/0x2199459939956219c713c4fe59c800713798e4bd922312d5a0a93a50fd7ac7f5) | 4901416 |
+| 2026-09-12 | Creditcoin CC3 Testnet | recordContributions round 0: the whole round, batch of 3, verified by 0x0FD2 in one call | [0xac2a637f…652fe9](https://creditcoin-testnet.blockscout.com/tx/0xac2a637fb248dfc8b74801b8ec993be4d7c3831d083774ef261e84cdb9652fe9) | 888573 |
+| 2026-09-12 | Creditcoin CC3 Testnet | closeRound 0 (everyone paid; rotation by score) | [0x53cbb51d…277bbb](https://creditcoin-testnet.blockscout.com/tx/0x53cbb51ddf2337bae79f33870d591a72aefcf8ca930e9edda5a12ac882277bbb) | 354326 |
+| 2026-09-12 | Sepolia | payout round 0 (300 tUSD to member 0) | [0xfee30618…7263c3](https://sepolia.etherscan.io/tx/0xfee3061882b31b7adc8603fd3bdec728b9c777a5760b11ec346ed0e2b87263c3) | 64821 |
+| 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout round 0 (payout proven back through 0x0FD2) | [0x92344d88…74ba88](https://creditcoin-testnet.blockscout.com/tx/0x92344d886c25f2e14a573f9934407797f0379bdd100bda4e5a5101000174ba88) | 386582 |
 
 ## Live precompile verification (no deployment needed)
 

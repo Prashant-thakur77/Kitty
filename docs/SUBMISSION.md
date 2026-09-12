@@ -67,12 +67,13 @@ What no other Attestcoin contract in this field does:
   caller.
 - Live on Creditcoin CC3 Testnet: KittyLedger at
   `0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276` (with KittyViewer, KittyUSD, KittyCreditLine and
-  KittyBadge) trusts KittyVault `0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84` on Sepolia. The first
-  circle settled round 0 end to end on 12 September 2026: three Sepolia payments, two batch proofs
-  verified by 0x0FD2, an early close, a 300 tUSD payout on Sepolia and its proof back to
-  Creditcoin. Round 0 landed in two calls (1 + 2) because the steward's batch timer fired before two
-  payments were attested; the policy now holds for attested roundmates. Every transaction is linked
-  in `docs/TESTNET_LOG.md`.
+  KittyBadge) trusts its paired KittyVault `0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84` on Sepolia.
+  Two full rounds settled end to end on 12 September 2026. On the first ledger: three Sepolia
+  payments, two batch proofs verified by 0x0FD2, an early close, a 300 tUSD payout on Sepolia and
+  its proof back to Creditcoin, then all eight attack scenarios against the live precompile
+  (including a real late payment after the attested deadline). On the final ledger, with the
+  roundmate hold rule: the whole round verified as one batch of three in a single precompile call,
+  closed, paid out and proven back. Every transaction is linked in `docs/TESTNET_LOG.md`.
 - Verified against the live precompile before deployment: a real Sepolia proof and a real 3-tx
   batch proof both returned `true` from the live 0x0FD2, tampered bytes and a wrong chain key
   reverted (`pnpm verify:live`), and the batch measured 24% cheaper than three singles.
