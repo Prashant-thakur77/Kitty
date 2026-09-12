@@ -34,7 +34,7 @@ attested block heights, closes rounds, picks the rotation recipient deterministi
 on-time, late and missed as a Kitty Score. Payouts are proven back, so the ledger only ever shows
 money that verifiably moved.
 
-What no other Attestcoin contract in this field does:
+Three properties that follow from the design:
 
 - **Settles up to ten payments from every open circle in one precompile call.** Payments from every
   open circle are pooled into one `verifyAndEmit` under a single continuity proof, preflighted for free with the view `verify`,

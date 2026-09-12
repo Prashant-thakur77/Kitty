@@ -1,6 +1,6 @@
 """Chatterbox TTS narration for the Kitty demo video. One wav per segment + durations.json.
 Run: ~/chatterbox-env/bin/python scripts/media/narrate.py [outdir]
-Voice prompt: ~/Downloads/kristen.mp3 (calm, clear; exaggeration kept low for narration)."""
+Voice prompt: set VOICE_PROMPT to a short wav/mp3 of a voice you have the rights to use (exaggeration kept low for narration)."""
 import torchaudio as ta, json, os, sys
 from chatterbox.tts import ChatterboxTTS
 
@@ -33,7 +33,7 @@ prev = os.path.join(OUT, 'durations.json')
 if only and os.path.exists(prev): durations = json.load(open(prev))['durations']
 for name, text in segments:
     if only and name not in only: continue
-    wav = model.generate(text, audio_prompt_path="/home/prashant/Downloads/kristen.mp3", exaggeration=0.45, cfg_weight=0.5)
+    wav = model.generate(text, audio_prompt_path=os.environ.get("VOICE_PROMPT"), exaggeration=0.45, cfg_weight=0.5)
     path = os.path.join(OUT, name + ".wav")
     ta.save(path, wav, model.sr)
     durations[name] = wav.shape[-1] / model.sr

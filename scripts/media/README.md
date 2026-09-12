@@ -6,7 +6,7 @@ a local Playwright install path at the top of each `.mjs` — adjust it if you m
 
 | file | what it does |
 |---|---|
-| `narrate.py` | Chatterbox TTS (GPU) → one wav per demo segment + `durations.json`. `~/chatterbox-env/bin/python scripts/media/narrate.py <outdir> [names,to,regenerate]`. Voice prompt `~/Downloads/kristen.mp3`. Chatterbox caps a clip at 40 s, so keep each segment under ~100 words. |
+| `narrate.py` | Chatterbox TTS (GPU) → one wav per demo segment + `durations.json`. `~/chatterbox-env/bin/python scripts/media/narrate.py <outdir> [names,to,regenerate]`. Voice prompt from `VOICE_PROMPT` (a short recording of a voice you have the rights to use). Chatterbox caps a clip at 40 s, so keep each segment under ~100 words. |
 | `record-demo.mjs` | Drives the dashboard in headless Chromium against the local world, executes the on-chain actions mid-recording, streams terminal commands into a styled terminal card, injects a read-only demo wallet and a visible cursor, and writes one webm per surface + `timeline.json` whose segment lengths match the narration. |
 | `assemble.py` | Trims each segment to its measured length, speeds the picture up by at most 1.35× when the actions ran longer than the voice (so there is never dead air), pads narration, concatenates, mixes a quiet room-tone bed, burns captions, writes a faststart mp4. |
 | `cards/title.html`, `cards/terminal.html` | The title/close card and the terminal surface, styled with Kitty's own tokens. Parameterised by query string. |

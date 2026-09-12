@@ -29,7 +29,6 @@ An index of everything under `docs/`, one line each. Start with the technical no
 |---|---|
 | [`OPERATIONS.md`](OPERATIONS.md) | Runbook: prerequisites, every `.env` and worker variable, `scripts/deploy.sh` and `FORCE_REDEPLOY`, seeding, the worker's loop and state files, the lab API routes, recording the lab, `txlog`, recovery procedures, local world scripts, CI, GitHub Pages. |
 | [`USER_SCENARIOS.md`](USER_SCENARIOS.md) | Every dashboard flow for visitors, members, organisers, lenders and reviewers, with preconditions, steps, the UI states rendered and the on-chain effects. |
-| [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) | The recording-day script for the testnet demo, segment by segment. |
 | [`TELEGRAM.md`](TELEGRAM.md) | The Telegram bot and Mini App: setup with BotFather, commands, event pushes and reminders. |
 
 ## Records
@@ -38,7 +37,6 @@ An index of everything under `docs/`, one line each. Start with the technical no
 |---|---|
 | [`TESTNET_LOG.md`](TESTNET_LOG.md) | Every testnet transaction with explorer link and gas, in order, plus the live precompile verifications and the Sepolia deployments. |
 | [`SUBMISSION.md`](SUBMISSION.md) | The DoraHacks submission fields: description, Attestcoin usage, links, team. |
-| [`audit-round-1.json`](audit-round-1.json), [`audit-round-2.json`](audit-round-2.json) | The two pre-submission audit plans and their findings. |
 | [`Kitty-deck.pdf`](Kitty-deck.pdf) | The deck, printed from `/presentation`. |
 | [`assets/`](assets/) | Banner, architecture diagram, screenshots and demo GIFs used by the README. |
 
@@ -46,7 +44,3 @@ An index of everything under `docs/`, one line each. Start with the technical no
 
 | Document | Description |
 |---|---|
-| [`STRATEGY.md`](STRATEGY.md) | The hackathon strategy: track, judging criteria, what wins. |
-| [`MASTER_PLAN.md`](MASTER_PLAN.md) | The build-to-win plan with sources and licenses for every borrowed idea. |
-| [`BUILD_PLAN.md`](BUILD_PLAN.md) | The original architecture and build order. |
-| [`AGENT_PLAN.md`](AGENT_PLAN.md) | The v2 plan: Attestcoin depth track, the three-layer steward, the three agent-safety scenarios, and their status. |

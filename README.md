@@ -16,7 +16,9 @@
   <b>Kitty</b> is a rotating savings circle — a chit fund, a susu, a tanda — where the money stays in stablecoins on Ethereum and the rules live on Creditcoin, fed only by transactions the <b>Attestcoin Protocol</b> has cryptographically verified. No treasurer. No oracle operator. No bridge. The output is a credit history a lender can underwrite against, for people the banking system has never seen.
 </p>
 
-**What no other Attestcoin contract in this field does**
+<p align="center"><b>Live on Creditcoin CC3 Testnet and Ethereum Sepolia since 12 September 2026</b> · four circles run, 100+ linked transactions · <a href="https://prashant-thakur77.github.io/Kitty/">dashboard</a> · <a href="https://t.me/KittyCirclesBot">@KittyCirclesBot</a></p>
+
+**Three properties that follow from the design**
 
 - **Settles up to ten payments from every open circle in one precompile call.** Payments from every open circle are pooled into one `verifyAndEmit` under a single continuity proof, preflighted for free with the view `verify`, and measured 24% cheaper than singles against the live 0x0FD2 ([measured](#gas-measured)).
 - **Has no clock but the attestor network.** Deadlines are Sepolia block heights; a round with a missing payment can close only when `is_height_attested(chainKey, deadline + 64)` says so, and the Ethereum payout is proven back before the round shows *Paid*.
@@ -95,11 +97,66 @@ Chapters: 0:00 Hook · 0:10 The problem (3D) · 0:45 The split, money on Ethereu
 | Steward | `/steward`, the steward's decision log and citation validator, live |
 | Source | https://github.com/Prashant-thakur77/Kitty |
 
+### On-chain evidence
+
+Every claim in this README is backed by a transaction on the public testnets. A few of the hundred-plus rows in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md):
+
+| What happened | Transaction |
+|---|---|
+| A whole round (three payments) verified by `0x0FD2` in one `verifyAndEmit` call | [`0xac2a637f…`](https://creditcoin-testnet.blockscout.com/tx/0xac2a637fb248dfc8b74801b8ec993be4d7c3831d083774ef261e84cdb9652fe9) |
+| Eight payments from two different circles pooled into one precompile call | [`0xa7310f00…`](https://creditcoin-testnet.blockscout.com/tx/0xa7310f0081f8e3254b3ba511526196e8bf34cdb5d203f481fb05636815c1f7fa) |
+| A member proving their own payment from the browser, no operator involved | [`0x7b8fdaab…`](https://creditcoin-testnet.blockscout.com/tx/0x7b8fdaab59af28c7df083528702b02ff5babe8260365a9ec2d0032d5cb8861b5) |
+| A round closed on the attested deadline with a real missed payment and the attestation that proved it | [`0xef146316…`](https://creditcoin-testnet.blockscout.com/tx/0xef146316d55e42f20a54a8d97935d711769d3f4571cf0fd760af4471bd9f01ca) |
+| A Sepolia payout proven back to Creditcoin before the round shows *Paid* | [`0x92344d88…`](https://creditcoin-testnet.blockscout.com/tx/0x92344d886c25f2e14a573f9934407797f0379bdd100bda4e5a5101000174ba88) |
+| A replayed proof rejected by the ledger (`QueryAlreadyProcessed`) and a forged chain key rejected by the precompile itself | recorded in [`web/public/lab-testnet.json`](web/public/lab-testnet.json), shown at `/lab` |
+
 ## How a round settles
 
 <p align="center">
   <img src="docs/assets/architecture.png" alt="Architecture: money on Sepolia, proof through Attestcoin, rules on Creditcoin" width="100%">
 </p>
+
+```mermaid
+flowchart LR
+  subgraph ETH[Ethereum Sepolia · chain key 1]
+    direction TB
+    M[Member wallet] -->|contribute| V[KittyVault escrow<br/>Contributed · PaidOut]
+    O[Vault operator] -->|payout| V
+  end
+  subgraph ATT[Attestcoin Protocol]
+    direction TB
+    A[Attestor network] -->|attests Sepolia blocks| CI[0x0FD3 ChainInfo<br/>is_height_attested · bounds]
+    PB[Proof Builder<br/>Merkle + continuity proofs]
+    BP[0x0FD2 Block prover<br/>verifyAndEmit · verify]
+  end
+  subgraph CC[Creditcoin CC3 Testnet]
+    direction TB
+    L[KittyLedger<br/>membership · deadlines · rotation · score]
+    L --> CL[KittyCreditLine]
+    L --> B[KittyBadge ERC-5192]
+    L --> VW[KittyViewer]
+  end
+  V -. Contributed / PaidOut events .-> PB
+  PB -->|batch proof| S[Steward, or any wallet]
+  S -->|recordContributions · confirmPayout| L
+  L -->|one verifyAndEmit call| BP
+  L -->|the only clock| CI
+  L -. payout instruction .-> O
+  D[Dashboard · Telegram bot] --> L
+```
+
+The lifecycle of one round, as the ledger sees it:
+
+```mermaid
+stateDiagram-v2
+  [*] --> Open: RoundOpened
+  Open --> Open: recordContributions, proof verified by 0x0FD2
+  Open --> Closed: closeRound, everyone proven
+  Open --> Closed: closeRound, deadline + 64 attested on 0x0FD3, unpaid members MISSED
+  Closed --> Paid: confirmPayout, PaidOut proven by 0x0FD2
+  Closed --> Closed: pot carried over when nobody is eligible
+  Paid --> [*]
+```
 
 1. **Create.** A group opens a circle on Creditcoin with its members (or signed invites), the installment, and a round length measured in *Sepolia blocks*. Circles can rotate in fixed order or by proven score.
 2. **Pay.** Each round, members pay the installment into the vault on Sepolia. That is the whole of their interaction.
@@ -109,6 +166,35 @@ Chapters: 0:00 Hook · 0:10 The problem (3D) · 0:45 The split, money on Ethereu
 6. **Close.** A round closes early when everyone has paid, or once the deadline block plus a 64-block grace window is attested. Members who consented to the circle and did not pay are recorded as missed. The recipient is deterministic: fixed order, or the best proven record that has not received yet.
 7. **Pay out and prove back.** The vault pays the recipient on Sepolia. That `PaidOut` transaction is proven back to Creditcoin before the round can show *Paid*.
 8. **Score.** Every member accrues a Kitty Score built solely from proven payments and attested deadlines. `KittyCreditLine` lends against it; `KittyBadge` renders it on chain.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Mb as Member
+  participant Vt as KittyVault (Sepolia)
+  participant At as Attestor network
+  participant PBd as Proof Builder
+  participant St as Steward / any wallet
+  participant Lg as KittyLedger (Creditcoin)
+  participant P2 as 0x0FD2
+  participant P3 as 0x0FD3
+  Mb->>Vt: contribute(circle, round, amount)
+  Vt-->>Vt: emit Contributed
+  At->>P3: attest Sepolia block
+  St->>P3: get_attestation_bounds / is_height_attested
+  St->>PBd: batch proof for up to 10 payments
+  St->>P2: verify (view, free preflight)
+  St->>Lg: recordContributions(batch)
+  Lg->>P2: verifyAndEmit (one call)
+  Lg-->>Lg: decode, bind emitter / to / from / amount / round, replay guard
+  Lg->>P3: is_height_attested(deadline + 64) when a payment is missing
+  Lg-->>Lg: closeRound: pick recipient, record misses with the attestation
+  St->>Vt: payout(recipient, pot)
+  Vt-->>Vt: emit PaidOut
+  St->>Lg: confirmPayout(proof of PaidOut)
+  Lg->>P2: verifyAndEmit
+  Lg-->>Lg: round shows Paid
+```
 
 <p align="center">
   <img src="docs/assets/circle.png" alt="A circle: urgency band, attested-block scale, members, rotation, browser proving, proof feed" width="100%">
@@ -123,7 +209,7 @@ Kitty was built to use the protocol deeply rather than minimally. The full techn
 | **Batch verification across circles** | `recordContributions` → `verifyAndEmit(chainKey, heights[], txs[], merkleProofs[], continuity)` | Up to ten queries under one continuity proof, pooled from every open circle. The continuity proof is checked once. |
 | **Free preflight** | precompile view `verify`, both overloads, from the worker and from the browser | A proof that would fail is never submitted; a bad batch costs nothing. |
 | **Attested-height clock** | `is_height_attested(chainKey, deadline + grace)` in `closeRound`; `onTime = height ≤ deadline` | No timestamps, no admin. The attestor network decides when a round ends. |
-| **Attestation bounds** | `is_height_attested` as the clock; `find_lowest_attested_after` in `closeRound` to record *which* attestation proved every missed deadline (stored on the round, carried by `ContributionMissed` and `RoundClosed`) and from the dashboard (which attestation covers a payment); `get_chain_by_key` and `get_latest_attestation_height_and_hash` at circle creation (registry check; round 0's deadline must lie beyond the attested frontier, so an invite circle cannot be opened on an already-closed round) and the latter for the lag indicator; `get_attestation_bounds` for whether a deadline is covered | 5 of the ChainInfo precompile's 11 functions on the hot path, 4 of them inside the ledger; the 8-function interface in `IChainInfo.sol` is exercised against the mock in [`test/KittyMultiChain.t.sol`](test/KittyMultiChain.t.sol). |
+| **ChainInfo as the clock and the evidence** | `is_height_attested(chainKey, deadline + 64)` gates every deadline close; `find_lowest_attested_after` records *which* attestation proved each missed deadline (stored on the round, carried by `ContributionMissed` and `RoundClosed`); `get_chain_by_key` and `get_latest_attestation_height_and_hash` at circle creation (registry check, and round 0 must end beyond the attested frontier); `get_attestation_bounds` in the dashboard | Five of the ChainInfo precompile's eleven functions on the hot path, four of them inside the ledger. The eight-function interface in `IChainInfo.sol` is exercised against the mock in [`test/KittyMultiChain.t.sol`](test/KittyMultiChain.t.sol). |
 | **Per-circle chain key** | validated at creation against the on-chain registry; the trusted-vault allowlist is keyed by chain | A circle settles from Sepolia (key 1) or Ethereum mainnet (key 3). A vault trusted on one chain is not trusted on another. |
 | **Query-id replay protection** | `keccak(chainKey ‖ height ‖ txIndex)`, byte-identical to `ASCBase`, shared by every entry point, plus in-batch duplicate detection | The same proof can never count twice. |
 | **Receipt status** | `receiptStatus == 1` before any log is read | The precompile proves inclusion, not success. |
@@ -263,7 +349,7 @@ The score is used, not just displayed. `KittyCreditLine` underwrites purely from
 
 ## Quick start
 
-Requirements: Foundry, Node 22 with pnpm, and Docker is not needed. The first four commands run offline against two local anvils with the precompiles mocked at their real addresses; `pnpm judge` runs them all and then reaches the live CC3 Testnet precompile (internet, no .env needed).
+Requirements: Foundry and Node 22 with pnpm; no Docker or hosted services are needed. The first four commands run offline against two local anvils with the precompiles mocked at their real addresses; `pnpm judge` runs them all and then reaches the live CC3 Testnet precompile (internet, no .env needed).
 
 ```bash
 git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty
@@ -293,7 +379,7 @@ pnpm demo fund && pnpm demo create && pnpm demo contribute
 pnpm worker                               # attestation wait → batch proof → record → close → payout → proof-back
 ```
 
-Faucets: Sepolia ETH from [Alchemy](https://www.alchemy.com/faucets/ethereum-sepolia); tCTC from the Creditcoin Discord `#token-faucet` (`/faucet address:0x…`).
+Faucets: Sepolia ETH from [Alchemy](https://www.alchemy.com/faucets/ethereum-sepolia); tCTC from the `/faucet` command in the `#testnet-faucet` channel of the Creditcoin Discord.
 
 ## Deployments
 
@@ -332,9 +418,10 @@ worker/
   src/proofs.ts, verifier.ts  Proof Builder client, precompile preflight
   src/scenarios.ts, api.ts    attack scenarios and the SSE lab API
   src/verify-live.ts          real proofs against the live precompile
-web/                          Vite + React + wagmi dashboard
+web/                          Vite + React + wagmi dashboard (3D hero and story, circle wheel, score dial, steward log, attack lab)
+bot/                          Telegram bot: chain reads, event pushes, deadline reminders, Mini App entry
 scripts/                      deploy.sh · local-setup.sh · local-world.sh · local-e2e.sh · scenarios.sh · media/
-docs/                         integration write-up, plans, submission material, testnet log, deck (the demo video is a release asset)
+docs/                         technical note, protocol spec, threat model, ADRs, operations, integration write-up, testnet log, deck
 ```
 
 ## Documentation
@@ -356,11 +443,9 @@ Index with one line per file: [`docs/README.md`](docs/README.md).
 | [`docs/adr/0005-one-vault-per-ledger.md`](docs/adr/0005-one-vault-per-ledger.md) | ADR: why a ledger redeploy pairs with a fresh vault and why a payment cannot predate its circle |
 | [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Runbook: env keys, `deploy.sh`, seeding, the worker and its state files, the lab API, recording, `txlog`, recovery procedures, local worlds, CI, Pages |
 | [`docs/USER_SCENARIOS.md`](docs/USER_SCENARIOS.md) | Every dashboard flow for members, organisers, lenders and reviewers, with UI states and on-chain effects |
-| [`docs/DEMO_RUNBOOK.md`](docs/DEMO_RUNBOOK.md) | The recording-day script for the testnet demo |
 | [`docs/TELEGRAM.md`](docs/TELEGRAM.md) | The Telegram bot and Mini App |
 | [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md) | Every testnet transaction with explorer link and gas |
 | [`docs/SUBMISSION.md`](docs/SUBMISSION.md) | The DoraHacks submission fields |
-| [`docs/STRATEGY.md`](docs/STRATEGY.md), [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md), [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md), [`docs/AGENT_PLAN.md`](docs/AGENT_PLAN.md) | Strategy, sourcing, build order and the v2 agent plan |
 | [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf) | The deck, printed from `/presentation` |
 | [`.env.example`](.env.example) | Environment variable template |
 
@@ -389,7 +474,7 @@ Known limits, stated plainly: the vault operator *sends* payouts, and the stewar
 - **Why block heights instead of timestamps?** Attested height is the one clock every party can verify. A timestamp is an opinion; an attested block is a fact.
 - **Why a 64-block grace window?** A payment mined at the deadline block is attested at the same moment its round becomes closable. Without a window, a rival could close the round before the proof lands. A proof that lands after a round has closed cannot be recorded; the steward proves as soon as a payment's block is attested, well inside the window.
 - **Why can anyone submit a proof?** Because the ledger's checks are complete without knowing who is calling. That is what lets a member finish a round from the browser when the steward is switched off.
-- **Why is the model advisory only?** The 2026 Convergence winners in CRE & AI and Autonomous Agents, and the 2025 Chromion DeFi winner, all made the agent propose and the contract dispose. Kitty goes further: the agent's only power is to submit proofs, and its explanations are filtered by a validator that removes any figure the decision log cannot back.
+- **Why is the model advisory only?** A language model should propose and a contract should dispose; Kitty goes one step further: the agent's only power is to submit proofs, and its explanations are filtered by a validator that removes any figure the decision log cannot back.
 - **What was hard.** `forge script` cannot simulate Creditcoin blocks; deployment uses `forge create`. The SDK's gas fallback underestimates batch calls; the worker floors it. Hosted Sepolia RPCs cap log ranges; the worker scans in 50-block windows. Back-to-back sends on a fast chain race the node's nonce; the worker uses `NonceManager` and resets it after any failed send.
 
 ## Roadmap
@@ -398,4 +483,6 @@ Score-gated circle sizes · seat bidding for early payout · loan defaults feedi
 
 ## License
 
-Released under the [MIT License](LICENSE). Built by Prashant for BUIDL CTC 2026 Fall, with the Attestcoin Protocol at its core.
+Released under the [MIT License](LICENSE). Copyright 2026 Prashant Thakur.
+
+Third-party components, each under its own licence: [OpenZeppelin Contracts](https://github.com/OpenZeppelin/openzeppelin-contracts) (MIT), [`@gluwa/asc-contracts`](https://www.npmjs.com/package/@gluwa/asc-contracts) and [`@gluwa/usc-sdk`](https://www.npmjs.com/package/@gluwa/usc-sdk) (Attestcoin Protocol libraries, used under their published licences), [Foundry](https://github.com/foundry-rs/foundry) (MIT/Apache-2.0), [React](https://react.dev), [wagmi](https://wagmi.sh), [viem](https://viem.sh), [three.js](https://threejs.org) and [react-three-fiber](https://github.com/pmndrs/react-three-fiber), [motion](https://motion.dev), [grammY](https://grammy.dev) (all MIT), [Lucide](https://lucide.dev) icons (ISC), and the Instrument Serif, Geist and Geist Mono typefaces (SIL Open Font License). The demo narration is synthesised speech; no recording of a real person is distributed with this repository.
