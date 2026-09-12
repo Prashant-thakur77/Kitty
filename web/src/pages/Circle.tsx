@@ -16,6 +16,8 @@ import { ROUND_STATUS } from '../lib/types'
 import { BlockProgress, Blockie, Section, Stat, Tag } from '../components/ui'
 import { chainName } from '../lib/verifier'
 import { ProofFeed } from '../components/ProofFeed'
+import { RotationWheel, RoundTimeline, WheelLegend } from '../components/RotationWheel'
+import { Reveal } from '../components/motion'
 
 type Urgency = 'calm' | 'attention' | 'urgent' | 'proven'
 
@@ -37,6 +39,7 @@ export function CirclePage() {
   const [msg, setMsg] = useState('')
   const [modal, setModal] = useState<'closed' | 'confirm' | 'sent'>('closed')
   const [reverify, setReverify] = useState<{ tx: `0x${string}`; member: `0x${string}` } | null>(null)
+  const [showList, setShowList] = useState(false)
   const receipt = useWaitForTransactionReceipt({ hash: txHash, chainId: sepolia.id })
   const zero = '0x0000000000000000000000000000000000000000'
   const allowance = useReadContract({ chainId: sepolia.id, address: cfg.token, abi: usdAbi, functionName: 'allowance', args: [address ?? zero, cfg.vault], query: { enabled: !!address && !!cfg.token } })
@@ -131,8 +134,15 @@ export function CirclePage() {
         <Stat label="Deadline · Sepolia block" value={num(dl)} sub={bounds ? (bounds.isAttested ? `deadline attested · covering block ${num(bounds.childHeight)}` : `latest attested ${num(bounds.parentHeight)} · waiting for ${num(dl)}`) : deadlineAttested ? 'grace over — closable' : deadlinePassed ? `late until block ${num(closeHeight)}` : `attested head ${num(attested)}`} tone="sky" />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Section title={`Members · round ${circle.currentRound}`}>
+      <Reveal i={1} className="mt-4 grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start">
+        <Section title={byScore ? 'Rotation · by Kitty Score' : 'Rotation · fixed order'} right={byScore ? <Tag tone="mint">best record first</Tag> : <Tag tone="muted">hover a member</Tag>}>
+          <RotationWheel members={circle.members} currentRound={circle.currentRound} active={active} byScore={byScore} recipient={recipient} rounds={rounds} roundStatus={round?.status}
+            contributions={detail.contributions} scores={detail.scores} records={detail.records} payments={payments} pot={round?.pot} you={address} deadlineAttested={deadlineAttested} loading={!round || !detail.contributions} />
+          <div className="mt-3"><WheelLegend /></div>
+        </Section>
+
+        <div className="grid content-start gap-4">
+        <Section title={`Members · round ${circle.currentRound}`} right={<span className="mono text-xs" style={{ color: 'var(--muted)' }}>{round?.contributions ?? 0} of {n} proven</span>}>
           <div className="grid gap-2">
             {circle.members.map((m, i) => {
               const c = detail.contributions?.[i]
@@ -163,8 +173,10 @@ export function CirclePage() {
             })}
           </div>
         </Section>
-
-        <Section title={byScore ? 'Rotation · by Kitty Score' : 'Rotation · fixed order'} right={byScore ? <Tag tone="mint">best record first</Tag> : undefined}>
+        <div>
+        <Section title={`Round history · ${n} rounds`} right={<button className="btn btn-ghost" style={{ padding: '.2rem .55rem', fontSize: 12 }} onClick={() => setShowList((v) => !v)} aria-expanded={showList}>{showList ? 'hide list' : 'show as list'}</button>}>
+          <RoundTimeline members={circle.members} currentRound={circle.currentRound} active={active} byScore={byScore} recipient={recipient} rounds={rounds} />
+          {showList && <div className="mt-4">
           <ol className="grid gap-2">
             {circle.members.map((m, r) => {
               const rd = rounds?.[r]
@@ -180,11 +192,15 @@ export function CirclePage() {
               )
             })}
           </ol>
+          </div>}
           <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
             A round closes early when every payment is proven, or once the deadline block is <em>attested</em> (ChainInfo precompile 0x0FD3). "Paid" appears only after the Ethereum payout itself is proven back through 0x0FD2.{byScore && ' In a by-score circle the pot goes to the member with the best proven record who has not received yet — missing or paying late this round lowers your score before the pick.'}
           </p>
         </Section>
-      </div>
+        </div>
+        </div>
+      </Reveal>
+
 
       {active && round?.status === 0 && <div className="mt-4"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} chainKey={circle.chainKey} contribution={circle.contribution} onDone={refetch} /></div>}
       <div className="mt-4"><ProofFeed items={feed} /></div>

@@ -1,0 +1,78 @@
+/* Visualisation styles for RotationWheel, round timeline, ScoreRing and the score sparkline. Colours come from the tokens in index.css. */
+
+.viz-wheel { position: relative; width: 100%; max-width: 500px; margin: 0 auto; aspect-ratio: 1 / 1; min-width: 0; contain: inline-size; }
+.viz-wheel svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.viz-wheel .member { cursor: pointer; }
+.viz-wheel .member:focus-visible { outline: none; }
+.viz-wheel .member:focus-visible .node-ring { stroke: var(--mint); stroke-width: 2; }
+.viz-wheel .label { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); letter-spacing: .02em; transition: fill .2s; }
+.viz-wheel .member:hover .label, .viz-wheel .member[data-hot="true"] .label { fill: var(--ink); }
+.viz-wheel .member[data-past="true"] .label { fill: var(--dim); }
+.viz-wheel .centre-num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; fill: var(--ink); }
+.viz-wheel .centre-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; fill: var(--muted); }
+.viz-wheel .centre-sub { font-family: var(--mono); font-size: 12px; fill: var(--muted); }
+.viz-wheel .halo { filter: drop-shadow(0 0 10px var(--mint-glow)); }
+.viz-tip {
+  position: absolute; z-index: 5; pointer-events: none; min-width: 200px; max-width: 300px; white-space: nowrap;
+  background: color-mix(in srgb, var(--panel) 92%, #000); border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 10px;
+  font-size: 12px; line-height: 1.45; color: var(--ink-2); box-shadow: 0 12px 30px -12px rgba(0, 0, 0, .8);
+  transform: translate(-50%, calc(-100% - 10px));
+}
+.viz-tip .mono { color: var(--ink); }
+.viz-tip .row { display: flex; justify-content: space-between; gap: 12px; }
+.viz-tip .row + .row { margin-top: 2px; }
+.viz-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; justify-content: center; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.viz-legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ── round timeline ── */
+.viz-timeline { overflow-x: auto; padding: 6px 2px 2px; scrollbar-width: thin; min-width: 0; contain: inline-size; }
+.viz-timeline .strip { display: flex; align-items: flex-start; min-width: max-content; }
+.viz-timeline .node { position: relative; width: 132px; flex: none; text-align: center; }
+.viz-timeline .node .disc {
+  width: 34px; height: 34px; border-radius: 999px; margin: 0 auto; display: grid; place-items: center;
+  background: var(--panel-2); border: 1.5px solid var(--line-2); color: var(--muted); font-family: var(--mono); font-size: 11px; font-weight: 600;
+  transition: border-color .3s, color .3s, background .3s, box-shadow .3s;
+}
+.viz-timeline .node[data-state="paid"] .disc { border-color: var(--mint); color: var(--mint); background: var(--mint-soft); }
+.viz-timeline .node[data-state="closed"] .disc { border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
+.viz-timeline .node[data-state="current"] .disc { border-color: var(--sky); color: var(--sky); background: var(--sky-soft); box-shadow: 0 0 0 0 rgba(125, 182, 232, .35); animation: viz-ping 2.4s ease-out infinite; }
+.viz-timeline .node .who { margin-top: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--ink); white-space: nowrap; }
+.viz-timeline .node .who.tbd { color: var(--muted); font-style: italic; font-family: var(--body); }
+.viz-timeline .node .pot { font-family: var(--mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 16px; }
+.viz-timeline .node .st { margin-top: 5px; }
+.viz-timeline .node .link { position: absolute; left: -66px; top: 16px; width: 132px; height: 2px; overflow: visible; pointer-events: none; }
+.viz-timeline .node .disc svg { display: block; }
+@keyframes viz-ping { 0% { box-shadow: 0 0 0 0 rgba(125, 182, 232, .35); } 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* ── score ring ── */
+.viz-ring { position: relative; width: 100%; max-width: 320px; margin: 0 auto; aspect-ratio: 300 / 262; min-width: 0; contain: inline-size; }
+.viz-ring svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.viz-ring .tick-label { font-family: var(--mono); font-size: 10.5px; fill: var(--dim); }
+.viz-ring .tier-label { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; fill: var(--muted); }
+.viz-ring .centre { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.viz-ring .centre .big { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 56px; line-height: 1; letter-spacing: -.02em; transition: color .5s; }
+.viz-ring .centre .grade { font-family: var(--display); font-size: 26px; line-height: 1; margin-top: 6px; }
+.viz-ring .centre .range { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+
+.viz-bars { display: grid; gap: 10px; }
+.viz-bars .bar { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; font-size: 12.5px; }
+.viz-bars .bar .lbl { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.viz-bars .bar .track { height: 10px; border-radius: 4px; background: #1B2823; overflow: hidden; }
+.viz-bars .bar .fill { height: 100%; border-radius: 4px; transform-origin: left center; }
+.viz-bars .bar .val { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; min-width: 84px; text-align: right; }
+.viz-bars .bar .val small { color: var(--muted); }
+
+/* ── sparkline ── */
+.viz-spark { position: relative; width: 100%; height: 120px; }
+.viz-spark svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.viz-spark .axis { font-family: var(--mono); font-size: 9.5px; fill: var(--dim); }
+
+/* ── skeletons (reserve height; no layout shift when data lands) ── */
+.viz-skel { background: linear-gradient(90deg, #131c17 0%, #182319 50%, #131c17 100%); background-size: 200% 100%; animation: viz-shimmer 1.6s linear infinite; border-radius: 8px; }
+@keyframes viz-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .viz-timeline .node[data-state="current"] .disc, .viz-skel { animation: none !important; }
+}
+
+@keyframes viz-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

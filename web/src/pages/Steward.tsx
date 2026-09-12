@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { MessageSquare, ExternalLink } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { MessageSquare, ExternalLink, ScrollText, Loader2 } from 'lucide-react'
 import { cfg } from '../config'
 import { Section, Tag } from '../components/ui'
-import { Reveal } from '../components/motion'
+import { Reveal, Stagger, Item, EASE_OUT } from '../components/motion'
+import { Skeleton, SkeletonRows, SkeletonText, Empty } from '../components/Skeleton'
 
 /** Mirrors worker/src/agent/log.ts Decision (not imported: that package pulls node:fs into the bundle). */
 type Decision = {
@@ -32,6 +34,7 @@ export function Steward() {
   const [asking, setAsking] = useState(false)
   const [answer, setAnswer] = useState<Explanation | null>(null)
   const [askErr, setAskErr] = useState('')
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     let cancelled = false
@@ -70,22 +73,30 @@ export function Steward() {
       <Reveal className="flex flex-wrap items-end justify-between gap-3">
         <div><div className="eyebrow">Kitty Steward</div><h1 className="text-3xl">The decision log</h1>
           <p className="mt-1 max-w-[70ch] text-sm" style={{ color: 'var(--muted)' }}>The worker is an agent in three layers, and authority decreases as you move toward the model. Every decision below carries the chain state it saw and the transactions it produced, so any line can be checked against the chain. Layer 3 may only cite figures from this log.</p></div>
-        <div className="text-xs mono" style={{ color: 'var(--muted)' }}>
-          {offline ? <Tag tone="sky">sample log · recorded from the local world</Tag> : loaded ? <span className="pill live">live · {cfg.labApi.replace(/^https?:\/\//, '')}{mode ? ` · mode ${mode}` : ''}</span> : 'connecting…'}
+        <div className="text-xs mono" style={{ color: 'var(--muted)' }} aria-live="polite">
+          {offline ? <Tag tone="sky">sample log · recorded from the local world</Tag> : loaded ? <span className="pill live">live · {cfg.labApi.replace(/^https?:\/\//, '')}{mode ? ` · mode ${mode}` : ''}</span> : <span aria-label="Connecting to the lab API"><Skeleton w={190} h={22} r={999} /></span>}
         </div>
       </Reveal>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-        <Reveal i={1}>
-          <Section title="Decisions · newest first" right={<span className="mono text-xs" style={{ color: 'var(--muted)' }}>{entries.length} entries</span>}>
-            {loaded && entries.length === 0 && <p className="text-sm" style={{ color: 'var(--muted)' }}>No decisions logged yet. Run <code className="mono">pnpm worker</code> (or <code className="mono">scripts/local-world.sh</code>) and reload.</p>}
-            <ol className="grid gap-2">
+        <Reveal i={1} className="min-w-0">
+          <Section title="Decisions · newest first" right={loaded ? <span className="mono text-xs" style={{ color: 'var(--muted)' }}>{entries.length} entries</span> : <Skeleton w={64} h={12} />}>
+            {!loaded && <div aria-busy="true" aria-label="Loading the decision log"><SkeletonRows n={5} /></div>}
+            {loaded && entries.length === 0 && (
+              <Empty
+                icon={<ScrollText size={22} />}
+                title="No decisions logged yet"
+                body={<>The steward writes a line here every time it proves, waits, closes or pays out. Run <code className="mono">pnpm worker</code> or <code className="mono">scripts/local-world.sh</code> and reload.</>}
+                action={{ label: 'See what the steward may do', to: '/architecture' }}
+              />
+            )}
+            <Stagger as="ol" className="grid gap-2">
               {entries.map((d, i) => (
-                <li key={`${d.at}-${i}`} className="panel-2 px-3 py-2.5 text-sm">
+                <Item as="li" key={`${d.at}-${i}`} className="panel-2 px-3 py-2.5 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
                     <Tag tone={KIND_TONE[d.kind] ?? 'muted'}>{d.kind}</Tag>
                     <span className="mono text-[11px]" style={{ color: 'var(--muted)' }} title={d.at}>{fmtAt(d.at)}</span>
-                    <span className="min-w-0 flex-1 basis-full sm:basis-auto">{d.summary}</span>
+                    <span className="min-w-0 flex-1 basis-full sm:basis-auto" style={{ overflowWrap: 'anywhere' }}>{d.summary}</span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {Object.entries(d.evidence).map(([k, v]) => (
@@ -101,22 +112,24 @@ export function Steward() {
                       })}
                     </div>
                   )}
-                </li>
+                </Item>
               ))}
-            </ol>
+            </Stagger>
           </Section>
         </Reveal>
 
-        <Reveal i={2}>
+        <Reveal i={2} className="min-w-0">
           <Section title="Ask the steward · Layer 3">
             <p className="text-sm" style={{ color: 'var(--muted)' }}>Claude rewrites the log in plain language. Every figure it states must be cited and must appear in the log; the citation validator strips any sentence it cannot back before it is shown. Without an API key the answer is the deterministic sentence from Layer 2.</p>
             <form onSubmit={ask} className="mt-3 grid gap-2">
               <input value={question} onChange={(e) => setQuestion(e.target.value)} disabled={offline} placeholder="why did you close round 1?" className="mono panel-2 w-full px-3 py-2 text-sm" style={{ color: 'var(--ink)' }} />
-              <button type="submit" className="btn btn-mint justify-center" disabled={offline || asking || !question.trim()} title={offline ? 'Start the local lab API with `pnpm lab:api` to ask live' : undefined}><MessageSquare size={14} /> {asking ? 'Asking…' : offline ? 'Ask (needs pnpm lab:api)' : 'Ask'}</button>
+              <button type="submit" className="btn btn-mint justify-center" disabled={offline || asking || !question.trim()} aria-busy={asking} title={offline ? 'Start the local lab API with `pnpm lab:api` to ask live' : undefined}>{asking ? <Loader2 size={14} className="spin" /> : <MessageSquare size={14} />} {asking ? 'Asking…' : offline ? 'Ask (needs pnpm lab:api)' : 'Ask'}</button>
             </form>
-            {askErr && <div className="log mt-3" style={{ color: 'var(--amber)' }}>{askErr}</div>}
+            {asking && <div className="panel-2 mt-3 p-3" aria-busy="true" aria-label="Waiting for the steward"><Skeleton w={120} h={20} r={999} /><SkeletonText n={3} className="mt-3" /></div>}
+            {askErr && <div className="log mt-3" style={{ color: 'var(--amber)' }} role="alert">{askErr}</div>}
+            <AnimatePresence initial={false}>
             {answer && (
-              <div className="panel-2 mt-3 p-3 text-sm">
+              <motion.div key={answer.text} className="panel-2 mt-3 p-3 text-sm" initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE_OUT }}>
                 <div className="mb-2 flex flex-wrap items-center gap-2"><Tag tone={answer.source === 'claude' ? 'mint' : 'muted'}>{answer.source === 'claude' ? 'claude · cited' : 'deterministic · Layer 2'}</Tag>{answer.source === 'deterministic' && <span className="text-xs" style={{ color: 'var(--muted)' }}>no ANTHROPIC_API_KEY on the API, or nothing survived the check</span>}</div>
                 <p className="m-0">{answer.text}</p>
                 {answer.verified.length > 0 && (
@@ -135,8 +148,9 @@ export function Steward() {
                     </ul>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </Section>
         </Reveal>
       </div>

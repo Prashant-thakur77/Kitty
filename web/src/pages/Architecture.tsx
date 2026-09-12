@@ -1,5 +1,20 @@
 import { cfg } from '../config'
 import { Tag } from '../components/ui'
+import { Canvas3D } from '../three/Canvas3D'
+
+// three.js lives in its own chunk: Canvas3D fetches it only when the stage decides to render
+const flowScene = () => import('../three/FlowScene')
+const FLOW_CAMERA = { position: [0, 3.2, 8.0] as [number, number, number], fov: 30 }
+
+/** Shown in place of the 3D stage on small screens, without WebGL, or under reduced motion. */
+const FlowFallback = () => (
+  <div className="flow-fallback flex flex-wrap items-center gap-2 px-4 py-3">
+    <span className="t3-label"><b>Ethereum</b> · KittyVault</span><span style={{ color: 'var(--dim)' }}>→</span>
+    <span className="t3-label sky">0x0FD2 · block prover</span><span style={{ color: 'var(--dim)' }}>→</span>
+    <span className="t3-label mint"><b>Creditcoin</b> · KittyLedger</span><span style={{ color: 'var(--dim)' }}>←</span>
+    <span className="t3-label amber">0x0FD3 · ChainInfo</span>
+  </div>
+)
 
 const NODES = [
   { k: 'pay', t: 'Pay', chain: 'Sepolia', d: 'Member calls KittyVault.contribute. Escrow moves; a purpose-named Contributed event is emitted. The vault knows nothing about circles.', file: 'src/source/KittyVault.sol', tone: 'muted' },
@@ -14,6 +29,10 @@ const NODES = [
 export function Architecture() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
+      <div className="flow-scene mb-8" aria-label="Proof flow: KittyVault on Ethereum, through the 0x0FD2 block prover, into KittyLedger on Creditcoin; 0x0FD3 ChainInfo attests the clock">
+        <Canvas3D scene={flowScene} camera={FLOW_CAMERA} fallback={<FlowFallback />} />
+        <div className="flow-caption eyebrow">Proof flow · vault → 0x0FD2 → ledger · 0x0FD3 attests the clock</div>
+      </div>
       <div className="eyebrow">Architecture</div>
       <h1 className="text-3xl">Verify → decode → bind → clock → score</h1>
       <p className="mt-1 max-w-[72ch] text-sm" style={{ color: 'var(--muted)' }}>Two chains, one worker, two precompiles. Every arrow that changes money or reputation is a proven transaction or an attested block. Click a node to open the source.</p>

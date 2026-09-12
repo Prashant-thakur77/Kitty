@@ -25,7 +25,15 @@ body {
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
 ::selection { background: var(--mint); color: #062015; }
-:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 6px; transition: outline-offset .15s var(--ease-out), box-shadow .2s var(--ease-out); }
+.btn:focus-visible, .navlink:focus-visible, .toast-x:focus-visible { outline-offset: 2px; box-shadow: 0 0 0 4px rgba(79, 209, 163, .16); border-radius: 999px; }
+input:focus-visible, textarea:focus-visible { outline-offset: 0; border-color: color-mix(in srgb, var(--mint) 60%, transparent) !important; box-shadow: 0 0 0 4px rgba(79, 209, 163, .12); }
+input, textarea { transition: border-color .2s, box-shadow .2s; }
+
+/* skip link: off-screen until focused, then a mint tab under the nav */
+.skip-link { position: fixed; top: -100px; left: 16px; z-index: 100; padding: .6rem 1rem; border-radius: 999px; background: var(--mint); color: #062015; font-weight: 700; text-decoration: none; transition: top .2s var(--ease-out); }
+.skip-link:focus { top: 12px; outline-offset: 2px; text-decoration: none; }
+.route:focus { outline: none; }
 a { color: var(--sky); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .no-underline, .no-underline:hover { text-decoration: none; }
@@ -94,9 +102,30 @@ h1, h2, h3, .display { font-family: var(--display); font-weight: 400; letter-spa
 .btn .arrow { transition: transform .25s var(--ease-out); }
 .btn:hover .arrow { transform: translateX(3px); }
 
-.navlink { white-space: nowrap; padding: .45rem .8rem; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 14px; text-decoration: none; transition: color .2s, background .2s; }
+.navlink { position: relative; white-space: nowrap; padding: .45rem .8rem; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 14px; text-decoration: none; transition: color .2s, background .2s; }
 .navlink:hover { color: var(--ink); background: rgba(255, 255, 255, .05); text-decoration: none; }
-.navlink.active { color: var(--mint); background: var(--mint-soft); }
+.navlink.active { color: var(--mint); }
+.navlink.active:hover { background: transparent; }
+/* the active background is a shared-layout element that glides between links (motion layoutId) */
+.navlink-pill { position: absolute; inset: 0; border-radius: 999px; background: var(--mint-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 22%, transparent); pointer-events: none; }
+.navlink-lg { font-size: 17px; padding: .7rem 1rem; }
+
+/* mobile sheet (Radix Dialog + motion): slides in from the right, over a dimmed page */
+.sheet-overlay { position: fixed; inset: 0; z-index: 40; background: rgba(5, 10, 8, .72); backdrop-filter: blur(6px); }
+.sheet {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 50; width: min(86vw, 360px); display: flex; flex-direction: column;
+  padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); background: var(--panel); border-left: 1px solid var(--line);
+  box-shadow: -30px 0 80px -20px rgba(0, 0, 0, .6); overflow-y: auto; will-change: transform;
+}
+.sheet-foot { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--line); }
+
+/* route progress bar: a 2px mint line at the very top, scaled from the left */
+.route-progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60; transform-origin: 0 50%; background: linear-gradient(90deg, var(--mint), var(--mint-2)); box-shadow: 0 0 12px var(--mint-glow); pointer-events: none; }
+
+/* interactive cards only: lift and brighten on hover, settle on press */
+.card-hover { transition: transform .35s var(--ease-spring), border-color .25s, box-shadow .35s var(--ease-out), background .25s; will-change: transform; }
+.card-hover:hover { transform: translateY(-2px) scale(1.012); border-color: var(--line-2); background: #14201A; box-shadow: 0 18px 40px -24px rgba(0, 0, 0, .8), 0 0 0 1px rgba(79, 209, 163, .06); }
+.card-hover:active { transform: translateY(0) scale(.995); transition-duration: .12s; }
 .nav { transition: background .3s, border-color .3s, backdrop-filter .3s; border-bottom: 1px solid transparent; }
 .nav[data-scrolled="true"] { background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(14px) saturate(1.2); border-bottom-color: var(--line); }
 
@@ -127,7 +156,8 @@ h1, h2, h3, .display { font-family: var(--display); font-weight: 400; letter-spa
 
 /* ───────────────────────────── block tick scale (Rauno-style index, 48 source blocks) ───────────────────────────── */
 .ticks { display: flex; gap: 3px; align-items: flex-end; height: 26px; }
-.ticks i { flex: 1; height: 10px; border-radius: 2px; background: #1E2B25; transition: height .35s var(--ease-out), background .35s; }
+.ticks i { flex: 1; height: 10px; border-radius: 2px; background: #1E2B25; transform-origin: 50% 100%; transition: height .55s var(--ease-spring), background .35s; }
+.ticks i:hover { filter: brightness(1.25); }
 .ticks i.on { background: var(--mint); height: 18px; }
 .ticks i.late { background: var(--amber); height: 14px; }
 .ticks i.deadline { background: var(--rose); height: 26px; }
@@ -142,9 +172,50 @@ h1, h2, h3, .display { font-family: var(--display); font-weight: 400; letter-spa
 .marquee:hover .track { animation-play-state: paused; }
 
 /* ───────────────────────────── motion ───────────────────────────── */
+/* Reveal / Stagger / Item live in components/motion.tsx (motion + IntersectionObserver); `.reveal` is kept for raw markup. */
 .reveal { animation: rise .7s var(--ease-out) both; }
 .reveal[data-i="1"] { animation-delay: .06s } .reveal[data-i="2"] { animation-delay: .12s } .reveal[data-i="3"] { animation-delay: .18s }
 .reveal[data-i="4"] { animation-delay: .24s } .reveal[data-i="5"] { animation-delay: .30s } .reveal[data-i="6"] { animation-delay: .36s }
+.spin { animation: spin 1s linear infinite; }
+
+/* skeleton: a panel-toned block with a slow mint-tinted sheen passing over it */
+.skeleton {
+  display: block; position: relative; overflow: hidden; background: #1A2620; border-radius: 6px;
+  background-image: linear-gradient(100deg, transparent 30%, rgba(199, 211, 204, .07) 45%, rgba(79, 209, 163, .10) 50%, rgba(199, 211, 204, .07) 55%, transparent 70%);
+  background-size: 220% 100%; background-position: 120% 0; animation: shimmer 1.8s var(--ease-out) infinite;
+}
+
+/* empty state: centred, quiet, one action */
+.empty { display: grid; justify-items: center; text-align: center; gap: .5rem; padding: 34px 20px; border: 1px dashed var(--line-2); border-radius: 16px; background: color-mix(in srgb, var(--panel-2) 70%, transparent); }
+.empty-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; margin-bottom: .25rem; background: var(--mint-soft); color: var(--mint); border: 1px solid color-mix(in srgb, var(--mint) 30%, transparent); }
+
+/* toasts: bottom-right stack, one per lifecycle, tone by left rule */
+.toast-region { position: fixed; right: 16px; bottom: 16px; z-index: 70; display: flex; flex-direction: column; gap: 8px; width: min(calc(100vw - 32px), 380px); pointer-events: none; }
+.toast {
+  position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 12px 12px 12px 14px; border-radius: 14px; overflow: hidden; pointer-events: auto;
+  background: color-mix(in srgb, var(--panel) 92%, transparent); border: 1px solid var(--line-2); backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .8), inset 3px 0 0 var(--tone);
+}
+.toast.mint { --tone: var(--mint); } .toast.amber { --tone: var(--amber); } .toast.rose { --tone: var(--rose); } .toast.sky { --tone: var(--sky); }
+.toast-icon { color: var(--tone); display: inline-flex; margin-top: 1px; flex: none; }
+.toast-x { flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; border: 0; background: transparent; color: var(--muted); cursor: pointer; transition: background .2s, color .2s; }
+.toast-x:hover { background: rgba(255, 255, 255, .06); color: var(--ink); }
+.toast-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--tone); opacity: .55; transform-origin: 0 50%; }
+
+/* stepper: four nodes joined by a rail; the rail fills as the proof advances */
+.stepper { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: relative; gap: 6px; }
+.stepper::before { content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 11px; height: 2px; background: var(--line-2); border-radius: 2px; }
+.stepper .rail { position: absolute; left: 12.5%; right: 12.5%; top: 11px; height: 2px; background: linear-gradient(90deg, var(--mint), var(--mint-2)); border-radius: 2px; transform-origin: 0 50%; box-shadow: 0 0 10px var(--mint-glow); }
+.step { position: relative; display: grid; justify-items: center; gap: 8px; text-align: center; }
+.step-dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--panel); border: 2px solid var(--line-2); color: var(--muted); font-family: var(--mono); font-size: 11px; transition: border-color .3s, background .3s, color .3s, box-shadow .3s; }
+.step[data-state="done"] .step-dot { background: var(--mint); border-color: var(--mint); color: #062015; }
+.step[data-state="active"] .step-dot { border-color: var(--mint); color: var(--mint); box-shadow: 0 0 0 0 var(--mint-glow); animation: pulse 1.6s infinite; }
+.step[data-state="error"] .step-dot { background: var(--rose-soft); border-color: var(--rose); color: var(--rose); }
+.step-label { font-size: 11.5px; line-height: 1.25; color: var(--muted); font-weight: 600; }
+.step[data-state="done"] .step-label, .step[data-state="active"] .step-label { color: var(--ink); }
+.step[data-state="error"] .step-label { color: var(--rose); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes drift { from { transform: translate3d(-2%, 0, 0) rotate(0deg); } to { transform: translate3d(2%, -3%, 0) rotate(1.5deg); } }
 @keyframes throb { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
@@ -163,4 +234,7 @@ tr:last-child td { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .reveal { opacity: 1; transform: none; }
+  .skeleton { background-image: none; }
+  .card-hover:hover, .card-hover:active { transform: none; }
+  html { scroll-behavior: auto; }
 }

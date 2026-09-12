@@ -216,7 +216,7 @@ Eight scenarios, each of which pushes a real transaction through proof, precompi
 |---|---|
 | Replay an already-counted proof | `QueryAlreadyProcessed(queryId)` |
 | Fake vault emits a byte-identical `Contributed` event | `WrongEmitter(got, want)` |
-| Same proof, chain key 3 | `WrongChain(3, 1)` |
+| Same proof, chain key 3 | rejected by the live 0x0FD2 itself ("Continuity proof does not match attestation"); against a permissive verifier the ledger reverts `WrongChain(3, 1)` |
 | Included but reverted source transaction | `SourceTxFailed()` |
 | Payment after the deadline block | Accepted, `onTime = false`, score −20 |
 | Steal the steward's on-ledger powers: a fresh key tries to take a pot, trust a vault, close a round early, bind a circle to its own vault | `NotOperator()`, `OwnableUnauthorizedAccount(…)`, `RoundStillOpenOnSource(…)`, `VaultNotTrusted(…)` |

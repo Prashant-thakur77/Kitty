@@ -49,8 +49,8 @@ export const SCENARIOS: ScenarioMeta[] = [
   {
     name: 'wrongChain',
     title: 'Wrong chain key',
-    expected: 'WrongChain',
-    description: 'Each circle stores its own chain key, validated against get_chain_by_key; a batch under another key reverts WrongChain(got, want).',
+    expected: 'WrongChain, or the precompile rejects the continuity proof',
+    description: 'Each circle stores its own chain key, validated against get_chain_by_key. Under another key the live 0x0FD2 rejects the continuity proof itself; if a proof ever got past it, the ledger reverts WrongChain(got, want).',
   },
   {
     name: 'revertedTx',
@@ -143,7 +143,14 @@ const scenarios: Record<ScenarioName, (ctx: Ctx, expected: string) => Promise<Sc
     const [proof] = await buildBatchProof([tx]);
     const forged = { ...proof, chainKey: 3 };
     log(`submitting proof of ${tx} with chainKey 3 instead of ${proof.chainKey}`);
-    return expectRevert(ledger, forged, expected);
+    const r = { ...(await expectRevert(ledger, forged, 'WrongChain')), expected };
+    // Against the live precompile the forgery never reaches the ledger's own check: 0x0FD2 rejects the continuity
+    // proof under the wrong chain's attestations first. Either rejection is the point of the scenario.
+    if (!r.ok && r.got.startsWith('Error(Continuity proof does not match')) {
+      log(`  the live 0x0FD2 rejected the forged chain key before KittyLedger's WrongChain check could run`);
+      return { ...r, ok: true };
+    }
+    return r;
   },
 
   async spoofEmitter({ ledger }, expected) {

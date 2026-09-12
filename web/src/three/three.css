@@ -1,0 +1,39 @@
+/* 3D stages: shared wrapper + page placements. Palette comes from src/index.css tokens. */
+.t3 { position: relative; overflow: hidden; pointer-events: none; }
+.t3 canvas { display: block; outline: none; }
+
+/* Html labels inside FlowScene: same voice as .eyebrow, on a soft panel so they read over geometry */
+.t3-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  color: var(--muted); background: color-mix(in srgb, var(--bg) 72%, transparent); border: 1px solid var(--line);
+  border-radius: 999px; padding: .28rem .7rem; backdrop-filter: blur(6px); pointer-events: none; user-select: none;
+}
+.t3-label b { font-weight: 600; color: var(--ink-2); }
+.t3-label.mint { color: var(--mint); border-color: color-mix(in srgb, var(--mint) 40%, transparent); background: color-mix(in srgb, var(--mint-soft) 75%, transparent); }
+.t3-label.sky { color: var(--sky); border-color: color-mix(in srgb, var(--sky) 40%, transparent); background: color-mix(in srgb, var(--sky-soft) 75%, transparent); }
+.t3-label.amber { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 40%, transparent); background: color-mix(in srgb, var(--amber-soft) 75%, transparent); }
+
+/* Landing hero: the circle sits behind the copy on tablets, in its own column on desktop */
+.hero-scene {
+  position: absolute; inset: 0 -12% 0 38%; z-index: -1; opacity: .34;
+  mask-image: radial-gradient(75% 70% at 55% 50%, #000 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(75% 70% at 55% 50%, #000 35%, transparent 100%);
+}
+.hero-scene .t3 { position: absolute; inset: 0; }
+@media (min-width: 1024px) {
+  .hero-3d .hero-title { font-size: clamp(46px, 5.1vw, 76px); }
+  .hero-3d .lede { max-width: 50ch; }
+  .hero-scene {
+    position: relative; inset: auto; z-index: auto; opacity: 1; height: 560px; margin-right: -8%;
+    mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  }
+}
+
+/* Architecture: the flow stage above the node list */
+.flow-scene { position: relative; height: 420px; border: 1px solid var(--line); border-radius: 22px; background: var(--bg-2); overflow: hidden; }
+.flow-scene .t3 { position: absolute; inset: 0; }
+.flow-scene .flow-caption { position: absolute; left: 18px; bottom: 14px; z-index: 2; pointer-events: none; }
+@media (max-width: 1023px) { .flow-scene { height: 340px; } }
+.flow-scene:has(.flow-fallback) { height: auto; }
+.flow-scene:has(.flow-fallback) .flow-caption { display: none; }

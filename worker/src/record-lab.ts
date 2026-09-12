@@ -34,8 +34,13 @@ interface Recorded extends ScenarioResult {
 // this frontier by itself, so each scenario sees the source-chain head attested before it runs.
 const mockChainInfo = new ethers.Contract(CHAIN_INFO_PRECOMPILE, ['function setAttestedHeight(uint64,uint64)'], ccSigner);
 
+// LAB_ONLY=late,fireTheAgent reruns a subset and merges it into an existing recording (testnet runs are slow and a
+// scenario like `late` can only run once the round's deadline has passed on the source chain).
+const only = new Set((process.env.LAB_ONLY ?? '').split(',').map((s) => s.trim()).filter(Boolean) as ScenarioName[]);
+const previous: Recorded[] = only.size && fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')).results : [];
 const results: Recorded[] = [];
 for (const name of ORDER) {
+  if (only.size && !only.has(name)) { const p = previous.find((r) => r.name === name); if (p) results.push(p); continue; }
   const meta = SCENARIOS.find((s) => s.name === name)!;
   if (cfg.mode === 'local') await (await mockChainInfo.setAttestedHeight(cfg.chainKey, await sourceProvider.getBlockNumber())).wait();
   const lines: string[] = [];

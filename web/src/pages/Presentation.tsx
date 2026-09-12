@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { ArrowLeft, ArrowRight, Printer } from 'lucide-react'
 import { cfg } from '../config'
+import { EASE_OUT } from '../components/motion'
 
 function Slide({ eyebrow, title, children, big }: { eyebrow?: string; title: string; children?: ReactNode; big?: boolean }) {
   return (
@@ -50,19 +53,35 @@ const slides: ReactNode[] = [
 
 export function Presentation() {
   const [i, setI] = useState(0)
-  const next = useCallback(() => setI((c) => Math.min(c + 1, slides.length - 1)), [])
-  const prev = useCallback(() => setI((c) => Math.max(c - 1, 0)), [])
+  const [dir, setDir] = useState(1)
+  const next = useCallback(() => { setDir(1); setI((c) => Math.min(c + 1, slides.length - 1)) }, [])
+  const prev = useCallback(() => { setDir(-1); setI((c) => Math.max(c - 1, 0)) }, [])
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (['ArrowRight', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next() } if (['ArrowLeft', 'Backspace'].includes(e.key)) { e.preventDefault(); prev() } }
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
   }, [next, prev])
+  const reduced = useReducedMotion()
   return (
     <div>
-      <div className="noprint fixed bottom-4 right-4 z-40 flex items-center gap-2 text-xs mono" style={{ color: 'var(--muted)' }}>
-        <button className="btn" onClick={prev} disabled={i === 0}>←</button><span>{i + 1} / {slides.length}</span><button className="btn" onClick={next} disabled={i === slides.length - 1}>→</button>
-        <button className="btn btn-ghost" onClick={() => window.print()}>Print → PDF</button>
+      <div className="noprint fixed bottom-4 right-4 z-40 flex items-center gap-2 text-xs mono" style={{ color: 'var(--muted)' }} role="group" aria-label="Slide controls">
+        <button className="btn" onClick={prev} disabled={i === 0} aria-label="Previous slide"><ArrowLeft size={15} /></button>
+        <span aria-live="polite" aria-atomic="true">{i + 1} / {slides.length}</span>
+        <button className="btn" onClick={next} disabled={i === slides.length - 1} aria-label="Next slide"><ArrowRight size={15} /></button>
+        <button className="btn btn-ghost" onClick={() => window.print()}><Printer size={14} /> Print → PDF</button>
       </div>
-      <div className="noprint">{slides[i]}</div>
+      <div className="noprint" style={{ overflowX: 'hidden' }}>
+        <AnimatePresence mode="wait" initial={false} custom={dir}>
+          <motion.div
+            key={i} custom={dir}
+            initial={reduced ? { opacity: 1 } : { opacity: 0, x: dir * 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={reduced ? { opacity: 1 } : { opacity: 0, x: dir * -28, transition: { duration: 0.16, ease: EASE_OUT } }}
+            transition={{ duration: reduced ? 0 : 0.28, ease: EASE_OUT }}
+          >
+            {slides[i]}
+          </motion.div>
+        </AnimatePresence>
+      </div>
       <div className="hidden print:block">{slides}</div>
     </div>
   )

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useReadContracts } from 'wagmi'
+import { CircleDashed, ArrowRight } from 'lucide-react'
 import { useCircleCount } from '../hooks'
 import { cfg } from '../config'
 import { ledgerAbi } from '../lib/abi'
@@ -8,39 +9,64 @@ import type { Circle } from '../lib/types'
 import { usd } from '../lib/format'
 import { Tag } from '../components/ui'
 import { chainName } from '../lib/verifier'
+import { Reveal, Stagger, Item } from '../components/motion'
+import { Skeleton, SkeletonCard, Empty } from '../components/Skeleton'
 
 export function Circles() {
-  const { data: count } = useCircleCount()
+  const { data: count, isLoading: counting } = useCircleCount()
   const n = Number(count ?? 0n)
   const q = useReadContracts({
     contracts: Array.from({ length: n }, (_, i) => ({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'getCircle', args: [BigInt(i + 1)] })),
     query: { enabled: n > 0 },
   })
+  const countPending = !!cfg.ledger && (counting || count === undefined)
+  const loading = countPending || (n > 0 && !q.data)
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-3xl">Circles on Creditcoin</h1>
-      <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>{n} circle{n === 1 ? '' : 's'} · newest last</p>
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        {n === 0 && <div className="panel p-5 text-sm" style={{ color: 'var(--muted)' }}>No circles yet. Run <code className="mono">pnpm demo create</code> or create one from the worker.</div>}
-        {q.data?.map((r, i) => {
-          const c = r.result as Circle | undefined
-          if (!c) return null
-          return (
-            <Link key={i} to={`/circle/${i + 1}`} className="panel block p-5 no-underline" style={{ color: 'var(--ink)' }}>
-              <div className="flex items-start justify-between gap-3">
-                <div><div className="eyebrow">#{i + 1}</div><div className="display text-xl">{c.name}</div></div>
-                <Tag tone={c.status === 0 ? 'mint' : 'muted'}>{c.status === 0 ? 'active' : 'completed'}</Tag>
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                <div><div className="eyebrow">members</div><div className="mono">{c.members.length}</div></div>
-                <div><div className="eyebrow">installment</div><div className="mono">{usd(c.contribution)}</div></div>
-                <div><div className="eyebrow">round</div><div className="mono">{c.currentRound + 1} / {c.members.length}</div></div>
-                <div className="col-span-3"><div className="eyebrow">settles from</div><div className="mono text-xs">{chainName(c.chainKey)}</div></div>
-              </div>
-            </Link>
-          )
-        })}
-      </div>
+      <Reveal>
+        <div className="eyebrow">Ledger</div>
+        <h1 className="text-3xl">Circles on Creditcoin</h1>
+        <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
+          {countPending ? <Skeleton w={120} h={12} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : <>{n} circle{n === 1 ? '' : 's'} · newest last</>}
+        </p>
+      </Reveal>
+      {loading ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-2" aria-busy="true" aria-label="Loading circles">
+          {Array.from({ length: Math.max(2, Math.min(n, 4)) }, (_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : n === 0 ? (
+        <Reveal i={1} className="mt-5">
+          <Empty
+            icon={<CircleDashed size={22} />}
+            title="No circles yet"
+            body={<>This ledger has not opened a circle. Create one with <code className="mono">pnpm demo create</code> from the repo, or let the worker create the demo world.</>}
+            action={{ label: <>See how a circle works <ArrowRight size={14} className="arrow" /></>, to: '/architecture', primary: true }}
+          />
+        </Reveal>
+      ) : (
+        <Stagger className="mt-5 grid gap-3 md:grid-cols-2">
+          {q.data?.map((r, i) => {
+            const c = r.result as Circle | undefined
+            if (!c) return null
+            return (
+              <Item key={i}>
+                <Link to={`/circle/${i + 1}`} className="panel card-hover block p-5 no-underline" style={{ color: 'var(--ink)' }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div><div className="eyebrow">#{i + 1}</div><div className="display text-xl">{c.name}</div></div>
+                    <Tag tone={c.status === 0 ? 'mint' : 'muted'}>{c.status === 0 ? 'active' : 'completed'}</Tag>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                    <div><div className="eyebrow">members</div><div className="mono">{c.members.length}</div></div>
+                    <div><div className="eyebrow">installment</div><div className="mono">{usd(c.contribution)}</div></div>
+                    <div><div className="eyebrow">round</div><div className="mono">{c.currentRound + 1} / {c.members.length}</div></div>
+                    <div className="col-span-3"><div className="eyebrow">settles from</div><div className="mono text-xs">{chainName(c.chainKey)}</div></div>
+                  </div>
+                </Link>
+              </Item>
+            )
+          })}
+        </Stagger>
+      )}
     </main>
   )
 }

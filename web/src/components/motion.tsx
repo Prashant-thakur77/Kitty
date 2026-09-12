@@ -1,8 +1,54 @@
-import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type MouseEvent, type CSSProperties } from 'react'
+import { motion, useInView, useReducedMotion, type Variants } from 'motion/react'
 
-/** Wraps children in the load-in rise animation; `i` staggers siblings. Plays immediately on mount. */
-export function Reveal({ i = 0, className = '', children, as: Tag = 'div' }: { i?: number; className?: string; children: ReactNode; as?: 'div' | 'section' | 'li' | 'span' }) {
-  return <Tag className={`reveal ${className}`} data-i={i}>{children}</Tag>
+const EASE_OUT = [0.22, 1, 0.36, 1] as const
+const TAGS = { div: motion.div, section: motion.section, li: motion.li, span: motion.span, ul: motion.ul, ol: motion.ol } as const
+type RevealTag = keyof typeof TAGS
+
+/**
+ * Rises in when it scrolls into view (IntersectionObserver, once, 10% inset). Elements already on screen at mount
+ * animate immediately, as the old CSS version did; `i` staggers siblings by 60ms. Reduced motion: opacity only, instant.
+ */
+export function Reveal({ i = 0, className = '', children, as = 'div', style }: { i?: number; className?: string; children: ReactNode; as?: RevealTag; style?: CSSProperties }) {
+  const ref = useRef<HTMLElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-10% 0px -10% 0px' })
+  const reduced = useReducedMotion()
+  const M = TAGS[as] as typeof motion.div
+  return (
+    <M
+      ref={ref as React.Ref<HTMLDivElement>}
+      className={className}
+      style={style}
+      initial={reduced ? false : { opacity: 0, y: 14 }}
+      animate={inView ? { opacity: 1, y: 0 } : undefined}
+      transition={reduced ? { duration: 0 } : { duration: 0.7, ease: EASE_OUT, delay: i * 0.06 }}
+    >
+      {children}
+    </M>
+  )
+}
+
+const staggerParent: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } } }
+const staggerItem: Variants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE_OUT } } }
+const staggerItemReduced: Variants = { hidden: { opacity: 1 }, show: { opacity: 1 } }
+
+/** A list whose `Item` children cascade in as the list scrolls into view. Use with `Item` for each row/card. */
+export function Stagger({ className = '', children, as = 'div', style }: { className?: string; children: ReactNode; as?: RevealTag; style?: CSSProperties }) {
+  const ref = useRef<HTMLElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-10% 0px -10% 0px' })
+  const M = TAGS[as] as typeof motion.div
+  return (
+    <M ref={ref as React.Ref<HTMLDivElement>} className={className} style={style} variants={staggerParent} initial="hidden" animate={inView ? 'show' : 'hidden'}>
+      {children}
+    </M>
+  )
+}
+
+/** One entry of a `Stagger` list. Inherits the parent's variants, so it needs no props beyond markup. */
+export function Item({ className = '', children, as = 'div', style, layout }: { className?: string; children: ReactNode; as?: RevealTag; style?: CSSProperties; layout?: boolean }) {
+  const reduced = useReducedMotion()
+  const M = TAGS[as] as typeof motion.div
+  return <M className={className} style={style} variants={reduced ? staggerItemReduced : staggerItem} layout={layout}>{children}</M>
 }
 
 /** A card whose border and fill light up where the pointer is. */
@@ -50,6 +96,8 @@ export function useScrolled(threshold = 12) {
   return scrolled
 }
 
-function prefersReducedMotion() {
+export function prefersReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 }
+
+export { EASE_OUT }

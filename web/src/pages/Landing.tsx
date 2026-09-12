@@ -1,8 +1,14 @@
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
-import { useCircleCount, useGlobalStats, useLedgerEvents } from '../hooks'
+import { useCircle, useCircleCount, useGlobalStats, useLedgerEvents } from '../hooks'
 import { CountUp, Reveal, Spotlight } from '../components/motion'
+import { Canvas3D, useCan3D } from '../three/Canvas3D'
 import { cfg } from '../config'
+
+// three.js lives in its own chunk: Canvas3D fetches it only when the hero decides to render
+const heroScene = () => import('../three/HeroScene')
+const HERO_CAMERA = { position: [0, 4.1, 8.0] as [number, number, number], fov: 33 }
 
 const TRUST = [
   ['Holds the money', 'Treasurer', 'One contract, one chain', 'Escrow vault on Ethereum'],
@@ -24,33 +30,43 @@ export function Landing() {
   const st = useGlobalStats()
   const { items } = useLedgerEvents()
   const latest = count && (count as bigint) > 0n ? String(count) : undefined
+  const { circle } = useCircle(latest ? BigInt(latest) : undefined)
+  const can3D = useCan3D()
+  const heroRef = useRef<HTMLElement>(null)
   const feed = items.filter((i) => ['ContributionRecorded', 'BatchVerified', 'RoundClosed', 'PayoutConfirmed', 'ContributionMissed'].includes(i.kind)).slice(0, 14)
   const marquee = feed.length ? [...feed, ...feed] : []
 
   return (
     <main>
       {/* ── hero ── */}
-      <section className="hero">
-        <div className="streak" aria-hidden />
-        <div className="mx-auto max-w-6xl px-5 pb-20 pt-16 md:pt-24">
-          <Reveal i={0}>
-            <Link to="/lab" className="pill mint live no-underline" style={{ fontSize: 13, padding: '.3rem .8rem .3rem .7rem' }}>
-              Attack lab open · 8 scenarios, 0 exploits <ArrowRight size={13} />
-            </Link>
-          </Reveal>
-          <Reveal i={1}>
-            <h1 className="hero-title mt-7 max-w-[16ch]">Savings circles where every payment is <em>proven</em>, not promised.</h1>
-          </Reveal>
-          <Reveal i={2}>
-            <p className="lede mt-7">
-              Chit funds, susu, tandas and chamas run on trust in a treasurer. Kitty keeps the money in stablecoins on Ethereum and puts the rules on Creditcoin, fed only by transactions the Attestcoin Protocol has cryptographically verified. No treasurer. No oracle operator. No bridge.
-            </p>
-          </Reveal>
-          <Reveal i={3} className="mt-9 flex flex-wrap items-center gap-3">
-            <Link to={latest ? `/circle/${latest}` : '/circles'} className="btn btn-mint no-underline">Open a live circle <ArrowRight size={16} className="arrow" /></Link>
-            <Link to="/lab" className="btn no-underline">Try to cheat it</Link>
-            <a href={cfg.repo} target="_blank" rel="noreferrer" className="btn btn-ghost no-underline">Source <ArrowUpRight size={15} /></a>
-          </Reveal>
+      <section ref={heroRef} className={`hero${can3D ? ' hero-3d' : ''}`}>
+        {!can3D && <div className="streak" aria-hidden />}
+        <div className="mx-auto max-w-6xl px-5 pb-20 pt-16 md:pt-24 lg:grid lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-8">
+          <div>
+            <Reveal i={0}>
+              <Link to="/lab" className="pill mint live no-underline" style={{ fontSize: 13, padding: '.3rem .8rem .3rem .7rem' }}>
+                Attack lab open · 8 scenarios, 0 exploits <ArrowRight size={13} />
+              </Link>
+            </Reveal>
+            <Reveal i={1}>
+              <h1 className="hero-title mt-7 max-w-[16ch]">Savings circles where every payment is <em>proven</em>, not promised.</h1>
+            </Reveal>
+            <Reveal i={2}>
+              <p className="lede mt-7">
+                Chit funds, susu, tandas and chamas run on trust in a treasurer. Kitty keeps the money in stablecoins on Ethereum and puts the rules on Creditcoin, fed only by transactions the Attestcoin Protocol has cryptographically verified. No treasurer. No oracle operator. No bridge.
+              </p>
+            </Reveal>
+            <Reveal i={3} className="mt-9 flex flex-wrap items-center gap-3">
+              <Link to={latest ? `/circle/${latest}` : '/circles'} className="btn btn-mint no-underline">Open a live circle <ArrowRight size={16} className="arrow" /></Link>
+              <Link to="/lab" className="btn no-underline">Try to cheat it</Link>
+              <a href={cfg.repo} target="_blank" rel="noreferrer" className="btn btn-ghost no-underline">Source <ArrowUpRight size={15} /></a>
+            </Reveal>
+          </div>
+          {can3D && (
+            <div className="hero-scene" aria-hidden>
+              <Canvas3D scene={heroScene} sceneProps={{ members: circle?.members, items }} camera={HERO_CAMERA} pointerFrom={heroRef} />
+            </div>
+          )}
         </div>
         <div className="rule" />
       </section>

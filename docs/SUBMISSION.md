@@ -65,6 +65,12 @@ What no other Attestcoin contract in this field does:
   before a round can show *Paid*.
 - Browser-side proving through the CORS-open Proof Builder; the ledger checks the proof, never the
   caller.
+- Live on Creditcoin CC3 Testnet: KittyLedger at
+  `0xc6fe7fd411681E07a44523f87F6aB0805903c2dE` (with KittyViewer, KittyUSD, KittyCreditLine and
+  KittyBadge) trusts KittyVault `0x1172ABd45724069749E9EB98A0349177435B284E` on Sepolia. The first
+  circle settled round 0 end to end on 12 September 2026: three Sepolia payments, two batch proofs
+  verified by 0x0FD2, an early close, a 300 tUSD payout on Sepolia and its proof back to
+  Creditcoin. Every transaction is linked in `docs/TESTNET_LOG.md`.
 - Verified against the live precompile before deployment: a real Sepolia proof and a real 3-tx
   batch proof both returned `true` from the live 0x0FD2, tampered bytes and a wrong chain key
   reverted (`pnpm verify:live`), and the batch measured 24% cheaper than three singles.
@@ -82,6 +88,7 @@ What no other Attestcoin contract in this field does:
 - Deck: https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/Kitty-deck.pdf
 - Release: https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission
 - Integration write-up: `docs/ATTESTCOIN_INTEGRATION.md`
+- Contracts: KittyLedger https://creditcoin-testnet.blockscout.com/address/0xc6fe7fd411681E07a44523f87F6aB0805903c2dE · KittyVault https://sepolia.etherscan.io/address/0x1172ABd45724069749E9EB98A0349177435B284E · all addresses in `deployments.json`
 - Sector: DeFi
 
 ## Team
