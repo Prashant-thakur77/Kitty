@@ -197,6 +197,12 @@ Two properties follow, and both are demonstrated in the attack lab rather than a
 - **The steward's Creditcoin key is worth nothing.** No role, no ownership, no allowance; everything it calls on the ledger is callable by anyone. On Sepolia this build runs the vault-operator key in the same process: that is the one privileged action in the system, it is bounded by `KittyVault` to addresses that have paid into the circle, and it is exactly the action Attestcoin writability removes.
 - **The model is optional.** With no API key the steward prints the deterministic sentence from layer 2 and behaves identically.
 
+The decision log and the citation validator are part of the product, not a debug file: `/steward` lists every decision with the chain state behind it and lets a reviewer question the agent.
+
+<p align="center">
+  <img src="docs/assets/steward.png" alt="The steward's decision log and the cited explanation" width="100%">
+</p>
+
 ```bash
 pnpm test:agent                       # policy + citation validator, no network
 pnpm explain "why did you wait?"      # cited explanation, or the deterministic fallback

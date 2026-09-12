@@ -34,7 +34,7 @@ export function Nav() {
           </Link>
           <nav className="hidden items-center gap-1 md:flex md:ml-4">{links}</nav>
           <div className="ml-auto flex items-center gap-3">
-            <div className="hidden items-center gap-2 text-xs mono lg:flex" title="Latest Sepolia block vs the latest block attested on Creditcoin by the attestor network">
+            <div className="hidden shrink-0 items-center gap-2 whitespace-nowrap text-xs mono lg:flex" title="Latest Sepolia block vs the latest block attested on Creditcoin by the attestor network">
               <span style={{ color: 'var(--muted)' }}>Sepolia</span><span>{num(head)}</span>
               <span style={{ color: 'var(--muted)' }}>→ attested</span><span style={{ color: 'var(--sky)' }}>{num(attested)}</span>
               {lag !== undefined && <span className="pill sky">lag {lag}</span>}
