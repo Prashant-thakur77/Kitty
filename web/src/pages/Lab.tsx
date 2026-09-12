@@ -22,6 +22,22 @@ const FALLBACK: Scenario[] = [
   { name: 'poisonReasoning', title: 'Poison the reasoning', expected: 'fabricated sentences stripped', description: 'Feeds the explainer’s citation validator a paragraph mixing true cited facts with invented ones. Anything the decision log cannot back is removed before display.' },
   { name: 'late', title: 'Late payment', expected: 'ContributionRecorded onTime=false', description: 'A member pays after the round deadline block. The proof is accepted, but the proven height marks it late in the credit record.' },
 ]
+/** Turns 64-hex transaction hashes into explorer links when the run happened on the real testnets. Lines mention the
+ *  chain before the hash ("cc tx 0x…", "sepolia tx 0x…", "source block … · tx 0x…"). */
+function linkify(line: string, testnet: boolean) {
+  if (!testnet) return line
+  const parts = line.split(/(0x[0-9a-fA-F]{64})/g)
+  if (parts.length === 1) return line
+  return parts.map((p, i) => {
+    if (!/^0x[0-9a-fA-F]{64}$/.test(p)) return p
+    const before = parts.slice(0, i).join('').toLowerCase()
+    if (!/\btx\s*$/.test(before)) return p                      // query ids and other 32-byte values stay plain
+    const cc = /cc tx\s*$/.test(before) || /creditcoin/.test(before.slice(-60))
+    const base = cc ? cfg.creditcoinExplorer : cfg.sepoliaExplorer
+    return <a key={i} href={`${base}/tx/${p}`} target="_blank" rel="noreferrer" className="mono" style={{ color: 'var(--sky)' }}>{p}</a>
+  })
+}
+
 const WHY: Record<string, string> = {
   replay: 'Query id = keccak(chainKey ‖ height ‖ txIndex) is marked processed before any state changes. Same derivation as ASCBase.',
   spoofEmitter: 'The decoded log’s emitting address must equal the circle’s registered vault, and the transaction’s own `to` must be that vault too.',
@@ -43,6 +59,7 @@ export function Lab() {
   const [recorded, setRecorded] = useState<{ commit: string; date: string; mode?: string } | null>(null)
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const reduced = useReducedMotion()
+  const testnet = recorded?.mode === 'testnet' || (!!status && String(status.mode) !== 'local')
 
   useEffect(() => {
     let cancelled = false
@@ -122,7 +139,7 @@ export function Lab() {
                   <motion.div key="log" initial={reduced ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }} style={{ overflow: 'hidden' }}>
                     <div ref={(el) => { logRefs.current[s.name] = el }} className="log panel-2 mt-3 max-h-56 overflow-auto p-3" aria-live="polite">
                       {lines.length === 0 && live && <span className="grid gap-2" aria-label="Waiting for the first line"><Skeleton w="72%" h={10} /><Skeleton w="48%" h={10} /></span>}
-                      {lines.map((l, i) => <motion.div key={i} initial={reduced ? false : { opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.22, ease: EASE_OUT }}>{l}</motion.div>)}
+                      {lines.map((l, i) => <motion.div key={i} initial={reduced ? false : { opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.22, ease: EASE_OUT }}>{linkify(l, testnet)}</motion.div>)}
                       {r && <motion.div initial={reduced ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }} className="mt-2 flex items-center gap-2" style={{ color: r.ok ? 'var(--mint)' : 'var(--rose)' }}>{r.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {r.ok ? 'as expected' : 'UNEXPECTED'} · got {r.got}</motion.div>}
                     </div>
                   </motion.div>

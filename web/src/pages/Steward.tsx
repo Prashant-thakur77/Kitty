@@ -38,11 +38,13 @@ export function Steward() {
 
   useEffect(() => {
     let cancelled = false
-    // No local API (GitHub Pages): show the log recorded from `scripts/local-world.sh`, committed as web/src/data/steward.sample.json.
+    // No local API (GitHub Pages): show the steward's real CC3 Testnet log, committed as web/src/data/steward.sample.json.
     async function loadSample() {
       try {
         const { default: sample } = await import('../data/steward.sample.json')
-        if (!cancelled) setEntries([...(sample as Decision[])].reverse())
+        const rec = sample as { mode?: string; entries?: Decision[] } | Decision[]
+        const list = Array.isArray(rec) ? rec : rec.entries ?? []
+        if (!cancelled) { setEntries([...list].reverse()); if (!Array.isArray(rec) && rec.mode) setMode(rec.mode) }
       } catch { /* no sample shipped: the empty state stays */ }
     }
     fetch(`${cfg.labApi}/steward/log`).then((r) => r.json()).then((d: Decision[]) => { if (!cancelled && Array.isArray(d)) setEntries(d) })
@@ -52,8 +54,8 @@ export function Steward() {
     return () => { cancelled = true }
   }, [])
 
-  // Local anvil hashes do not exist on any explorer, so only a live worker earns links.
-  const explorerFor = (chain: 'source' | 'creditcoin') => (!offline && mode && mode !== 'local' ? (chain === 'source' ? cfg.sepoliaExplorer : cfg.creditcoinExplorer) : null)
+  // Local anvil hashes do not exist on any explorer, so only a testnet log (live worker or the committed record) earns links.
+  const explorerFor = (chain: 'source' | 'creditcoin') => (mode && mode !== 'local' ? (chain === 'source' ? cfg.sepoliaExplorer : cfg.creditcoinExplorer) : null)
 
   async function ask(e: FormEvent) {
     e.preventDefault()
@@ -74,7 +76,7 @@ export function Steward() {
         <div><div className="eyebrow">Kitty Steward</div><h1 className="text-3xl">The decision log</h1>
           <p className="mt-1 max-w-[70ch] text-sm" style={{ color: 'var(--muted)' }}>The worker is an agent in three layers, and authority decreases as you move toward the model. Every decision below carries the chain state it saw and the transactions it produced, so any line can be checked against the chain. Layer 3 may only cite figures from this log.</p></div>
         <div className="text-xs mono" style={{ color: 'var(--muted)' }} aria-live="polite">
-          {offline ? <Tag tone="sky">sample log · recorded from the local world</Tag> : loaded ? <span className="pill live">live · {cfg.labApi.replace(/^https?:\/\//, '')}{mode ? ` · mode ${mode}` : ''}</span> : <span aria-label="Connecting to the lab API"><Skeleton w={190} h={22} r={999} /></span>}
+          {offline ? <Tag tone={mode === 'testnet' ? 'mint' : 'sky'}>{mode === 'testnet' ? 'recorded on CC3 Testnet · every hash resolves on the explorer' : 'sample log · recorded from the local world'}</Tag> : loaded ? <span className="pill live">live · {cfg.labApi.replace(/^https?:\/\//, '')}{mode ? ` · mode ${mode}` : ''}</span> : <span aria-label="Connecting to the lab API"><Skeleton w={190} h={22} r={999} /></span>}
         </div>
       </Reveal>
 

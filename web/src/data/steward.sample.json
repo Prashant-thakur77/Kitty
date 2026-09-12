@@ -1,298 +1,363 @@
-[
- {
-  "at": "2026-09-12T03:44:43.841Z",
-  "kind": "prove",
-  "summary": "proving 3 payment(s) from 1 circle(s) on chain key 1 in one call: single pass requested",
-  "evidence": {
-   "chainKey": 1,
-   "queries": 3,
-   "circles": 1,
-   "attestedHeight": 63,
-   "sourceHead": 64,
-   "blocksOfSlack": 90,
-   "roundsCompleted": 1,
-   "blockSpan": 17,
-   "leftBehind": 0,
-   "waitedSeconds": 0,
-   "stillWaitingForAttestation": 0,
-   "preflight": "passed",
-   "queriesInCall": 3,
-   "fromHeight": 43,
-   "toHeight": 60,
-   "continuityRoots": 1
-  },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0x82838931adcd1fda6235d90233ba2b2a4f7b5b91b8839609ff2ba5eb4fd736e8"
-   },
-   {
-    "chain": "source",
-    "hash": "0x7a8e961eb4ca1bce171d8bf0d4e33ee35ea9acf16e6774998f15a50b628dad77"
-   },
-   {
-    "chain": "source",
-    "hash": "0x94a7f298e60b5d9aeeecaeab7be8716c2315738cb178d3c0cfad769d9c3ac5d3"
-   },
-   {
-    "chain": "source",
-    "hash": "0xc01b809a5477106a643aa9e34cf75521853d4460c906117a23cf2a4b7541638a"
+{
+ "mode": "testnet",
+ "recordedAt": "2026-09-12",
+ "entries": [
+  {
+   "at": "2026-09-12T04:19:05.442Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686500)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686500,
+    "waitingOnAttestation": 3
    }
-  ]
- },
- {
-  "at": "2026-09-12T03:44:48.019Z",
-  "kind": "close",
-  "summary": "closed circle 1 round 0 — every member proven",
-  "evidence": {
-   "circleId": "1",
-   "round": 0,
-   "closeHeight": "154",
-   "proven": 3,
-   "members": 3,
-   "everyoneProven": true
   },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0x066febfc1f5057e372ac0ad05a4fa97b129354b74e8acb3ed9d7a23b7167d8da"
+  {
+   "at": "2026-09-12T04:19:20.187Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686500)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686500,
+    "waitingOnAttestation": 3
    }
-  ]
- },
- {
-  "at": "2026-09-12T03:44:52.187Z",
-  "kind": "payout",
-  "summary": "paid circle 1 round 0: 300 tUSD to 0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-  "evidence": {
-   "circleId": "1",
-   "round": 0,
-   "recipient": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-   "amount_tUSD": 300
   },
-  "txs": [
-   {
-    "chain": "source",
-    "hash": "0x6e4a85cd56d89dba6b0d3fcf96ef806c6de648cac83ff1a124b232f3c34b4f3b"
+  {
+   "at": "2026-09-12T04:19:34.842Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686500)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686500,
+    "waitingOnAttestation": 3
    }
-  ]
- },
- {
-  "at": "2026-09-12T03:44:56.338Z",
-  "kind": "confirm",
-  "summary": "payout for circle 1 round 0 proven back to Creditcoin",
-  "evidence": {
-   "circleId": "1",
-   "round": 0,
-   "sourceHeight": 74
   },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0xa0e361f5eac2821f30d60972a201641c80d81c459e60e208a683a47b86be69d7"
+  {
+   "at": "2026-09-12T04:19:50.059Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686500)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686500,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:20:05.601Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686500)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686500,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:20:20.421Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686500)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686500,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:20:37.039Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686510)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686510,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:20:52.172Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686510)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686510,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:21:06.694Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686510)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686510,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:21:21.956Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686510)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686510,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:21:37.507Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686510)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686510,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:21:52.372Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686510)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686510,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:22:15.131Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686510)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686510,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:23:33.738Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686520)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686520,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:23:48.270Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686520)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686520,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:24:02.914Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686520)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686520,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:24:18.252Z",
+   "kind": "wait",
+   "summary": "waiting: 3 payment(s) not yet attested (frontier at source block 11686520)",
+   "evidence": {
+    "pending": 3,
+    "provable": 0,
+    "attestedHeight": 11686520,
+    "waitingOnAttestation": 3
+   }
+  },
+  {
+   "at": "2026-09-12T04:25:33.763Z",
+   "kind": "prove",
+   "summary": "proving 1 payment(s) from 1 circle(s) on chain key 1 in one call: waited 239s for a fuller batch",
+   "evidence": {
+    "chainKey": 1,
+    "queries": 1,
+    "circles": 1,
+    "attestedHeight": 11686530,
+    "sourceHead": 11686562,
+    "blocksOfSlack": 227,
+    "roundsCompleted": 0,
+    "blockSpan": 0,
+    "leftBehind": 0,
+    "waitedSeconds": 239,
+    "stillWaitingForAttestation": 2,
+    "preflight": "passed",
+    "queriesInCall": 1,
+    "fromHeight": 11686530,
+    "toHeight": 11686530,
+    "continuityRoots": 1
    },
-   {
-    "chain": "source",
-    "hash": "0x6e4a85cd56d89dba6b0d3fcf96ef806c6de648cac83ff1a124b232f3c34b4f3b"
-   }
-  ]
- },
- {
-  "at": "2026-09-12T03:45:10.780Z",
-  "kind": "prove",
-  "summary": "proving 2 payment(s) from 1 circle(s) on chain key 1 in one call: single pass requested",
-  "evidence": {
-   "chainKey": 1,
-   "queries": 2,
-   "circles": 1,
-   "attestedHeight": 90,
-   "sourceHead": 91,
-   "blocksOfSlack": 123,
-   "roundsCompleted": 0,
-   "blockSpan": 4,
-   "leftBehind": 0,
-   "waitedSeconds": 0,
-   "stillWaitingForAttestation": 0,
-   "preflight": "passed",
-   "queriesInCall": 2,
-   "fromHeight": 83,
-   "toHeight": 87,
-   "continuityRoots": 1
+   "txs": [
+    {
+     "chain": "creditcoin",
+     "hash": "0xaf5a3477f4460cca81100c5ce11fa136b41dab1cc4f5dc1fce889c52ff3e3ec0"
+    },
+    {
+     "chain": "source",
+     "hash": "0x2e6fb78a58bde01ea00469ddf5e5182a82594f58cba67c38f00db2d7b4ed40e8"
+    }
+   ]
   },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0x943a5f882dcdcbe5e583bffea0f8b0e12a931789cacce817f11d9cff9f86e561"
-   },
-   {
-    "chain": "source",
-    "hash": "0xa5a511722c05d34a5b2ab912d0e86149e8a3a75ededc58187986c89872351945"
-   },
-   {
-    "chain": "source",
-    "hash": "0x9419bdb7db6b293e0c2949f78974734a0b398dd7f3d1b721fdbd7b8fbc8efcb6"
+  {
+   "at": "2026-09-12T04:25:48.240Z",
+   "kind": "wait",
+   "summary": "waiting: 2 payment(s) not yet attested (frontier at source block 11686530)",
+   "evidence": {
+    "pending": 2,
+    "provable": 0,
+    "attestedHeight": 11686530,
+    "waitingOnAttestation": 2
    }
-  ]
- },
- {
-  "at": "2026-09-12T03:45:49.544Z",
-  "kind": "wait",
-  "summary": "waiting: 1 query(ies) ready, 80 blocks of slack, batching for a fuller proof",
-  "evidence": {
-   "chainKey": 1,
-   "queries": 1,
-   "circles": 1,
-   "attestedHeight": 133,
-   "sourceHead": 134,
-   "blocksOfSlack": 80,
-   "roundsCompleted": 0,
-   "blockSpan": 0,
-   "leftBehind": 0,
-   "waitedSeconds": 0,
-   "stillWaitingForAttestation": 0
+  },
+  {
+   "at": "2026-09-12T04:26:02.976Z",
+   "kind": "wait",
+   "summary": "waiting: 2 payment(s) not yet attested (frontier at source block 11686530)",
+   "evidence": {
+    "pending": 2,
+    "provable": 0,
+    "attestedHeight": 11686530,
+    "waitingOnAttestation": 2
+   }
+  },
+  {
+   "at": "2026-09-12T04:26:18.461Z",
+   "kind": "wait",
+   "summary": "waiting: 2 payment(s) not yet attested (frontier at source block 11686530)",
+   "evidence": {
+    "pending": 2,
+    "provable": 0,
+    "attestedHeight": 11686530,
+    "waitingOnAttestation": 2
+   }
+  },
+  {
+   "at": "2026-09-12T04:26:33.451Z",
+   "kind": "wait",
+   "summary": "waiting: 2 payment(s) not yet attested (frontier at source block 11686530)",
+   "evidence": {
+    "pending": 2,
+    "provable": 0,
+    "attestedHeight": 11686530,
+    "waitingOnAttestation": 2
+   }
+  },
+  {
+   "at": "2026-09-12T04:27:35.238Z",
+   "kind": "prove",
+   "summary": "proving 2 payment(s) from 1 circle(s) on chain key 1 in one call: waited 373s for a fuller batch",
+   "evidence": {
+    "chainKey": 1,
+    "queries": 2,
+    "circles": 1,
+    "attestedHeight": 11686540,
+    "sourceHead": 11686572,
+    "blocksOfSlack": 217,
+    "roundsCompleted": 0,
+    "blockSpan": 2,
+    "leftBehind": 0,
+    "waitedSeconds": 373,
+    "stillWaitingForAttestation": 0,
+    "preflight": "passed",
+    "queriesInCall": 2,
+    "fromHeight": 11686532,
+    "toHeight": 11686534,
+    "continuityRoots": 9
+   },
+   "txs": [
+    {
+     "chain": "creditcoin",
+     "hash": "0x05ef192da87d9e70898e4be106a44a77be0431e6bbe9a4eca7112e49f739c0ef"
+    },
+    {
+     "chain": "source",
+     "hash": "0x6b61e737ff7fd7f03efe66676afd1cf08b9b3f1b6fc758e2a92fa143ca2248bf"
+    },
+    {
+     "chain": "source",
+     "hash": "0xb8fb7d9e82c42e83d9ad084df418a119a482c02d6d5dbf77acb2f6aba45dba02"
+    }
+   ]
+  },
+  {
+   "at": "2026-09-12T04:27:47.857Z",
+   "kind": "close",
+   "summary": "closed circle 1 round 0 \u2014 every member proven",
+   "evidence": {
+    "circleId": "1",
+    "round": 0,
+    "closeHeight": "11686789",
+    "proven": 3,
+    "members": 3,
+    "everyoneProven": true
+   },
+   "txs": [
+    {
+     "chain": "creditcoin",
+     "hash": "0xc9ca3583bdc4143e46838a6005ffca2802b866b472285252ad513e46494cd89c"
+    }
+   ]
+  },
+  {
+   "at": "2026-09-12T04:28:05.307Z",
+   "kind": "payout",
+   "summary": "paid circle 1 round 0: 300 tUSD to 0xB077B088E668386Bc57af87F175d250f459f0791",
+   "evidence": {
+    "circleId": "1",
+    "round": 0,
+    "recipient": "0xB077B088E668386Bc57af87F175d250f459f0791",
+    "amount_tUSD": 300
+   },
+   "txs": [
+    {
+     "chain": "source",
+     "hash": "0xe8b660face84ebcd2164861a1dacd0621af892f278a442c1fb688b2641626841"
+    }
+   ]
+  },
+  {
+   "at": "2026-09-12T04:36:16.613Z",
+   "kind": "confirm",
+   "summary": "payout for circle 1 round 0 proven back to Creditcoin",
+   "evidence": {
+    "circleId": "1",
+    "round": 0,
+    "sourceHeight": 11686578
+   },
+   "txs": [
+    {
+     "chain": "creditcoin",
+     "hash": "0x7bda53a527732ebab36299206e616c53af38acc60d886d27081a88888f3c0da9"
+    },
+    {
+     "chain": "source",
+     "hash": "0xe8b660face84ebcd2164861a1dacd0621af892f278a442c1fb688b2641626841"
+    }
+   ]
   }
- },
- {
-  "at": "2026-09-12T03:45:59.727Z",
-  "kind": "wait",
-  "summary": "waiting: 1 query(ies) ready, 70 blocks of slack, batching for a fuller proof",
-  "evidence": {
-   "chainKey": 1,
-   "queries": 1,
-   "circles": 1,
-   "attestedHeight": 133,
-   "sourceHead": 144,
-   "blocksOfSlack": 70,
-   "roundsCompleted": 0,
-   "blockSpan": 0,
-   "leftBehind": 0,
-   "waitedSeconds": 10,
-   "stillWaitingForAttestation": 0
-  }
- },
- {
-  "at": "2026-09-12T03:46:09.912Z",
-  "kind": "wait",
-  "summary": "waiting: 1 query(ies) ready, 59 blocks of slack, batching for a fuller proof",
-  "evidence": {
-   "chainKey": 1,
-   "queries": 1,
-   "circles": 1,
-   "attestedHeight": 133,
-   "sourceHead": 155,
-   "blocksOfSlack": 59,
-   "roundsCompleted": 0,
-   "blockSpan": 0,
-   "leftBehind": 0,
-   "waitedSeconds": 20,
-   "stillWaitingForAttestation": 0
-  }
- },
- {
-  "at": "2026-09-12T03:46:35.861Z",
-  "kind": "prove",
-  "summary": "proving 1 payment(s) from 1 circle(s) on chain key 1 in one call: single pass requested",
-  "evidence": {
-   "chainKey": 1,
-   "queries": 1,
-   "circles": 1,
-   "attestedHeight": 133,
-   "sourceHead": 176,
-   "blocksOfSlack": 38,
-   "roundsCompleted": 0,
-   "blockSpan": 0,
-   "leftBehind": 0,
-   "waitedSeconds": 0,
-   "stillWaitingForAttestation": 0,
-   "preflight": "passed",
-   "queriesInCall": 1,
-   "fromHeight": 130,
-   "toHeight": 130,
-   "continuityRoots": 1
-  },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0x2d720c9a70daab371809da4edb1cd0f4c5b0ae2a3d2b529cf21a4affd5d3a2eb"
-   },
-   {
-    "chain": "source",
-    "hash": "0x8d97b14b79f2705935105757495f4ed85f58f8794f2aa374db8d5c29ab9915a8"
-   }
-  ]
- },
- {
-  "at": "2026-09-12T03:46:40.038Z",
-  "kind": "close",
-  "summary": "closed circle 1 round 1 — every member proven",
-  "evidence": {
-   "circleId": "1",
-   "round": 1,
-   "closeHeight": "214",
-   "proven": 3,
-   "members": 3,
-   "everyoneProven": true
-  },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0xc6cf69757fe88bd6cb00745e0959fb7f3bce56b09c91a55c8931784820da9d39"
-   }
-  ]
- },
- {
-  "at": "2026-09-12T03:46:44.212Z",
-  "kind": "payout",
-  "summary": "paid circle 1 round 1: 300 tUSD to 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-  "evidence": {
-   "circleId": "1",
-   "round": 1,
-   "recipient": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-   "amount_tUSD": 300
-  },
-  "txs": [
-   {
-    "chain": "source",
-    "hash": "0xda4e6560b8e5d511bb9b134d82df123723d84e8787390827ed87985b5623549c"
-   }
-  ]
- },
- {
-  "at": "2026-09-12T03:46:48.362Z",
-  "kind": "confirm",
-  "summary": "payout for circle 1 round 1 proven back to Creditcoin",
-  "evidence": {
-   "circleId": "1",
-   "round": 1,
-   "sourceHeight": 186
-  },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0x5907dda4b642a60d37c01aacdb20ae1edd7f7c2faabae782ba01a8b4d95ce6e0"
-   },
-   {
-    "chain": "source",
-    "hash": "0xda4e6560b8e5d511bb9b134d82df123723d84e8787390827ed87985b5623549c"
-   }
-  ]
- },
- {
-  "at": "2026-09-12T03:46:54.681Z",
-  "kind": "close",
-  "summary": "closed circle 1 round 2 — close height 274 attested",
-  "evidence": {
-   "circleId": "1",
-   "round": 2,
-   "closeHeight": "274",
-   "proven": 0,
-   "members": 3,
-   "everyoneProven": false
-  },
-  "txs": [
-   {
-    "chain": "creditcoin",
-    "hash": "0x6fcecfd80c8a2ddebd1f0035e8d88386ad0db593e45907f8f86ca336a06e093e"
-   }
-  ]
- }
-]
+ ]
+}
