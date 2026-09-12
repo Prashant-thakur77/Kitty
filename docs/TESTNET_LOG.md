@@ -103,6 +103,7 @@ Every transaction of the 12 September 2026 campaign, across four ledger deployme
 | 2026-09-12 | Creditcoin CC3 Testnet | recordContributions circle 2 round 2 (the fifth payment, once attested) | [0x43028c38…8669bb](https://creditcoin-testnet.blockscout.com/tx/0x43028c385036497bae749e5bed762ebedcc21368d1da0b9c518bda942e8669bb) | 401366 |
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 2 round 2 (everyone paid) | [0xc1eca80f…66cc95](https://creditcoin-testnet.blockscout.com/tx/0xc1eca80ff1bca1becdf7913ae69b27966cda16d83102e404a63642ef4266cc95) | 354326 |
 | 2026-09-12 | Sepolia | payout circle 2 round 2 (250 tUSD) | [0x8425800f…bcbd39](https://sepolia.etherscan.io/tx/0x8425800f1605cf13c966520bd3345f5cb1cbdd90be4d5d80cf02004446bcbd39) | 64845 |
+| 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout circle 2 round 2 (proven back through 0x0FD2) | [0x228a69a5…5a07ab](https://creditcoin-testnet.blockscout.com/tx/0x228a69a5f1b963a95f2357d044c9596bba3615450b8bf3afbd66f36c255a07ab) | 382998 |
 
 ## Live precompile verification (no deployment needed)
 
