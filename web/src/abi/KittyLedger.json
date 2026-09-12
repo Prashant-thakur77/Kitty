@@ -1731,6 +1731,22 @@
   },
   {
     "type": "error",
+    "name": "BeforeCircleStart",
+    "inputs": [
+      {
+        "name": "height",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "startHeight",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "CircleFull",
     "inputs": [
       {

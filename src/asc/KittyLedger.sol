@@ -228,6 +228,7 @@ contract KittyLedger is Ownable {
     error WrongAmount(uint256 got, uint256 want);
     error RoundNotOpen(uint256 circleId, uint32 round);
     error NotCurrentRound(uint32 got, uint32 want);
+    error BeforeCircleStart(uint64 height, uint64 startHeight);
     error AlreadyContributed(uint256 circleId, uint32 round, address member);
     error RoundStillOpenOnSource(uint64 deadlineHeight);
     error RoundNotClosed(uint256 circleId, uint32 round);
@@ -679,6 +680,9 @@ contract KittyLedger is Ownable {
         if (!isMember[circleId][member]) revert NotAMember(circleId, member);
         if (amount != c.contribution) revert WrongAmount(amount, c.contribution);
         if (round != c.currentRound) revert NotCurrentRound(round, c.currentRound);
+        // A payment cannot predate the circle: without this, a payment tagged (circleId, round) made before the circle
+        // existed (or counted by an earlier ledger instance that shares the vault) would be credited here.
+        if (height < c.startHeight) revert BeforeCircleStart(height, c.startHeight);
         Round storage rd = _rounds[circleId][round];
         if (rd.status != RoundStatus.Open) revert RoundNotOpen(circleId, round);
         if (_contributions[circleId][round][member].queryId != bytes32(0)) revert AlreadyContributed(circleId, round, member);

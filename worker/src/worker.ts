@@ -113,8 +113,13 @@ async function flushBatches() {
     const closeHeight = Number(await ledger.closeHeight(circleId, round));
     const seen = new Set<string>();
     const keep: Pending[] = [];
+    const startHeight = Number(circle.startHeight);
     for (const p of [...list].sort((a, b) => a.block - b.block)) {
       const k = p.member.toLowerCase();
+      // Mirrors the ledger's BeforeCircleStart rule: a payment mined before the circle's start height can never be
+      // credited to it (typically one an earlier ledger instance sharing the vault already counted). Checked before the
+      // duplicate rule so the member's later, valid payment is not the one that gets dropped.
+      if (p.block < startHeight) { state.recorded[p.txHash] = true; log(`ignoring payment by ${p.member} at source block ${p.block}, before the circle's start ${startHeight} (${p.txHash.slice(0, 12)}…)`); continue; }
       if (!members.has(k)) { state.recorded[p.txHash] = true; log(`ignoring payment from non-member ${p.member} (${p.txHash.slice(0, 12)}…)`); continue; }
       // Before the duplicate check: otherwise a member's corrected payment would be dropped as a
       // 'duplicate' of the wrong-amount one, and the batch would revert with WrongAmount every tick.

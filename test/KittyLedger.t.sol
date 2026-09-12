@@ -246,6 +246,16 @@ contract KittyLedgerTest is Test {
         ledger.recordContributions(CHAIN_KEY, _h(1_010), txs, proofs, TxFixtures.continuity());
     }
 
+    function test_rejectsPaymentThatPredatesTheCircle() public {
+        // a Sepolia payment mined before startHeight (for example one an earlier ledger instance already counted)
+        (bytes[] memory txs, INativeQueryVerifier.MerkleProof[] memory proofs) = _batch(_one(alice), _h(START - 1), 0);
+        vm.expectRevert(abi.encodeWithSelector(KittyLedger.BeforeCircleStart.selector, START - 1, START));
+        ledger.recordContributions(CHAIN_KEY, _h(START - 1), txs, proofs, TxFixtures.continuity());
+        // exactly at the start height is fine
+        _record(_one(alice), _h(START), 0);
+        assertTrue(ledger.getContribution(circleId, 0, alice).onTime);
+    }
+
     function test_rejectsDoubleContributionByMember() public {
         _record(_one(alice), _h(1_010), 0);
         (bytes[] memory txs, INativeQueryVerifier.MerkleProof[] memory proofs) = _batch(_one(alice), _h(1_011), 0);
