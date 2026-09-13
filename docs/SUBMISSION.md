@@ -34,6 +34,8 @@ attested block heights, closes rounds, picks the rotation recipient deterministi
 on-time, late and missed as a Kitty Score. Payouts are proven back, so the ledger only ever shows
 money that verifiably moved.
 
+Kitty does not import a credit record that already exists on another chain; it creates a primary one, from savings circles that run today with no bank at all. Every installment, deadline, payout and miss of the circle itself is proven or attested, stablecoins settle every round, the payout is proven back, and the agent that runs it holds a key with no power but a proof.
+
 Three properties that follow from the design:
 
 - **Settles up to ten payments from every open circle in one precompile call.** Payments from every

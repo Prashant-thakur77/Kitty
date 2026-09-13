@@ -41,6 +41,7 @@
 
 - [Overview](#overview)
 - [Demo](#demo)
+- [What makes Kitty different](#what-makes-kitty-different)
 - [Verify it yourself in five minutes](#verify-it-yourself-in-five-minutes)
 - [How a round settles](#how-a-round-settles)
 - [Attestcoin integration](#attestcoin-integration)
@@ -110,6 +111,21 @@ Every claim in this README is backed by a transaction on the public testnets. A 
 | A round closed on the attested deadline with a real missed payment and the attestation that proved it | [`0xef146316…`](https://creditcoin-testnet.blockscout.com/tx/0xef146316d55e42f20a54a8d97935d711769d3f4571cf0fd760af4471bd9f01ca) |
 | A Sepolia payout proven back to Creditcoin before the round shows *Paid* | [`0x92344d88…`](https://creditcoin-testnet.blockscout.com/tx/0x92344d886c25f2e14a573f9934407797f0379bdd100bda4e5a5101000174ba88) |
 | A replayed proof rejected by the ledger (`QueryAlreadyProcessed`) and a forged chain key rejected by the precompile itself | recorded in [`web/public/lab-testnet.json`](web/public/lab-testnet.json), shown at `/lab` |
+
+## What makes Kitty different
+
+Most proof-of-history projects import a credit record that already exists on another chain, typically repayments to a lending protocol, and re-score it. That serves people who already have DeFi history. Kitty is built for the other group: it creates a **primary** credit history from scratch, out of the savings circles that hundreds of millions of people already run without any bank. Concretely:
+
+| | Import an existing record | Kitty |
+|---|---|---|
+| Who it serves | Wallets with Aave, Compound or similar history | Members of chit funds, susu, tandas, chamas: often no on-chain past at all |
+| What is proven | Repayment events emitted by a third-party protocol | The circle's own rules: every installment, every deadline, every payout, every miss |
+| Time | Usually none: the record is read once | The attested source-chain height is the only clock; a miss carries the attestation that proved it |
+| Money movement | Read-only | Stablecoins settle every round; the payout on Ethereum is proven back before the round shows *Paid* |
+| Operator | An indexer or relayer submits proofs | An agent whose only power is a proof; a member can prove a whole round from the browser, and the ledger never checks who submits |
+| Evidence | A demo transaction or two | Five circles, 111 linked testnet transactions, eight attack scenarios on the live precompile, a Telegram bot in production |
+
+The score that results is not a claim about the past; it is a record that only proven payments and attested deadlines can write.
 
 ## Verify it yourself in five minutes
 
