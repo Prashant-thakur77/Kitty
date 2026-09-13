@@ -15,6 +15,8 @@ import { Borrow } from './pages/Borrow'
 import { Architecture } from './pages/Architecture'
 import { Presentation } from './pages/Presentation'
 import { Story } from './pages/Story'
+import { Guide } from './pages/Guide'
+import { TourProvider } from './tour/Tour'
 import { cfg } from './config'
 
 /** A thin mint bar at the very top that runs while one page leaves and the next arrives. */
@@ -48,7 +50,7 @@ export default function App() {
     : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: 8, transition: { duration: 0.16, ease: EASE_OUT } }, transition: { duration: 0.22, ease: EASE_OUT } }
 
   return (
-    <>
+    <TourProvider>
       <a href="#main" className="skip-link">Skip to content</a>
       <RouteProgress active={busy} />
       <Nav />
@@ -83,10 +85,11 @@ export default function App() {
             <Route path="/architecture" element={<Architecture />} />
             <Route path="/presentation" element={<Presentation />} />
             <Route path="/story" element={<Story />} />
+            <Route path="/guide" element={<Guide />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </motion.div>
       </AnimatePresence>
-    </>
+    </TourProvider>
   )
 }

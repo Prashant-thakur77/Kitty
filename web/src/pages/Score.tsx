@@ -67,7 +67,7 @@ export function ScorePage() {
       {addr && (
         <div className="mt-5 grid gap-4 lg:grid-cols-[420px_1fr]">
           <div className="grid content-start gap-4">
-            <Reveal as="section" className="panel p-5">
+            <Reveal as="section" className="panel p-5" tour="score-dial">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2"><Blockie address={addr} size={28} /><span className="mono">{short(addr)}</span></div>
                 {connected && connected.toLowerCase() === addr.toLowerCase() && <Tag tone="muted">you</Tag>}
@@ -76,7 +76,7 @@ export function ScorePage() {
               <p className="mt-2 text-center text-xs" style={{ color: 'var(--muted)' }}>500 base · +15 on time · −20 late · −120 missed · clamped 300–850</p>
             </Reveal>
             <Reveal i={1}>
-              <Section title="Score breakdown · getRecord(address)" right={<Tag tone="sky">ledger counters</Tag>}>
+              <Section tour="score-breakdown" title="Score breakdown · getRecord(address)" right={<Tag tone="sky">ledger counters</Tag>}>
                 <ScoreBreakdown record={record} />
                 <p className="mt-3 text-xs" style={{ color: 'var(--muted)' }}>Proven volume <span className="mono" style={{ color: 'var(--ink)' }}>{record ? (Number(record.volume) / 1e6).toLocaleString() : '—'} tUSD</span> across {record ? record.onTime + record.late : '—'} proven payments. Nothing here is self-reported: each counter moves only on a verified Attestcoin proof or an attested deadline.</p>
               </Section>
@@ -84,7 +84,7 @@ export function ScorePage() {
           </div>
           <div className="grid content-start gap-4">
             <Reveal i={1}>
-              <Section title="Score over time · replayed from ledger events" right={<Tag tone="muted">{history.filter((h) => h.kind === 'ContributionRecorded' || h.kind === 'ContributionMissed').length} scoring events</Tag>}>
+              <Section tour="score-sparkline" title="Score over time · replayed from ledger events" right={<Tag tone="muted">{history.filter((h) => h.kind === 'ContributionRecorded' || h.kind === 'ContributionMissed').length} scoring events</Tag>}>
                 <div style={{ minHeight: 140 }}>
                   {history.some((h) => h.kind === 'ContributionRecorded' || h.kind === 'ContributionMissed')
                     ? <ScoreSparkline events={history} current={value} />
@@ -93,14 +93,14 @@ export function ScorePage() {
               </Section>
             </Reveal>
             <Reveal i={2}>
-            <Section title="Lender view · readable by any Creditcoin contract" right={<div className="flex items-center gap-2"><button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: 13 }} disabled={value === undefined} title={value === undefined ? 'No score read from the ledger yet' : undefined} onClick={exportBundle}><Download size={13} /> Proof bundle</button><Tag tone="sky">creditScore(address)</Tag></div>}>
+            <Section tour="score-lender" title="Lender view · readable by any Creditcoin contract" right={<div className="flex items-center gap-2"><button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: 13 }} disabled={value === undefined} title={value === undefined ? 'No score read from the ledger yet' : undefined} onClick={exportBundle}><Download size={13} /> Proof bundle</button><Tag tone="sky">creditScore(address)</Tag></div>}>
               <p className="mb-2 text-xs" style={{ color: 'var(--muted)' }}>Download the proof bundle to hand a lender a self-verifying history: every entry names the Creditcoin transaction that carried its Attestcoin proof, so they can re-check it themselves.</p>
               <pre className="log panel-2 p-3">{JSON.stringify({ member: addr, score: value ?? null, tier: tier ?? null, onTime: record?.onTime ?? 0, late: record?.late ?? 0, missed: record?.missed ?? 0, received: record?.received ?? 0, volume_tUSD: record ? Number(record.volume) / 1e6 : 0, source: 'KittyLedger on Creditcoin CC3 Testnet · inputs are Attestcoin-proven Sepolia txs and attested deadlines' }, null, 2)}</pre>
             </Section>
             </Reveal>
             <Reveal i={3}><BadgeCard address={addr} /></Reveal>
             <Reveal i={4}>
-            <Section title="History · every entry is a proof or an attested deadline">
+            <Section tour="score-history" title="History · every entry is a proof or an attested deadline">
               {history.length === 0 && <p className="text-sm" style={{ color: 'var(--muted)' }}>No proven activity for this address yet.</p>}
               {history.length > 0 && (
                 <div style={{ overflowX: 'auto', minWidth: 0, contain: 'inline-size' }}>

@@ -34,14 +34,14 @@ export function Architecture() {
   const proven = items.filter((i) => i.kind === 'ContributionRecorded').length
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flow-scene mb-8" aria-label="Proof flow: KittyVault on Ethereum, through the 0x0FD2 block prover, into KittyLedger on Creditcoin; 0x0FD3 ChainInfo attests the clock">
+      <div className="flow-scene mb-8" data-tour="arch-scene" aria-label="Proof flow: KittyVault on Ethereum, through the 0x0FD2 block prover, into KittyLedger on Creditcoin; 0x0FD3 ChainInfo attests the clock">
         <Canvas3D scene={flowScene} sceneProps={{ attested, items, proven }} camera={FLOW_CAMERA} fallback={<FlowFallback />} />
         <div className="flow-caption eyebrow">Proof flow · vault → 0x0FD2 → ledger · 0x0FD3 attests the clock</div>
       </div>
       <div className="eyebrow">Architecture</div>
       <h1 className="text-3xl">Verify → decode → bind → clock → score</h1>
       <p className="mt-1 max-w-[72ch] text-sm" style={{ color: 'var(--muted)' }}>Two chains, one worker, two precompiles. Every arrow that changes money or reputation is a proven transaction or an attested block. Click a node to open the source.</p>
-      <ol className="mt-6 grid gap-0">
+      <ol className="mt-6 grid gap-0" data-tour="arch-flow">
         {NODES.map((n, i) => (
           <li key={n.k} className="grid grid-cols-[28px_1fr] gap-3">
             <div className="flex flex-col items-center"><span className="dot" style={{ background: `var(--${n.tone === 'muted' ? 'muted' : n.tone})`, width: 12, height: 12 }} />{i < NODES.length - 1 && <span style={{ width: 2, flex: 1, background: 'var(--line)' }} />}</div>

@@ -22,7 +22,7 @@ export function BadgeCard({ address }: { address: `0x${string}` }) {
   }
   if (!cfg.badge) return null
   return (
-    <Section title="Kitty Score badge · soulbound, live-rendered from the ledger" right={<Tag tone="sky">ERC-5192</Tag>}>
+    <Section tour="score-badge" title="Kitty Score badge · soulbound, live-rendered from the ledger" right={<Tag tone="sky">ERC-5192</Tag>}>
       {has && img ? <img src={img} alt="Kitty Score badge" style={{ width: '100%', maxWidth: 400, borderRadius: 10, border: '1px solid var(--line)' }} /> : (
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm" style={{ color: 'var(--muted)' }}>{has ? 'Badge minted; rendering…' : 'No badge yet. Any member with proven history can claim one; it cannot be transferred and its picture updates as history changes.'}</p>

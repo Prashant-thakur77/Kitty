@@ -93,7 +93,7 @@ export function Steward() {
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <Reveal i={1} className="min-w-0">
-          <Section title="Decisions · newest first" right={loaded ? <span className="mono text-xs" style={{ color: 'var(--muted)' }}>{entries.length} entries</span> : <Skeleton w={64} h={12} />}>
+          <Section tour="steward-log" title="Decisions · newest first" right={loaded ? <span className="mono text-xs" style={{ color: 'var(--muted)' }}>{entries.length} entries</span> : <Skeleton w={64} h={12} />}>
             {!loaded && <div aria-busy="true" aria-label="Loading the decision log"><SkeletonRows n={5} /></div>}
             {loaded && entries.length === 0 && (
               <Empty
@@ -132,7 +132,7 @@ export function Steward() {
         </Reveal>
 
         <Reveal i={2} className="min-w-0">
-          <Section title="Ask the steward · Layer 3">
+          <Section tour="steward-ask" title="Ask the steward · Layer 3">
             <p className="text-sm" style={{ color: 'var(--muted)' }}>Claude rewrites the log in plain language. Every figure it states must be cited and must appear in the log; the citation validator strips any sentence it cannot back before it is shown. Without an API key the answer is the deterministic sentence from Layer 2.</p>
             {offline ? (
               <div className="mt-3">

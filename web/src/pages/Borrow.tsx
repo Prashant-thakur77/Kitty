@@ -106,7 +106,7 @@ export function Borrow() {
       {cfg.credit && (
         <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
           <Reveal i={1}>
-            <Section title="Underwriting · read live from KittyLedger" right={<Tag tone="sky">underwrite(address)</Tag>}>
+            <Section tour="borrow-underwrite" title="Underwriting · read live from KittyLedger" right={<Tag tone="sky">underwrite(address)</Tag>}>
               {!subject && (
                 <Empty
                   icon={<Wallet size={22} />}

@@ -409,6 +409,10 @@ pnpm worker                               # attestation wait → batch proof →
 
 Faucets: Sepolia ETH from [Alchemy](https://www.alchemy.com/faucets/ethereum-sepolia); tCTC from the `/faucet` command in the `#testnet-faucet` channel of the Creditcoin Discord.
 
+### Guided tour
+
+The dashboard explains itself: add `?tour=1` to any address (for example `/circles?tour=1`) and a spotlight tour walks through every tab in about two minutes, opening the newest circle on the ledger for the circle steps and a real member for the score steps. `/guide` is the written version, one section per tab with what it does, what you can do there and which on-chain source feeds it, each with a *Take the tour from here* button. The compass button in the nav starts the tour too, and a first-time visitor is offered it once.
+
 ### Create a circle from the browser
 
 The dashboard can open circles without the CLI. `/create` (also the *Create a circle* button on `/circles`) takes a name, either a list of 2 to 10 member addresses or an open circle with a member cap, the installment in tUSD, the round length in Sepolia blocks (with the approximate hours shown) and the rotation rule; the source chain is picked from what the ChainInfo precompile `get_supported_chains()` reports, with chains greyed out where the ledger does not trust the vault, and the start height defaults to the latest attested Sepolia height plus 20 because the ledger refuses a circle whose first round would already be over on the attested frontier. Every write is simulated first, so a revert shows its decoded custom error in a toast before the wallet is asked to sign.

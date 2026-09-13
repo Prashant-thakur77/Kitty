@@ -208,7 +208,7 @@ export function Presentation() {
   const reduced = useReducedMotion()
   return (
     <div>
-      <div className="noprint fixed bottom-4 right-4 z-40 flex items-center gap-2 text-xs mono" style={{ color: 'var(--muted)' }} role="group" aria-label="Slide controls">
+      <div className="noprint fixed bottom-4 right-4 z-40 flex items-center gap-2 text-xs mono" style={{ color: 'var(--muted)' }} role="group" aria-label="Slide controls" data-tour="present-controls">
         <button className="btn" onClick={prev} disabled={i === 0} aria-label="Previous slide"><ArrowLeft size={15} /></button>
         <span aria-live="polite" aria-atomic="true">{i + 1} / {slides.length}</span>
         <button className="btn" onClick={next} disabled={i === slides.length - 1} aria-label="Next slide"><ArrowRight size={15} /></button>

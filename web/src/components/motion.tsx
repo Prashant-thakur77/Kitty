@@ -9,7 +9,7 @@ type RevealTag = keyof typeof TAGS
  * Rises in when it scrolls into view (IntersectionObserver, once, 10% inset). Elements already on screen at mount
  * animate immediately, as the old CSS version did; `i` staggers siblings by 60ms. Reduced motion: opacity only, instant.
  */
-export function Reveal({ i = 0, className = '', children, as = 'div', style }: { i?: number; className?: string; children: ReactNode; as?: RevealTag; style?: CSSProperties }) {
+export function Reveal({ i = 0, className = '', children, as = 'div', style, tour }: { i?: number; className?: string; children: ReactNode; as?: RevealTag; style?: CSSProperties; tour?: string }) {
   const ref = useRef<HTMLElement>(null)
   const inView = useInView(ref, { once: true, margin: '-10% 0px -10% 0px' })
   const reduced = useReducedMotion()
@@ -19,6 +19,7 @@ export function Reveal({ i = 0, className = '', children, as = 'div', style }: {
       ref={ref as React.Ref<HTMLDivElement>}
       className={className}
       style={style}
+      data-tour={tour}
       initial={reduced ? false : { opacity: 0, y: 14 }}
       animate={inView ? { opacity: 1, y: 0 } : undefined}
       transition={reduced ? { duration: 0 } : { duration: 0.7, ease: EASE_OUT, delay: i * 0.06 }}
@@ -33,12 +34,12 @@ const staggerItem: Variants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 
 const staggerItemReduced: Variants = { hidden: { opacity: 1 }, show: { opacity: 1 } }
 
 /** A list whose `Item` children cascade in as the list scrolls into view. Use with `Item` for each row/card. */
-export function Stagger({ className = '', children, as = 'div', style }: { className?: string; children: ReactNode; as?: RevealTag; style?: CSSProperties }) {
+export function Stagger({ className = '', children, as = 'div', style, tour }: { className?: string; children: ReactNode; as?: RevealTag; style?: CSSProperties; tour?: string }) {
   const ref = useRef<HTMLElement>(null)
   const inView = useInView(ref, { once: true, margin: '-10% 0px -10% 0px' })
   const M = TAGS[as] as typeof motion.div
   return (
-    <M ref={ref as React.Ref<HTMLDivElement>} className={className} style={style} variants={staggerParent} initial="hidden" animate={inView ? 'show' : 'hidden'}>
+    <M ref={ref as React.Ref<HTMLDivElement>} className={className} style={style} data-tour={tour} variants={staggerParent} initial="hidden" animate={inView ? 'show' : 'hidden'}>
       {children}
     </M>
   )

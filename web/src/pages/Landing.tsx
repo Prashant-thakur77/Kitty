@@ -49,7 +49,7 @@ export function Landing() {
   return (
     <main>
       {/* ── hero ── */}
-      <section ref={heroRef} className={`hero${can3D ? ' hero-3d' : ''}`}>
+      <section ref={heroRef} className={`hero${can3D ? ' hero-3d' : ''}`} data-tour="hero">
         <div className="mx-auto max-w-6xl px-5 pb-20 pt-16 md:pt-24 lg:grid lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-8">
           <div>
             <Reveal i={0}>
@@ -102,7 +102,7 @@ export function Landing() {
 
       {/* ── numbers ── */}
       <section className="mx-auto max-w-6xl px-5 py-16">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="stats">
           {[
             { label: 'Payments proven', v: st.proven, tone: 'var(--mint)', sub: 'each one verified by 0x0FD2' },
             { label: 'On time', v: st.onTimePct, tone: 'var(--ink)', sub: 'by attested block height', suffix: '%' },

@@ -143,7 +143,7 @@ export function ProvePanel({ members, contributions, payments, attested, chainKe
 
   if (pending.length === 0) return null
   return (
-    <Section title="Prove it yourself · no operator needed" right={<Tag tone="sky">Proof Builder → 0x0FD2</Tag>}>
+    <Section tour="circle-prove" title="Prove it yourself · no operator needed" right={<Tag tone="sky">Proof Builder → 0x0FD2</Tag>}>
       <p className="text-sm" style={{ color: 'var(--muted)' }}>Any member can fetch the round's batch proof from the Attestcoin Proof Builder in the browser and submit it from their own wallet. The ledger checks everything; the submitter is irrelevant.</p>
       <ul className="mt-3 grid gap-1.5">
         {pending.map((x) => {

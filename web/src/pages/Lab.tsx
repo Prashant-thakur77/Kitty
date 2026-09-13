@@ -123,7 +123,7 @@ export function Lab() {
           {offline ? (recorded ? <Tag tone={recorded.mode === 'testnet' ? 'mint' : 'sky'}>{recorded.mode === 'testnet' ? 'recorded on Sepolia + CC3 Testnet' : 'recorded run'} · {recorded.date.slice(0, 10)} · {recorded.commit.slice(0, 7)}</Tag> : <Tag tone="amber">lab api offline · run `pnpm lab:api`</Tag>) : status ? <span>mode {String(status.mode)} · source head {String(status.sourceHead)} · attested {String(status.attestedHeight ?? 'n/a')}</span> : <span className="flex items-center gap-2" aria-label="Connecting to the lab API"><Skeleton w={200} h={12} /><Skeleton w={54} h={22} r={999} /></span>}
         </div>
       </Reveal>
-      <Stagger className="mt-5 grid gap-3 md:grid-cols-2">
+      <Stagger className="mt-5 grid gap-3 md:grid-cols-2" tour="lab-grid">
         {scenarios.map((s) => {
           const r = results[s.name]; const lines = logs[s.name] ?? []
           const live = running === s.name

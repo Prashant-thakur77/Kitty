@@ -174,7 +174,7 @@ export function Create() {
 
       <form onSubmit={submit} className="mt-5 grid gap-4 lg:grid-cols-[3fr_2fr] lg:items-start" aria-label="Create a circle">
         <Reveal i={2} className="grid gap-4">
-          <Section title="Circle" right={<Tag tone="muted">{mode === 'listed' ? 'listed members' : 'open · invites'}</Tag>}>
+          <Section tour="create-circle" title="Circle" right={<Tag tone="muted">{mode === 'listed' ? 'listed members' : 'open · invites'}</Tag>}>
             <div className="grid gap-4">
               <label className="text-sm" style={{ color: 'var(--muted)' }}>Name
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Delhi Chit Circle" className={fieldCls} style={ink} maxLength={64} />
@@ -183,7 +183,7 @@ export function Create() {
                 <div className="text-sm" style={{ color: 'var(--muted)' }}>Membership</div>
                 <div className="mt-1 flex flex-wrap gap-2" role="radiogroup" aria-label="Membership mode">
                   <button type="button" role="radio" aria-checked={mode === 'listed'} className={`btn ${mode === 'listed' ? 'btn-mint' : ''}`} onClick={() => setMode('listed')}>Listed members</button>
-                  <button type="button" role="radio" aria-checked={mode === 'open'} className={`btn ${mode === 'open' ? 'btn-mint' : ''}`} onClick={() => setMode('open')}>Open circle with invites</button>
+                  <button type="button" role="radio" aria-checked={mode === 'open'} className={`btn ${mode === 'open' ? 'btn-mint' : ''}`} onClick={() => setMode('open')} data-tour="create-open">Open circle with invites</button>
                 </div>
                 <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
                   {mode === 'listed'
@@ -228,7 +228,7 @@ export function Create() {
         </Reveal>
 
         <Reveal i={3} className="grid gap-4">
-          <Section title="Source chain and timing" right={<Tag tone="sky">0x0FD3</Tag>}>
+          <Section tour="create-chain" title="Source chain and timing" right={<Tag tone="sky">0x0FD3</Tag>}>
             <div className="grid gap-4">
               <div>
                 <div className="text-sm" style={{ color: 'var(--muted)' }}>Settles from</div>

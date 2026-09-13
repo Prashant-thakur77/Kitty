@@ -60,9 +60,10 @@ export function Blockie({ address, size = 22 }: { address: string; size?: number
   )
 }
 
-export function Section({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
+/** `tour` names the element for the guided tour (`data-tour`), so the spotlight can find this panel. */
+export function Section({ title, right, children, tour }: { title: string; right?: ReactNode; children: ReactNode; tour?: string }) {
   return (
-    <section className="panel p-5">
+    <section className="panel p-5" data-tour={tour}>
       <div className="mb-3 flex items-baseline justify-between gap-3"><h3 className="text-sm" style={{ color: 'var(--muted)', fontFamily: 'var(--body)', fontWeight: 600 }}>{title}</h3>{right}</div>
       {children}
     </section>

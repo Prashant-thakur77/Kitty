@@ -136,7 +136,7 @@ export function CirclePage() {
       </div>
 
       {/* Round header — urgency band (Saving Circles pattern, re-implemented; blocks not seconds) */}
-      <section className={`band ${urgency}`}>
+      <section className={`band ${urgency}`} data-tour="circle-band">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="eyebrow">ROUND {circle.currentRound + 1} OF {n} · CONTRIBUTION</div>
@@ -152,12 +152,12 @@ export function CirclePage() {
             {address && myIdx < 0 && <span className="self-center text-xs" style={{ color: 'var(--muted)' }}>This wallet is not a member.</span>}
           </div>
         </div>
-        <div className="mt-5"><BlockProgress start={start} deadline={dl} now={head} attested={attested} /></div>
+        <div className="mt-5" data-tour="circle-ticks"><BlockProgress start={start} deadline={dl} now={head} attested={attested} /></div>
         {needsConsent && <p className="mt-3 text-xs" style={{ color: 'var(--amber)' }}>You were listed by the organiser but have not consented yet. Only consented members can be marked missed; accepting (or paying once) records your consent on Creditcoin.</p>}
         {msg && <p className="mt-3 text-xs" style={{ color: 'var(--amber)' }}>{msg}</p>}
       </section>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4" data-tour="circle-stats">
         <Stat label="Installment" value={usd(circle.contribution)} />
         <Stat label="Pot this round" value={usd(round?.pot)} tone="mint" />
         <Stat label="Proven" value={`${round?.contributions ?? 0} / ${n}`} />
@@ -168,14 +168,14 @@ export function CirclePage() {
       {circle.open && !isOrganiser && <div className="mt-4 panel p-4 text-sm" style={{ color: 'var(--muted)' }}>This circle is open for invites ({n} of {circle.maxMembers} seats taken). The organiser <span className="mono">{short(circle.organiser)}</span> signs invite links; a link is redeemed at <span className="mono">/join/{String(circleId)}</span> by the invited wallet. No payment can be recorded until invites are closed.</div>}
 
       <Reveal i={1} className="mt-4 grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start">
-        <Section title={byScore ? 'Rotation · by Kitty Score' : 'Rotation · fixed order'} right={byScore ? <Tag tone="mint">best record first</Tag> : <Tag tone="muted">hover a member</Tag>}>
+        <Section tour="circle-wheel" title={byScore ? 'Rotation · by Kitty Score' : 'Rotation · fixed order'} right={byScore ? <Tag tone="mint">best record first</Tag> : <Tag tone="muted">hover a member</Tag>}>
           <RotationWheel members={circle.members} currentRound={circle.currentRound} active={active} byScore={byScore} recipient={recipient} rounds={rounds} roundStatus={round?.status}
             contributions={detail.contributions} scores={detail.scores} records={detail.records} payments={payments} pot={round?.pot} you={address} deadlineAttested={deadlineAttested} loading={!round || !detail.contributions} />
           <div className="mt-3"><WheelLegend /></div>
         </Section>
 
         <div className="grid content-start gap-4">
-        <Section title={`Members · round ${circle.currentRound + 1} of ${n}`} right={<span className="mono text-xs" style={{ color: 'var(--muted)' }}>{round?.contributions ?? 0} of {n} proven</span>}>
+        <Section tour="circle-members" title={`Members · round ${circle.currentRound + 1} of ${n}`} right={<span className="mono text-xs" style={{ color: 'var(--muted)' }}>{round?.contributions ?? 0} of {n} proven</span>}>
           <div className="grid gap-2">
             {circle.members.map((m, i) => {
               const c = detail.contributions?.[i]
@@ -207,7 +207,7 @@ export function CirclePage() {
           </div>
         </Section>
         <div>
-        <Section title={`Round history · ${n} rounds`} right={<button className="btn btn-ghost" style={{ padding: '.2rem .55rem', fontSize: 12 }} onClick={() => setShowList((v) => !v)} aria-expanded={showList}>{showList ? 'hide list' : 'show as list'}</button>}>
+        <Section tour="circle-history" title={`Round history · ${n} rounds`} right={<button className="btn btn-ghost" style={{ padding: '.2rem .55rem', fontSize: 12 }} onClick={() => setShowList((v) => !v)} aria-expanded={showList}>{showList ? 'hide list' : 'show as list'}</button>}>
           <RoundTimeline members={circle.members} currentRound={circle.currentRound} active={active} byScore={byScore} recipient={recipient} rounds={rounds} />
           {showList && <div className="mt-4">
           <ol className="grid gap-2">
@@ -237,7 +237,7 @@ export function CirclePage() {
 
 
       {active && round?.status === 0 && <div className="mt-4"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} chainKey={circle.chainKey} contribution={circle.contribution} onDone={refetch} /></div>}
-      <div className="mt-4"><ProofFeed items={feed} /></div>
+      <div className="mt-4" data-tour="circle-feed"><ProofFeed items={feed} /></div>
 
       {reverify && <ReverifyModal tx={reverify.tx} member={reverify.member} onClose={() => setReverify(null)} />}
       <Dialog.Root open={modal !== 'closed'} onOpenChange={(o) => !o && setModal('closed')}>

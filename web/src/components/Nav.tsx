@@ -3,12 +3,13 @@ import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import * as Dialog from '@radix-ui/react-dialog'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Wallet, LogOut, Menu, X, Send } from 'lucide-react'
+import { Wallet, LogOut, Menu, X, Send, Compass, BookOpen } from 'lucide-react'
 import 'viem/window'
 import { useAttestation } from '../hooks'
 import { useScrolled, EASE_OUT } from './motion'
 import { short, num } from '../lib/format'
 import { useTelegram, TELEGRAM_BOT_URL } from '../lib/telegram'
+import { useTour } from '../tour/Tour'
 
 const LINKS = [
   { to: '/circles', label: 'Circles' },
@@ -39,10 +40,10 @@ function Links({ group }: { group: string }) {
   )
 }
 
-function AttestationPill({ className = '' }: { className?: string }) {
+function AttestationPill({ className = '', tour }: { className?: string; tour?: string }) {
   const { head, attested, lag } = useAttestation()
   return (
-    <div className={`shrink-0 items-center gap-2 whitespace-nowrap text-xs mono ${className}`} title="Latest Sepolia block vs the latest block attested on Creditcoin by the attestor network">
+    <div className={`shrink-0 items-center gap-2 whitespace-nowrap text-xs mono ${className}`} data-tour={tour} title="Latest Sepolia block vs the latest block attested on Creditcoin by the attestor network">
       <span style={{ color: 'var(--muted)' }}>Sepolia</span><span>{num(head)}</span>
       <span style={{ color: 'var(--muted)' }}>→ attested</span><span style={{ color: 'var(--sky)' }}>{num(attested)}</span>
       {lag !== undefined && <span className="pill sky">lag {lag}</span>}
@@ -51,11 +52,11 @@ function AttestationPill({ className = '' }: { className?: string }) {
 }
 
 /** Compact link to the Kitty bot: proofs, deadline reminders and the Mini App, in Telegram. Hidden inside Telegram itself. */
-function TelegramPill({ className = '' }: { className?: string }) {
+function TelegramPill({ className = '', tour }: { className?: string; tour?: string }) {
   const { inTelegram } = useTelegram()
   if (inTelegram) return null
   return (
-    <a href={TELEGRAM_BOT_URL} target="_blank" rel="noreferrer" className={`pill sky no-underline ${className}`} title="Kitty on Telegram: /circle, /score, proof pushes and deadline reminders, and the Mini App">
+    <a href={TELEGRAM_BOT_URL} target="_blank" rel="noreferrer" className={`pill sky no-underline ${className}`} data-tour={tour} title="Kitty on Telegram: /circle, /score, proof pushes and deadline reminders, and the Mini App">
       <Send size={12} /> Telegram
     </a>
   )
@@ -85,7 +86,9 @@ export function Nav() {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   const reduced = useReducedMotion()
+  const tour = useTour()
   useEffect(() => { setOpen(false) }, [pathname])
+  const startTour = () => { setOpen(false); tour.start() }
 
   return (
     <header className="nav noprint sticky top-0 z-30" data-scrolled={scrolled}>
@@ -95,15 +98,17 @@ export function Nav() {
             <img src={`${import.meta.env.BASE_URL}kitty.svg`} alt="" width={28} height={28} />
             <span className="display text-2xl" style={{ letterSpacing: '-.01em' }}>Kitty</span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex md:ml-4" aria-label="Primary"><Links group="desktop" /></nav>
+          <nav className="hidden items-center gap-1 md:flex md:ml-4" aria-label="Primary" data-tour="nav"><Links group="desktop" /></nav>
           <div className="ml-auto flex items-center gap-3">
-            <AttestationPill className="hidden lg:flex" />
-            <TelegramPill className="hidden md:inline-flex" />
+            <AttestationPill className="hidden lg:flex" tour="attestation" />
+            {/* wrapped: `.pill` and `.btn` set display outside Tailwind's layers, so `hidden` on them would never win */}
+            <span className="hidden md:inline-flex"><TelegramPill tour="telegram" /></span>
+            <span className="hidden md:inline-flex"><button type="button" className="btn btn-ghost" style={{ padding: '.4rem .5rem' }} onClick={startTour} title="Take the tour: two minutes, every tab" aria-label="Take the tour"><Compass size={16} /></button></span>
             <div className="hidden items-center gap-3 md:flex"><WalletControl /></div>
             <Dialog.Root open={open} onOpenChange={setOpen}>
               <div className="md:hidden">
                 <Dialog.Trigger asChild>
-                  <button className="btn btn-ghost" aria-label="Open menu" aria-expanded={open} style={{ padding: '.5rem' }}><Menu size={20} /></button>
+                  <button className="btn btn-ghost" aria-label="Open menu" aria-expanded={open} style={{ padding: '.5rem' }} data-tour="nav-menu"><Menu size={20} /></button>
                 </Dialog.Trigger>
               </div>
               <AnimatePresence>
@@ -142,6 +147,10 @@ export function Nav() {
                             </motion.div>
                           ))}
                         </motion.nav>
+                        <div className="mt-3 grid gap-1" style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+                          <button type="button" className="navlink navlink-lg flex items-center gap-2 text-left" style={{ background: 'transparent', border: 0, cursor: 'pointer', fontFamily: 'var(--body)' }} onClick={startTour}><Compass size={16} /> Take the tour</button>
+                          <NavLink to="/guide" className={({ isActive }) => `navlink navlink-lg flex items-center gap-2${isActive ? ' active' : ''}`}><BookOpen size={16} /> What each tab does</NavLink>
+                        </div>
                         <div className="sheet-foot">
                           <div className="eyebrow mb-2">Attestation</div>
                           <AttestationPill className="flex flex-wrap" />

@@ -49,7 +49,7 @@ export function Circles() {
               {countPending ? <Skeleton w={120} h={12} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : <>{n} circle{n === 1 ? '' : 's'} · newest last</>}
             </p>
           </div>
-          <Link to="/create" className="btn btn-mint no-underline"><Plus size={15} /> Create a circle</Link>
+          <Link to="/create" className="btn btn-mint no-underline" data-tour="create-button"><Plus size={15} /> Create a circle</Link>
         </div>
       </Reveal>
       {loading ? (
@@ -57,7 +57,7 @@ export function Circles() {
           {Array.from({ length: Math.max(2, Math.min(n, 4)) }, (_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : n === 0 ? (
-        <Reveal i={1} className="mt-5">
+        <Reveal i={1} className="mt-5" tour="circles-list">
           <Empty
             icon={<CircleDashed size={22} />}
             title="No circles yet"
@@ -66,7 +66,7 @@ export function Circles() {
           />
         </Reveal>
       ) : (
-        <Stagger className="mt-5 grid gap-3 md:grid-cols-2">
+        <Stagger className="mt-5 grid gap-3 md:grid-cols-2" tour="circles-list">
           {q.data?.map((r, i) => {
             const c = r.result as Circle | undefined
             if (!c) return null
