@@ -1,0 +1,33 @@
+# Fly.io app for the Kitty Telegram bot (bot/Dockerfile). Deploy from the repo root:
+#   fly launch --no-deploy --copy-config --name kitty-bot
+#   fly volumes create kitty_bot_state --size 1 --region sin --yes
+#   fly secrets set BOT_TOKEN=<token from @BotFather>
+#   fly deploy
+# The bot holds no private key; it only reads the ledger. Subscriptions and the event cursor live
+# in bot/state/state.json on the volume, so restarts and redeploys keep them.
+app = "kitty-bot"
+primary_region = "sin"
+
+[build]
+  dockerfile = "bot/Dockerfile"
+
+[env]
+  SEPOLIA_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com"
+  CREDITCOIN_RPC_URL = "https://rpc.cc3-testnet.creditcoin.network"
+  KITTY_VAULT_ADDRESS = "0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84"
+  KITTY_LEDGER_ADDRESS = "0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276"
+  LEDGER_DEPLOY_BLOCK = "5473533"
+  KITTY_VIEWER_ADDRESS = "0xFfA85A21eBa3e46EFe3C53c77f1AF4f4Cdddc947"
+  KITTY_CREDIT_ADDRESS = "0xB54943A1cEd46aE1bB844260B77896b9A134B1ED"
+  BOT_STATE_FILE = "bot/state/state.json"
+
+[mounts]
+  source = "kitty_bot_state"
+  destination = "/app/bot/state"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+[[restart]]
+  policy = "always"

@@ -62,6 +62,24 @@ docker logs -f kitty-bot
 
 The container reads the same `.env` as the worker (RPC URLs, contract addresses). To serve `/steward` from the container, mount the worker's log: `-v $PWD/worker/steward.local.json:/app/worker/steward.local.json:ro`.
 
-## 5. Test the Mini App integration in a browser
+## 5. Keep it always on (Fly.io)
+
+The bot is a long-polling process with a small state file, so any host that runs one container around the clock works. The repo ships `fly.toml` for [Fly.io](https://fly.io): one shared-cpu machine with a 1 GB volume for `bot/state/state.json`, so subscriptions survive restarts and redeploys. Only `BOT_TOKEN` is a secret; the bot holds no private key.
+
+```bash
+curl -L https://fly.io/install.sh | sh          # once
+fly auth signup                                  # or: fly auth login
+fly launch --no-deploy --copy-config --name kitty-bot   # accept fly.toml as is
+fly volumes create kitty_bot_state --size 1 --region sin --yes
+fly secrets set BOT_TOKEN=123456789:AA…
+fly deploy
+fly logs                                         # expect: "watching 0xC2A1… every 15s"
+```
+
+`fly.toml` carries the testnet addresses and public RPC URLs in `[env]`; change them there after a redeploy of the contracts. Useful afterwards: `fly status`, `fly ssh console -C "cat /app/bot/state/state.json"`, `fly machine restart`, `fly scale memory 1024`. To take it down: `fly apps destroy kitty-bot`.
+
+Any Docker host works the same way (Railway, Render background worker, a small VPS): build from `bot/Dockerfile` at the repo root, mount a volume at `/app/bot/state`, and set the variables listed in `fly.toml` plus `BOT_TOKEN`. The steward can be hosted identically from the same image base (`CMD pnpm worker`), but it needs the operator `PRIVATE_KEY` as a secret and a funded key on both chains.
+
+## 6. Test the Mini App integration in a browser
 
 Append `?tg=1` to any dashboard URL (`http://localhost:5173/?tg=1`). The SDK script is injected, `<html data-telegram="1">` is set, the Telegram pill disappears from the nav, and, with no wallet extension, the wallet pill reads *open in a wallet browser to pay*. Outside Telegram the SDK is never loaded.

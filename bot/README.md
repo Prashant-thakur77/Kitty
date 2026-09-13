@@ -50,3 +50,4 @@ Setup with @BotFather, the Mini App registration and Docker are in [`docs/TELEGR
 | `src/config.ts` | Reuses `worker/src/config.ts` |
 | `test/format.test.ts` | `pnpm test:bot` |
 | `Dockerfile` | `docker build -f bot/Dockerfile -t kitty-bot .` |
+| `../fly.toml` | Always-on hosting on Fly.io with a volume for the state file; see `docs/TELEGRAM.md` section 5 |

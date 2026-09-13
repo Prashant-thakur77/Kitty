@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+web/dist
+out
+cache
+.env
+.env.*
+**/*.local.json
+bot/state.json
+worker/state*.json
+worker/steward*.json
+docs/*.mp4
+docs/*.pdf
+.git
