@@ -19,7 +19,7 @@ for t in timeline:
 # segments that are mostly a page waiting on the steward may be compressed harder than the rest
 MAX_SPEED = {'08_miss': 1.8, '04_enable': 1.5, '05_live': 1.9, '05b_create': 2.05}
 # the 3D story chapters carry their own on-screen captions
-NO_CAPTIONS = {'02_problem', '03_split', '04_enable'}
+NO_CAPTIONS = {'02_problem', '03_split', '04_enable', '12_telegram'}
 parts, srt, clock = [], [], 0.0
 for i, t in enumerate(timeline):
     name, sec = t['name'], t['seconds']
