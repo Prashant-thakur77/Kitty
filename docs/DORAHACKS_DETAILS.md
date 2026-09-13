@@ -6,7 +6,7 @@
 
 Kitty is a rotating savings circle (a chit fund, a susu, a tanda, a chama) where the money stays in stablecoins on Ethereum and the rules run on Creditcoin, fed only by transactions the **Attestcoin Protocol** has cryptographically verified. No treasurer, no oracle operator, no bridge. The output is a **Kitty Score**: a credit history built from nothing but proven payments and attested deadlines, which a lender on Creditcoin can underwrite against, for people the banking system has never seen.
 
-**Live now:** dashboard https://prashant-thakur77.github.io/Kitty/ · Telegram bot https://t.me/KittyCirclesBot · source https://github.com/Prashant-thakur77/Kitty · demo https://youtu.be/ajHBt2ANKtA
+**Live now:** dashboard https://prashant-thakur77.github.io/Kitty/ · Telegram bot (self-hosted, in the demo video) https://t.me/KittyCirclesBot · source https://github.com/Prashant-thakur77/Kitty · demo https://youtu.be/ajHBt2ANKtA
 
 ## What is live on testnet
 
@@ -72,7 +72,7 @@ Create a circle in one Creditcoin transaction, invite members with signed links,
 1. Open https://prashant-thakur77.github.io/Kitty/circle/4 and follow any proven payment to its Creditcoin transaction.
 2. Open https://prashant-thakur77.github.io/Kitty/lab for the eight scenarios recorded against the live precompile.
 3. Run one proof against the live precompile from any machine: `git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty && pnpm install && pnpm verify:live 0x2e6fb78a58bde01ea00469ddf5e5182a82594f58cba67c38f00db2d7b4ed40e8`
-4. Send `/circle 4` to https://t.me/KittyCirclesBot.
+4. Run the bot with `BOT_TOKEN=… pnpm bot` and send it `/circle 4` (or watch it at 4:28 in the demo).
 
 ## Documentation
 

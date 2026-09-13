@@ -158,7 +158,7 @@ No wallet or funds are needed for any of these.
 
    It fetches the Proof Builder proof for that Sepolia payment, asks `0x0FD2` on CC3 Testnet whether it verifies (`true`), then shows the tampered-bytes and wrong-chain-key negatives reverting.
 
-6. Send `/circle 4` to [@KittyCirclesBot](https://t.me/KittyCirclesBot). The answer is assembled from chain reads only.
+6. Run the Telegram bot against the same ledger with `BOT_TOKEN=<your BotFather token> pnpm bot` and send it `/circle 4`; the answer is assembled from chain reads only. The demo video shows this exchange with [@KittyCirclesBot](https://t.me/KittyCirclesBot) at 4:28.
 
 ## How a round settles
 
@@ -357,7 +357,7 @@ pnpm explain "why did you wait?"      # cited explanation, or the deterministic 
 
 ## Telegram
 
-The bot is live as [@KittyCirclesBot](https://t.me/KittyCirclesBot) against the final ledger. A circle lives in a group chat, so Kitty does too. [`bot/`](bot/) is a Telegram bot ([@KittyCirclesBot](https://t.me/KittyCirclesBot)) that pushes every proof into the chat and opens the dashboard as a Mini App; [`docs/TELEGRAM.md`](docs/TELEGRAM.md) has the BotFather setup.
+A circle lives in a group chat, so Kitty does too. [`bot/`](bot/) is a self-hosted Telegram bot (shown as [@KittyCirclesBot](https://t.me/KittyCirclesBot) in the demo video; `pnpm bot` runs it against the final ledger, `fly.toml` hosts it) that pushes every proof into the chat and opens the dashboard as a Mini App; [`docs/TELEGRAM.md`](docs/TELEGRAM.md) has the BotFather setup.
 
 - `/circle 1` — the live circle: round, deadline block against the attested frontier from `0x0FD3`, who is proven, pending or missed, pot, next recipient, explorer links.
 - `/score 0x…` — Kitty Score, tier, counters and the credit limit from `KittyCreditLine.underwrite`.
