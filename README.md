@@ -16,7 +16,7 @@
   <b>Kitty</b> is a rotating savings circle — a chit fund, a susu, a tanda — where the money stays in stablecoins on Ethereum and the rules live on Creditcoin, fed only by transactions the <b>Attestcoin Protocol</b> has cryptographically verified. No treasurer. No oracle operator. No bridge. The output is a credit history a lender can underwrite against, for people the banking system has never seen.
 </p>
 
-<p align="center"><b>Live on Creditcoin CC3 Testnet and Ethereum Sepolia since 12 September 2026</b> · four circles run, 100+ linked transactions · <a href="https://prashant-thakur77.github.io/Kitty/">dashboard</a> · <a href="https://t.me/KittyCirclesBot">@KittyCirclesBot</a></p>
+<p align="center"><b>Live on Creditcoin CC3 Testnet and Ethereum Sepolia since 12 September 2026</b> · seven circles run, 125 linked transactions · <a href="https://prashant-thakur77.github.io/Kitty/">dashboard</a> · <a href="https://t.me/KittyCirclesBot">@KittyCirclesBot</a></p>
 
 **Three properties that follow from the design**
 
@@ -110,6 +110,7 @@ Every claim in this README is backed by a transaction on the public testnets. A 
 | A member proving their own payment from the browser, no operator involved | [`0x7b8fdaab…`](https://creditcoin-testnet.blockscout.com/tx/0x7b8fdaab59af28c7df083528702b02ff5babe8260365a9ec2d0032d5cb8861b5) |
 | A round closed on the attested deadline with a real missed payment and the attestation that proved it | [`0xef146316…`](https://creditcoin-testnet.blockscout.com/tx/0xef146316d55e42f20a54a8d97935d711769d3f4571cf0fd760af4471bd9f01ca) |
 | A Sepolia payout proven back to Creditcoin before the round shows *Paid* | [`0x92344d88…`](https://creditcoin-testnet.blockscout.com/tx/0x92344d886c25f2e14a573f9934407797f0379bdd100bda4e5a5101000174ba88) |
+| Two circles' payouts proven back in one `confirmPayouts` call under one continuity proof | [`0x5496258b…`](https://creditcoin-testnet.blockscout.com/tx/0x5496258ba46b613c6f74c071dffce80b4d486c58cc5ffc14b3de2f64c7700953) |
 | A replayed proof rejected by the ledger (`QueryAlreadyProcessed`) and a forged chain key rejected by the precompile itself | recorded in [`web/public/lab-testnet.json`](web/public/lab-testnet.json), shown at `/lab` |
 
 ## What makes Kitty different
@@ -123,7 +124,7 @@ Most proof-of-history projects import a credit record that already exists on ano
 | Time | Usually none: the record is read once | The attested source-chain height is the only clock; a miss carries the attestation that proved it |
 | Money movement | Read-only | Stablecoins settle every round; the payout on Ethereum is proven back before the round shows *Paid* |
 | Operator | An indexer or relayer submits proofs | An agent whose only power is a proof; a member can prove a whole round from the browser, and the ledger never checks who submits |
-| Evidence | A demo transaction or two | Five circles, 111 linked testnet transactions, eight attack scenarios on the live precompile, a Telegram bot in production |
+| Evidence | A demo transaction or two | Seven circles, 125 linked testnet transactions, eight attack scenarios on the live precompile, a Telegram bot in production |
 
 The score that results is not a claim about the past; it is a record that only proven payments and attested deadlines can write.
 
@@ -250,7 +251,7 @@ Kitty was built to use the protocol deeply rather than minimally. The full techn
 | **Query-id replay protection** | `keccak(chainKey ‖ height ‖ txIndex)`, byte-identical to `ASCBase`, shared by every entry point, plus in-batch duplicate detection | The same proof can never count twice. |
 | **Receipt status** | `receiptStatus == 1` before any log is read | The precompile proves inclusion, not success. |
 | **Emitter and transaction binding** | `log.address_ == vault`, `tx.to == vault`, `tx.from == member` | A proof of someone else's transaction that merely contains a vault log is rejected. |
-| **Proof-back of payouts** | `confirmPayout` and batch `confirmPayouts` on the `PaidOut` transaction | *Paid* is never an operator's claim. |
+| **Proof-back of payouts** | `confirmPayout`, and batch `confirmPayouts` when several rounds pay out in the same tick (exercised live: two circles' payouts under one continuity proof) | *Paid* is never an operator's claim. |
 | **Browser-side proving** | Proof Builder is CORS-open; `ProvePanel` fetches the batch proof and submits from the member's wallet | The ledger checks the proof, never the caller. The steward is a convenience, not a dependency. |
 
 ### Files using Attestcoin

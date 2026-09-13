@@ -126,6 +126,20 @@ Every transaction of the 12 September 2026 campaign, across four ledger deployme
 | 2026-09-13 | Sepolia | payout circle 5 round 1 (300 tUSD) | [0x48f314d0…032a80](https://sepolia.etherscan.io/tx/0x48f314d0e4586703fd3c5708d45bfa56960fe985206059104d6d05404c032a80) | 64833 |
 | 2026-09-13 | Creditcoin CC3 Testnet | confirmPayout circle 5 round 1 (proven back through 0x0FD2) | [0xb6e6091e…fd6bfb](https://creditcoin-testnet.blockscout.com/tx/0xb6e6091e3119082849b91a36417c09c7e970f7f6cc2d8fb809fc22c8ddfd6bfb) | 387478 |
 | 2026-09-13 | Creditcoin CC3 Testnet | closeRound circle 5 round 2 (final round on the attested deadline, nobody paid; circle completed) | [0x68cc0eea…315543](https://creditcoin-testnet.blockscout.com/tx/0x68cc0eeacdfef4ad8ad58b78f7b9b31112303e6d40f0d0e83c9cd3d570315543) | 367864 |
+| 2026-09-13 | Creditcoin CC3 Testnet | createCircle 6 (Manila Paluwagan, 3 members, by score) | [0x2771a809…479264](https://creditcoin-testnet.blockscout.com/tx/0x2771a8090a4796bea82692d112ad58bd5829ebb96b223e4cd25e28a812479264) | 357602 |
+| 2026-09-13 | Creditcoin CC3 Testnet | createCircle 7 (Nairobi Chama, 3 members, fixed rotation) | [0x8d39d630…2fdba2](https://creditcoin-testnet.blockscout.com/tx/0x8d39d6307f24873d46c5b77b0c7d5686748a340085288d6993e04523d62fdba2) | 357602 |
+| 2026-09-13 | Sepolia | contribute circle 6 round 0 member 0 | [0x031e99a4…958c28](https://sepolia.etherscan.io/tx/0x031e99a460e1ed58df7fd2063e1d3f7b08d0e480e9f9438c6d52b472ee958c28) | 105733 |
+| 2026-09-13 | Sepolia | contribute circle 6 round 0 member 1 | [0x9d9b1e4b…4cb5ce](https://sepolia.etherscan.io/tx/0x9d9b1e4bb8829536714aad3b5c1bb6d93aec7a8c6e3bebdbe1ca2ecbfe4cb5ce) | 71533 |
+| 2026-09-13 | Sepolia | contribute circle 6 round 0 member 2 | [0x438863b5…cc4d09](https://sepolia.etherscan.io/tx/0x438863b54ece8100e4089bab9675acfc798a50acb57f2dd6b388aad5eccc4d09) | 71533 |
+| 2026-09-13 | Sepolia | contribute circle 7 round 0 member 0 | [0xd1d86a99…b23780](https://sepolia.etherscan.io/tx/0xd1d86a99e498b6cdf7e5c1a0bfe90ea81f6f11e45881dc348ff16d570db23780) | 88633 |
+| 2026-09-13 | Sepolia | contribute circle 7 round 0 member 1 | [0x6b6f1c44…83defe](https://sepolia.etherscan.io/tx/0x6b6f1c449e8104b61767ada81cf253561f61d63414033705b94370663a83defe) | 71533 |
+| 2026-09-13 | Sepolia | contribute circle 7 round 0 member 2 | [0x66571ce4…a5b309](https://sepolia.etherscan.io/tx/0x66571ce44bfb381bad23a1aa4e8105c2823f68d5929a5dcd7ee52c5db2a5b309) | 66733 |
+| 2026-09-13 | Creditcoin CC3 Testnet | recordContributions: 6 payments from circles 6 and 7 in ONE precompile call | [0x3f6a25a8…0d9eef](https://creditcoin-testnet.blockscout.com/tx/0x3f6a25a8569e3bbaaafc8276211598951304614cc67de092aa8891fb190d9eef) | 1395349 |
+| 2026-09-13 | Creditcoin CC3 Testnet | closeRound circle 6 round 0 | [0x3c3383db…3f3153](https://creditcoin-testnet.blockscout.com/tx/0x3c3383db7b4c833cf773cfbfe246526cca495e8acf9349cb8bd1326d713f3153) | 354326 |
+| 2026-09-13 | Creditcoin CC3 Testnet | closeRound circle 7 round 0 | [0xc96bd729…0cc1ee](https://creditcoin-testnet.blockscout.com/tx/0xc96bd729e778fabe0b2069b78a8504860eea455cc5c4e687e02f46b0890cc1ee) | 347830 |
+| 2026-09-13 | Sepolia | payout circle 6 round 0 (300 tUSD) | [0x4cce8892…7168ab](https://sepolia.etherscan.io/tx/0x4cce8892dc7bc04ab7df31b7aa4baab9faa45f4764a570ef2302038e007168ab) | 69621 |
+| 2026-09-13 | Sepolia | payout circle 7 round 0 (300 tUSD) | [0x54685f67…57c863](https://sepolia.etherscan.io/tx/0x54685f67c3a796eb161721da997a16df996d9737e2ba9897adfdafbd7057c863) | 64821 |
+| 2026-09-13 | Creditcoin CC3 Testnet | confirmPayouts: payouts of circles 6 and 7 proven back in ONE call (batch proof-back) | [0x5496258b…700953](https://creditcoin-testnet.blockscout.com/tx/0x5496258ba46b613c6f74c071dffce80b4d486c58cc5ffc14b3de2f64c7700953) | 440916 |
 
 ## Live precompile verification (no deployment needed)
 

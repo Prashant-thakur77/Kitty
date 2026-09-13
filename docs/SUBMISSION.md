@@ -20,6 +20,8 @@ verified. The output is a Kitty Score built from proven payments and attested de
 
 ## Full description
 
+**In one paragraph.** Kitty is live on Creditcoin CC3 Testnet and Ethereum Sepolia: seven circles opened, five run to completion, 125 linked transactions. A whole round verified in one `verifyAndEmit` call; eight payments from two circles pooled into one call; a member creating a circle, paying and proving the entire round from the browser during the demo recording; a real missed payment closed on the attested deadline with the attestation recorded on chain; payouts proven back, in batch; all eight attack scenarios rejected or accepted exactly as designed against the live precompile; a Telegram bot in production; 162 Foundry tests including stateful invariants, 29 agent tests, 11 bot tests; a technical note, protocol spec, threat model, five ADRs, an audit checklist and a triaged static-analysis report. Everything below is backed by a transaction in `docs/TESTNET_LOG.md`.
+
 **Problem.** Hundreds of millions of people save through rotating circles: chit funds in India,
 susu in Ghana, tandas in Mexico, chamas in Kenya, stokvels in South Africa. They work because
 members watch each other. They fail in the same two ways: a treasurer disappears with the pot, or a
@@ -58,12 +60,14 @@ Three properties that follow from the design:
 - Query ids derived byte-identically to `ASCBase` (`keccak(chainKey ‖ height ‖ txIndex)`) plus
   in-batch duplicate detection, so no proof counts twice.
 - Per-circle chain key validated with `get_chain_by_key` at creation; the trusted-vault allowlist
-  is keyed by chain; a batch under the wrong key reverts `WrongChain`.
+  is keyed by chain; a batch under the wrong key reverts `WrongChain`. Ethereum mainnet (chain key 3)
+  was exercised against the live precompile: a real mainnet transaction verified `true`, the
+  wrong-key negative reverted. `get_supported_chains` drives the chain picker on the create page.
 - `is_height_attested(chainKey, deadline + 64)` on 0x0FD3 is the only clock: no timestamps, no
   admin close.
 - The dashboard reads `find_lowest_attested_after` and `get_attestation_bounds` to show which
   attestation covers each payment and whether a deadline is covered.
-- `PaidOut` on Ethereum is proven back through `confirmPayout` (and the batch `confirmPayouts`)
+- `PaidOut` on Ethereum is proven back through `confirmPayout`, and the steward proves several payouts back under one continuity proof with the batch `confirmPayouts`
   before a round can show *Paid*.
 - Browser-side proving through the CORS-open Proof Builder; the ledger checks the proof, never the
   caller.

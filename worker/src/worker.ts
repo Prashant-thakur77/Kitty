@@ -13,7 +13,7 @@
 import { ethers } from 'ethers';
 import { cfg, contracts, chainInfo, sourceProvider, ccProvider, ccWallet, ccSigner, sourceSigner, loadState, saveState, log } from './config.ts';
 import { buildBatchProof, buildSingleProof } from './proofs.ts';
-import { submitRecordContributions, submitConfirmPayout, revertReason } from './chain.ts';
+import { submitRecordContributions, submitConfirmPayout, submitConfirmPayouts, revertReason } from './chain.ts';
 import { preflight } from './verifier.ts';
 import { decideBatch, explainBatch, type PendingPayment } from './agent/policy.ts';
 import { record } from './agent/log.ts';
@@ -215,6 +215,7 @@ async function closeRounds() {
 }
 
 async function payouts() {
+  const toConfirm: { id: number; r: number; key: string; payoutTx: string }[] = [];
   const n = Number(await ledger.circleCount());
   for (let id = 1; id <= n; id++) {
     const c = await ledger.getCircle(id);
@@ -253,19 +254,49 @@ async function payouts() {
         }
       }
       if (state.confirmed[payoutTx]) continue;
-      try {
-        const proof = await buildSingleProof(payoutTx);
+      toConfirm.push({ id, r, key, payoutTx });
+    }
+  }
+  if (toConfirm.length === 0) return;
+  // Several payouts waiting at once (two circles closing in the same tick) are proven back under ONE continuity
+  // proof with confirmPayouts; a single one, or a batch the Proof Builder cannot span, goes through confirmPayout.
+  if (toConfirm.length > 1) {
+    try {
+      const [proof] = await buildBatchProof(toConfirm.slice(0, 10).map((c) => c.payoutTx));
+      if (proof.heights.length === Math.min(10, toConfirm.length)) {
         const pre = await preflight(proof);
-        if (!pre.ok) { log(`✗ payout preflight rejected by 0x0FD2 (${pre.detail}) — retrying later`); continue; }
-        const crc = await submitConfirmPayout(ledger, proof);
-        state.confirmed[payoutTx] = true;
-        record({ kind: 'confirm', summary: `payout for circle ${id} round ${r} proven back to Creditcoin`,
-          evidence: { circleId: String(id), round: r, sourceHeight: proof.heights[0] },
-          txs: [{ chain: 'creditcoin', hash: crc.hash }, { chain: 'source', hash: payoutTx }] });
-      } catch (e) {
-        ccSigner.reset();
-        log(`✗ confirmPayout ${key} failed: ${revertReason(e, ledger.interface)}`);
+        if (!pre.ok && /timeout|TIMEOUT|EAI_AGAIN|ECONN|socket hang up/i.test(pre.detail ?? "")) { log(`✗ batch payout preflight could not reach the node (${pre.detail}) — retrying the batch next tick`); return; }
+        if (!pre.ok) { log(`✗ batch payout preflight rejected by 0x0FD2 (${pre.detail}) — falling back to singles`); }
+        else {
+          const crc = await submitConfirmPayouts(ledger, proof);
+          const done = toConfirm.slice(0, proof.heights.length);
+          for (const c of done) state.confirmed[c.payoutTx] = true;
+          record({ kind: 'confirm', summary: `${done.length} payouts (${done.map((c) => `circle ${c.id} round ${c.r}`).join(', ')}) proven back to Creditcoin in one call`,
+            evidence: { payouts: done.length, circles: [...new Set(done.map((c) => String(c.id)))].join(','), heights: proof.heights.join(','), continuityRoots: proof.continuity.roots.length },
+            txs: [{ chain: 'creditcoin', hash: crc.hash }, ...done.map((c) => ({ chain: 'source' as const, hash: c.payoutTx }))] });
+          return;
+        }
       }
+    } catch (e) {
+      ccSigner.reset();
+      const why = revertReason(e, ledger.interface);
+      if (/timeout|TIMEOUT|EAI_AGAIN|ECONN|socket hang up/i.test(why)) { log(`✗ confirmPayouts batch could not reach the node or the Proof Builder (${why}) — retrying the batch next tick`); return; }
+      log(`✗ confirmPayouts batch failed: ${why} — falling back to singles`);
+    }
+  }
+  for (const { id, r, key, payoutTx } of toConfirm) {
+    try {
+      const proof = await buildSingleProof(payoutTx);
+      const pre = await preflight(proof);
+      if (!pre.ok) { log(`✗ payout preflight rejected by 0x0FD2 (${pre.detail}) — retrying later`); continue; }
+      const crc = await submitConfirmPayout(ledger, proof);
+      state.confirmed[payoutTx] = true;
+      record({ kind: 'confirm', summary: `payout for circle ${id} round ${r} proven back to Creditcoin`,
+        evidence: { circleId: String(id), round: r, sourceHeight: proof.heights[0] },
+        txs: [{ chain: 'creditcoin', hash: crc.hash }, { chain: 'source', hash: payoutTx }] });
+    } catch (e) {
+      ccSigner.reset();
+      log(`✗ confirmPayout ${key} failed: ${revertReason(e, ledger.interface)}`);
     }
   }
 }

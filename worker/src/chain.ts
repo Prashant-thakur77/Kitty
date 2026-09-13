@@ -37,6 +37,19 @@ export async function submitConfirmPayout(ledger: ethers.Contract, p: BatchProof
   return rc;
 }
 
+/** Batch proof-back: one continuity proof for several PaidOut transactions, confirmed in a single ledger call. */
+export async function submitConfirmPayouts(ledger: ethers.Contract, p: BatchProof): Promise<ethers.TransactionReceipt> {
+  const args = [p.chainKey, p.heights, p.txBytes, p.merkleProofs, p.continuity];
+  const data = ledger.interface.encodeFunctionData('confirmPayouts', args);
+  await ledger.confirmPayouts.staticCall(...args);
+  const gasLimit = await gasFor(ledger, data, p.continuity.roots.length);
+  log(`→ KittyLedger.confirmPayouts(${p.heights.length} payouts, heights ${Math.min(...p.heights)}–${Math.max(...p.heights)}) gas=${gasLimit}`);
+  const tx = await ledger.confirmPayouts(...args, { gasLimit });
+  const rc = await tx.wait();
+  log(`   ✓ ${p.heights.length} payouts proven in one call · cc tx ${rc.hash}`);
+  return rc;
+}
+
 export function revertReason(e: unknown, iface?: ethers.Interface): string {
   const err = e as { data?: string; error?: { data?: string }; shortMessage?: string; message?: string; revert?: { name: string; args: unknown[] } };
   if (err.revert) return `${err.revert.name}(${err.revert.args.map(String).join(', ')})`;
