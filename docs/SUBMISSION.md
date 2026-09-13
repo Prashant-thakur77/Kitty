@@ -96,8 +96,7 @@ Three properties that follow from the design:
 
 - Repository: https://github.com/Prashant-thakur77/Kitty
 - Live dashboard: https://prashant-thakur77.github.io/Kitty/
-- Demo video (5:27): https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4
-  (also uploaded to YouTube as unlisted; paste that link in the video field)
+- Demo video (5:27): https://youtu.be/ajHBt2ANKtA (mp4 on the release)
 - Deck: https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/Kitty-deck.pdf
 - Release: https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission
 - Telegram bot (live): https://t.me/KittyCirclesBot (`/circle 4`, `/score 0x…`, `/watch circle 4`, `/steward`; opens the dashboard as a Mini App)

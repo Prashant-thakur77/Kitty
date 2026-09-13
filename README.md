@@ -81,7 +81,7 @@ Everything a member does is a plain deposit on the chain where they already hold
 
 ## Demo
 
-A narrated walkthrough (5:27): **[download the mp4](https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4)** from the [v2-submission release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission). The first three chapters are a 3D explainer rendered from the app's own `/story` route; everything after is the production dashboard against the live testnets. During the take a real member wallet creates a circle on Creditcoin, pays on Sepolia and proves the whole round from the browser (every transaction is in the log below), and the Telegram chapter is a phone recording of the live bot and Mini App.
+A narrated walkthrough (5:27): **[watch on YouTube](https://youtu.be/ajHBt2ANKtA)** or [download the mp4](https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4) from the [v2-submission release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission). The first three chapters are a 3D explainer rendered from the app's own `/story` route; everything after is the production dashboard against the live testnets. During the take a real member wallet creates a circle on Creditcoin, pays on Sepolia and proves the whole round from the browser (every transaction is in the log below), and the Telegram chapter is a phone recording of the live bot and Mini App.
 
 Chapters: 0:00 Hook · 0:10 The problem (3D) · 0:45 The split, money on Ethereum and rules on Creditcoin (3D) · 1:19 What Creditcoin makes possible (3D) · 1:39 Live on testnet, wallet connected · 1:50 Creating a circle from the browser, a real Creditcoin transaction · 2:17 The new circle: attested-block deadline, rotation, history · 2:38 Paying from the browser, a real Sepolia transaction · 2:53 Proving the whole round from the member wallet: 0x0FD3 bounds, Proof Builder, free preflight, 0x0FD2 · 3:19 The steward: eight payments from two circles in one call · 3:40 Attack lab recorded against the live precompile · 4:11 What a lender sees · 4:28 The Telegram bot and Mini App on a phone · 4:50 Attestcoin depth · 5:13 Close.
 
@@ -92,7 +92,7 @@ Chapters: 0:00 Hook · 0:10 The problem (3D) · 0:45 The split, money on Ethereu
 
 | Surface | Link |
 |---|---|
-| Demo video | https://github.com/Prashant-thakur77/Kitty/releases/download/v2-submission/kitty-demo.mp4 |
+| Demo video | https://youtu.be/ajHBt2ANKtA (mp4 on the [release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission)) |
 | Live dashboard | https://prashant-thakur77.github.io/Kitty/ (GitHub Pages, from `main`) |
 | Deck | [`docs/Kitty-deck.pdf`](docs/Kitty-deck.pdf), also on the [release](https://github.com/Prashant-thakur77/Kitty/releases/tag/v2-submission); `/presentation` on the dashboard is the live version |
 | Attack lab | `/lab`, eight live scenarios |
