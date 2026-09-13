@@ -1,7 +1,7 @@
 // Pure-function tests for the Telegram bot's message formatting. `pnpm test:bot`
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describe, esc, formatCircle, formatEvent, formatReminder, formatScore, formatSteward, formatStart, type CircleState, type Links } from '../src/format.ts';
+import { describe, esc, formatCircle, formatEvent, formatReminder, formatScore, formatSteward, formatStart, startLang, START_LANGS, type CircleState, type Links } from '../src/format.ts';
 import { pickRecipient } from '../src/chain.ts';
 
 const testnet: Links = { ccExplorer: 'https://creditcoin-testnet.blockscout.com', sourceExplorer: 'https://sepolia.etherscan.io', webAppUrl: 'https://prashant-thakur77.github.io/Kitty/' };
@@ -144,4 +144,21 @@ test('formatStart is three lines of pitch plus the commands, with the dashboard 
   assert.equal(pitch.length, 3);
   assert.match(msg, /https:\/\/prashant-thakur77\.github\.io\/Kitty\//);
   assert.match(msg, /\/watch 0x… or \/watch circle 1/);
+});
+
+test('formatStart speaks the languages of the places circles run, commands stay in English', () => {
+  assert.equal(startLang('hi'), 'hi');
+  assert.equal(startLang('pt-br'), 'pt');
+  assert.equal(startLang('de'), 'en');
+  assert.equal(startLang(undefined), 'en');
+  for (const lang of START_LANGS) {
+    const msg = formatStart(testnet, lang);
+    assert.equal(msg.split('\n\n')[0].split('\n').length, 3, lang);
+    assert.match(msg, /https:\/\/prashant-thakur77\.github\.io\/Kitty\//, lang);
+    assert.match(msg, /\/watch 0x… or \/watch circle 1/, lang);
+    assert.match(msg, /Creditcoin/, lang);
+  }
+  assert.match(formatStart(testnet, 'hi'), /चिट फंड/);
+  assert.match(formatStart(testnet, 'es'), /tandas/);
+  assert.match(formatStart(testnet, 'sw'), /chama/);
 });

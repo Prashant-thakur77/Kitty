@@ -29,6 +29,9 @@ The Mini App URL must be HTTPS. For a local build, `BOT_WEBAPP_URL` can point at
 
 ## 3. Run locally
 
+The `/start` pitch arrives in the sender's Telegram language when it is Hindi, Spanish, Swahili, Portuguese, French or Filipino (otherwise English); nothing to configure.
+
+
 ```bash
 pnpm install
 pnpm bot                       # live, long-polling, with BOT_TOKEN in .env

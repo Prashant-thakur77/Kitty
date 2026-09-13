@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { useAccount, usePublicClient, useSignMessage, useSwitchChain, useWriteContract } from 'wagmi'
 import { waitForTransactionReceipt } from 'wagmi/actions'
 import { hashMessage, isAddress, recoverMessageAddress } from 'viem'
-import { Copy, Check, Link2 } from 'lucide-react'
+import { Copy, Check, Link2, Share2, MessageCircle, Send } from 'lucide-react'
 import { cfg } from '../config'
 import { ledgerAbi } from '../lib/abi'
 import { creditcoinTestnet, wagmiConfig } from '../lib/wagmi'
-import { short } from '../lib/format'
+import { short, usd } from '../lib/format'
 import { inviteMessage, randomNonce, revertReason, simulateLedger } from '../lib/tx'
 import type { Circle } from '../lib/types'
 import { Section, Tag } from './ui'
@@ -35,6 +35,15 @@ export function InvitePanel({ circleId, circle, onChange }: { circleId: bigint; 
   const target = invitee.trim()
   const isMember = isAddress(target) && circle.members.some((m) => m.toLowerCase() === target.toLowerCase())
   const linkFor = (i: Invite) => `${location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/join/${String(circleId)}?invitee=${i.invitee}&nonce=${i.nonce}&sig=${i.sig}`
+  // Circles live in WhatsApp and Telegram groups, so the invite goes where the group already is: the native share
+  // sheet on phones, otherwise a prefilled WhatsApp or Telegram message. The text says what joining means.
+  const shareText = `Join ${circle.name || `circle ${String(circleId)}`} on Kitty: ${usd(circle.contribution)} a round, every payment proven on Creditcoin, no treasurer. Your invite (one wallet, one use):`
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+  const whatsapp = (i: Invite) => `https://wa.me/?text=${encodeURIComponent(`${shareText} ${linkFor(i)}`)}`
+  const telegram = (i: Invite) => `https://t.me/share/url?url=${encodeURIComponent(linkFor(i))}&text=${encodeURIComponent(shareText)}`
+  async function share(i: Invite) {
+    try { await navigator.share({ title: 'Kitty invite', text: shareText, url: linkFor(i) }) } catch { /* the sheet was dismissed */ }
+  }
 
   async function generate() {
     if (!isAddress(target) || !address || !client) return
@@ -103,8 +112,16 @@ export function InvitePanel({ circleId, circle, onChange }: { circleId: bigint; 
                   <span className="mono truncate text-xs" style={{ color: 'var(--dim)', maxWidth: '22ch' }} title={linkFor(i)}>nonce {i.nonce.slice(0, 6)}…{i.nonce.slice(-4)}</span>
                   {joined ? <Tag tone="mint">joined</Tag> : <Tag tone="muted">not redeemed</Tag>}
                 </span>
-                <span className="flex gap-1">
+                <span className="flex flex-wrap gap-1">
                   <a className="btn btn-ghost btn-sm" href={linkFor(i)} target="_blank" rel="noreferrer">open</a>
+                  {canShare ? (
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => share(i)} aria-label={`Share invite link for ${i.invitee}`}><Share2 size={12} /> share</button>
+                  ) : (
+                    <>
+                      <a className="btn btn-ghost btn-sm" href={whatsapp(i)} target="_blank" rel="noreferrer" aria-label={`Send invite for ${i.invitee} on WhatsApp`} title="Open WhatsApp with the invite prefilled"><MessageCircle size={12} /> WhatsApp</a>
+                      <a className="btn btn-ghost btn-sm" href={telegram(i)} target="_blank" rel="noreferrer" aria-label={`Send invite for ${i.invitee} on Telegram`} title="Open Telegram with the invite prefilled"><Send size={12} /> Telegram</a>
+                    </>
+                  )}
                   <button type="button" className="btn btn-sm" onClick={() => copy(i)} aria-label={`Copy invite link for ${i.invitee}`}>{copied === i.nonce ? <><Check size={12} /> copied</> : <><Copy size={12} /> copy link</>}</button>
                 </span>
               </li>
@@ -112,7 +129,7 @@ export function InvitePanel({ circleId, circle, onChange }: { circleId: bigint; 
           })}
         </ul>
       )}
-      <p className="mt-3 text-xs" style={{ color: 'var(--dim)' }}>Links are kept in this browser only; the ledger stores nothing until an invite is redeemed.</p>
+      <p className="mt-3 text-xs" style={{ color: 'var(--dim)' }}>Links are kept in this browser only; the ledger stores nothing until an invite is redeemed. Send each link to its member on WhatsApp or Telegram: only that wallet can redeem it, once.</p>
     </Section>
   )
 }

@@ -207,6 +207,8 @@ The form mirrors the ledger's own checks so a revert is the exception. Constants
 
 Shown on `/circle/:id` to the organiser while `circle.open` is true. Invites are stored in `localStorage` under `kitty:invites:<ledger lowercased>:<circleId>` as `{ invitee, nonce, sig }[]`; nothing goes on chain until redemption.
 
+Each stored invite has *open*, *copy link*, and either *share* (when `navigator.share` exists, the phone's native sheet with title, text and URL) or *WhatsApp* (`https://wa.me/?text=`) and *Telegram* (`https://t.me/share/url?url=&text=`) links carrying `shareText`: the circle's name, the installment from `usd(circle.contribution)`, and "every payment proven on Creditcoin, no treasurer", followed by the link.
+
 `generate()`:
 
 1. `nonce = randomNonce()`: 32 bytes from `crypto.getRandomValues`, as a `bigint`.

@@ -47,7 +47,7 @@ Parsing: the message is split on whitespace; the first token is lowercased and a
 
 | Command | Reply |
 |---|---|
-| `/start`, `/help` | `formatStart(links)`; `openKitty` is true in private chats and in simulate mode, so the reply carries the Mini App button. |
+| `/start`, `/help` | `formatStart(links, startLang(language_code))`, the pitch in the sender's Telegram language (en, hi, es, sw, pt, fr, tl); `openKitty` is true in private chats and in simulate mode, so the reply carries the Mini App button. |
 | `/watch <target>` | No argument: `Usage: <code>/watch 0x…</code> or <code>/watch circle 1</code>`. Otherwise the target is added to the chat's `members` or `circles` (no duplicates; members compared case-insensitively), the state is saved, and the reply is `👀 Watching member <code>0x1234…abcd</code>.` or `👀 Watching circle N.` followed by ` Every proof, missed payment, close and payout lands here, plus a reminder when a deadline is <BOT_REMINDER_BLOCKS> attested blocks away.` |
 | `/unwatch [target]` | No argument: clears both lists, `Stopped watching everything.` With a target: removes it, `Stopped watching <code>0x1234…abcd</code>.` or `Stopped watching circle N.` |
 | `/list` | `Not watching anything. Try <code>/watch circle 1</code>.` or a list headed `👀 Watching` with one `• circle N · <name>` line per circle (the name from `getCircle`, escaped, omitted if the read fails) and one `• member <code>0x…</code>` line per member. |
@@ -247,6 +247,8 @@ No treasurer, no oracle, no bridge. Dashboard: https://prashant-thakur77.github.
 /unwatch, /list, /steward
 ```
 
+The three pitch lines are translated for the places where circles already run: Hindi (chit funds), Spanish (tandas), Swahili (chamas), Portuguese (consórcios), French (tontines) and Filipino (paluwagan). `startLang(code)` maps Telegram's `language_code` (BCP 47; `pt-br` counts as `pt`) to one of `START_LANGS`, anything else to English, and `handle()` passes `ctx.from.language_code` through. The command list is English in every language because the commands are.
+
 ### `/watch` and `/list`
 
 These two replies are assembled in `handle()` rather than in `format.ts`; the examples follow its template strings for `/watch circle 1` (with the default `BOT_REMINDER_BLOCKS`) and for a chat watching circle 1 and one member.
@@ -261,4 +263,4 @@ These two replies are assembled in `handle()` rather than in `format.ts`; the ex
 • member <code>0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC</code>
 ```
 
-Tests: `pnpm test:bot` runs `bot/test/format.test.ts` (11 tests: `describe()` wording, `formatEvent` links, escaping and the local fallback, `formatCircle` in open, closed, paid and tentative states, `pickRecipient`, `formatScore`, `formatSteward`, `formatReminder`, `formatStart`) with no network.
+Tests: `pnpm test:bot` runs `bot/test/format.test.ts` (12 tests: `describe()` wording, `formatEvent` links, escaping and the local fallback, `formatCircle` in open, closed, paid and tentative states, `pickRecipient`, `formatScore`, `formatSteward`, `formatReminder`, `formatStart`) with no network.

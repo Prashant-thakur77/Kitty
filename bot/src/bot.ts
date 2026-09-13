@@ -15,7 +15,7 @@ import { Bot, type Context } from 'grammy';
 import { botCfg, requireLedger } from './config.ts';
 import { loadState, saveState, subs, watchersOf, type BotState } from './state.ts';
 import { attestedFrontier, circleName, head, memberPending, readCircle, readScore, scanEvents } from './chain.ts';
-import { esc, formatCircle, formatEvent, formatReminder, formatScore, formatStart, formatSteward, short, type Links } from './format.ts';
+import { esc, formatCircle, formatEvent, formatReminder, formatScore, formatStart, formatSteward, short, startLang, type Links } from './format.ts';
 import { read as readDecisions } from '../../worker/src/agent/log.ts';
 
 const links: Links = { ccExplorer: botCfg.ccExplorer, sourceExplorer: botCfg.sourceExplorer, webAppUrl: botCfg.webAppUrl };
@@ -28,7 +28,7 @@ type Send = (chatId: string, r: Reply) => Promise<void>;
 
 /* ------------------------------------------------------------------ commands */
 
-async function handle(state: BotState, chatId: string, chatType: string, text: string): Promise<Reply> {
+async function handle(state: BotState, chatId: string, chatType: string, text: string, languageCode?: string): Promise<Reply> {
   const [cmd, ...rest] = text.trim().split(/\s+/);
   const command = cmd.toLowerCase().replace(/@\w+$/, '');
   const argv = rest.join(' ');
@@ -43,7 +43,7 @@ async function handle(state: BotState, chatId: string, chatType: string, text: s
   switch (command) {
     case '/start':
     case '/help':
-      return { text: formatStart(links), openKitty: chatType === 'private' || chatType === 'sim' };
+      return { text: formatStart(links, startLang(languageCode)), openKitty: chatType === 'private' || chatType === 'sim' };
 
     case '/watch': {
       if (!argv) return { text: 'Usage: <code>/watch 0x…</code> or <code>/watch circle 1</code>' };
@@ -94,7 +94,7 @@ async function handle(state: BotState, chatId: string, chatType: string, text: s
       return { text: formatSteward(readDecisions(5), links) };
 
     default:
-      return { text: `Unknown command. ${formatStart(links)}` };
+      return { text: `Unknown command. ${formatStart(links, startLang(languageCode))}` };
   }
 }
 
@@ -198,7 +198,7 @@ async function main() {
     if (!text.startsWith('/')) return;
     const chatId = String(ctx.chat!.id);
     let r: Reply;
-    try { r = await handle(state, chatId, ctx.chat!.type, text); } catch (e) { r = { text: `Something went wrong: ${esc(errorText(e))}` }; }
+    try { r = await handle(state, chatId, ctx.chat!.type, text, ctx.from?.language_code); } catch (e) { r = { text: `Something went wrong: ${esc(errorText(e))}` }; }
     await ctx.reply(r.text, { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...(r.openKitty ? { reply_markup: keyboard(ctx.chat!.type) } : {}) });
   });
   await bot.api.setMyCommands([

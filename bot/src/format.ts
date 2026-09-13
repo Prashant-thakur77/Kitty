@@ -173,11 +173,63 @@ export function formatReminder(o: { member: string; circleId: string; name: stri
   ].join('\n');
 }
 
-export function formatStart(l: Links): string {
-  return [
+/**
+ * The pitch in the languages of the places where savings circles already run: Telegram sends the user's
+ * `language_code`, and the first message a saver reads is in their own language. The command list stays
+ * in English because the commands are. Unknown codes fall back to English.
+ */
+export const START_LANGS = ['en', 'hi', 'es', 'sw', 'pt', 'fr', 'tl'] as const;
+export type StartLang = (typeof START_LANGS)[number];
+const PITCH: Record<StartLang, [string, string, string]> = {
+  en: [
     '🐱 <b>Kitty</b> — savings circles where every payment is proven, not promised.',
     'Members pay stablecoins into a vault on Ethereum; the Attestcoin Protocol proves each payment to Creditcoin, where the rules, the rotation and your Kitty Score live.',
-    `No treasurer, no oracle, no bridge. Dashboard: ${l.webAppUrl}`,
+    'No treasurer, no oracle, no bridge. Dashboard: ',
+  ],
+  hi: [
+    '🐱 <b>Kitty</b> — ऐसी चिट फंड और बचत समितियाँ जहाँ हर भुगतान प्रमाणित होता है, वादा नहीं।',
+    'सदस्य Ethereum पर एक वॉल्ट में स्टेबलकॉइन जमा करते हैं; Attestcoin Protocol हर भुगतान को Creditcoin पर साबित करता है, जहाँ नियम, बारी और आपका Kitty Score रहते हैं।',
+    'न कोई फोरमैन, न ऑरेकल, न ब्रिज। डैशबोर्ड: ',
+  ],
+  es: [
+    '🐱 <b>Kitty</b> — tandas donde cada pago se demuestra, no se promete.',
+    'Los miembros pagan stablecoins a una bóveda en Ethereum; el Attestcoin Protocol prueba cada pago en Creditcoin, donde viven las reglas, el turno y tu Kitty Score.',
+    'Sin tesorero, sin oráculo, sin puente. Panel: ',
+  ],
+  sw: [
+    '🐱 <b>Kitty</b> — chama ambapo kila malipo yanathibitishwa, si ahadi.',
+    'Wanachama hulipa stablecoin kwenye hazina ya Ethereum; Attestcoin Protocol huthibitisha kila malipo kwenye Creditcoin, ambako sheria, zamu na Kitty Score yako zinaishi.',
+    'Hakuna mweka hazina, hakuna oracle, hakuna daraja. Dashibodi: ',
+  ],
+  pt: [
+    '🐱 <b>Kitty</b> — consórcios onde cada pagamento é provado, não prometido.',
+    'Os membros pagam stablecoins num cofre na Ethereum; o Attestcoin Protocol prova cada pagamento na Creditcoin, onde vivem as regras, a rotação e o seu Kitty Score.',
+    'Sem tesoureiro, sem oráculo, sem ponte. Painel: ',
+  ],
+  fr: [
+    '🐱 <b>Kitty</b> — des tontines où chaque paiement est prouvé, pas promis.',
+    'Les membres versent des stablecoins dans un coffre sur Ethereum ; l’Attestcoin Protocol prouve chaque paiement sur Creditcoin, où vivent les règles, le tour et votre Kitty Score.',
+    'Ni trésorier, ni oracle, ni pont. Tableau de bord : ',
+  ],
+  tl: [
+    '🐱 <b>Kitty</b> — paluwagan kung saan bawat bayad ay pinatutunayan, hindi pinangangako.',
+    'Nagbabayad ang mga miyembro ng stablecoin sa isang vault sa Ethereum; pinatutunayan ng Attestcoin Protocol ang bawat bayad sa Creditcoin, kung saan nakatira ang mga patakaran, ang pila at ang iyong Kitty Score.',
+    'Walang ingat-yaman, walang oracle, walang tulay. Dashboard: ',
+  ],
+};
+
+/** Telegram's `language_code` (BCP 47, e.g. `pt-br`) to a pitch language; anything else is English. */
+export function startLang(code?: string): StartLang {
+  const base = (code ?? '').toLowerCase().split('-')[0];
+  return (START_LANGS as readonly string[]).includes(base) ? (base as StartLang) : 'en';
+}
+
+export function formatStart(l: Links, lang: StartLang = 'en'): string {
+  const [a, b, c] = PITCH[lang];
+  return [
+    a,
+    b,
+    `${c}${l.webAppUrl}`,
     '',
     '/circle 1 — live state of a circle',
     '/score 0x… — Kitty Score, counters, credit limit',

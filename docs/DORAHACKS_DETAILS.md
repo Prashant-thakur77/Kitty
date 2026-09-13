@@ -17,7 +17,7 @@ Kitty is a rotating savings circle (a chit fund, a susu, a tanda, a chama) where
 - A **real missed payment** closed on the attested deadline, with the attestation that proved it stored on chain.
 - All **eight attack scenarios** run against the live precompile: six decoded rejections, two accepted by design.
 - A real **Ethereum mainnet** transaction verified under chain key 3 on the live precompile.
-- 162 Foundry tests (unit, fuzz, stateful invariants with an attacker target), 29 agent tests, 11 bot tests, a triaged Slither report, CI green.
+- 162 Foundry tests (unit, fuzz, stateful invariants with an attacker target), 29 agent tests, 12 bot tests, a triaged Slither report, CI green.
 
 ## The problem
 
