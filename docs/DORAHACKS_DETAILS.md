@@ -59,6 +59,14 @@ Create a circle in one Creditcoin transaction, invite members with signed links,
 
 ![What a lender sees](https://raw.githubusercontent.com/Prashant-thakur77/Kitty/main/docs/assets/score.png)
 
+## The five evaluation pillars
+
+- **User base expansion.** Savers who already run chit funds, susu, tandas and chamas become Creditcoin users the moment their circle settles through Kitty. They arrive through the Telegram bot and Mini App, signed invite links and ordinary stablecoin payments; their proof-derived history is readable by any Creditcoin lender via `creditScore(address)`.
+- **Technical alignment.** The ledger acts only on what 0x0FD2 verified and 0x0FD3 attested: batch verification across circles, free preflight, batch proof-back, six ChainInfo functions, browser-side proving, the mainnet chain key, all exercised on the live precompile.
+- **Product vision.** Next: mainnet circles under chain key 3 with a USDC vault, score-gated circle sizes, seat bidding, pot cover, loan defaults feeding the score, lender integrations, then payouts through Attestcoin writability so the last operator key disappears.
+- **Execution capability.** 100 commits in six days by one builder: contracts with 162 tests, steward, dashboard, bot, full documentation, four testnet deployments, 127 linked transactions, a recorded demo; every problem found live was fixed and logged the same day.
+- **Proven models.** A centuries-old savings mechanism (regulated as chit funds in India), the credit-bureau score lenders already price against, and a per-round fee priced against the chit-fund foreman's commission, made cheap by batch proofs. Full treatment: [docs/PILLARS.md](https://github.com/Prashant-thakur77/Kitty/blob/main/docs/PILLARS.md).
+
 ## Verify it yourself
 
 1. Open https://prashant-thakur77.github.io/Kitty/circle/4 and follow any proven payment to its Creditcoin transaction.

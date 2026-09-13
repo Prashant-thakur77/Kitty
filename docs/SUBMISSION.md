@@ -49,6 +49,16 @@ Three properties that follow from the design:
 - **Does not care who submits.** Fire the steward and a stranger's proof still settles the round;
   the steward's only on-ledger power is a proof.
 
+## The five evaluation pillars
+
+- **User base expansion.** Savers who already run chit funds, susu, tandas and chamas become Creditcoin users the moment their circle settles through Kitty. They arrive through the Telegram bot and Mini App, signed invite links and ordinary stablecoin payments; their proof-derived history is readable by any Creditcoin lender via `creditScore(address)`.
+- **Technical alignment.** The ledger acts only on what 0x0FD2 verified and 0x0FD3 attested: batch verification across circles, free preflight, batch proof-back, six ChainInfo functions, browser-side proving, mainnet chain key, all exercised on the live precompile.
+- **Product vision.** Next: mainnet circles under chain key 3 with a USDC vault, score-gated circle sizes, seat bidding, pot cover, loan defaults feeding the score, lender integrations, then payouts through Attestcoin writability so the last operator key disappears.
+- **Execution capability.** 100 commits in six days by one builder: contracts with 162 tests, steward, dashboard, bot, full documentation, four testnet deployments, 127 linked transactions, a recorded demo; every problem found live was fixed and logged the same day.
+- **Proven models.** A centuries-old savings mechanism (regulated as chit funds in India), the credit-bureau score lenders already price against, and a per-round fee priced against the chit-fund foreman's commission, made cheap by batch proofs.
+
+Full treatment: `docs/PILLARS.md`.
+
 ## How it uses the Attestcoin Protocol
 
 - Batch `verifyAndEmit` on 0x0FD2: up to 10 payments under one continuity proof, pooled across

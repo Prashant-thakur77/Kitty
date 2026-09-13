@@ -6,6 +6,7 @@ An index of everything under `docs/`, one line each. Start with the technical no
 
 | Document | Description |
 |---|---|
+| [`PILLARS.md`](PILLARS.md) | The five evaluation pillars answered with evidence. |
 | [`TECH.md`](TECH.md) | The technical note: a payment is a record, the nineteen checks that turn a Sepolia payment into Creditcoin state, the attestation clock, rotation, the score, the steward's three layers, the batch policy, measured gas, Attestcoin coverage, limits. |
 | [`specs/PROTOCOL.md`](specs/PROTOCOL.md) | The formal specification: data model, Circle and Round state machines, every external function of `KittyLedger` and `KittyVault` with access, preconditions, effects, events and errors, the event and error catalogues, query-id derivation, 21 numbered invariants with their tests. |
 | [`THREAT_MODEL.md`](THREAT_MODEL.md) | Assets, actors, trust assumptions, a threat table with the exact mitigating check and the test or scenario that demonstrates it, the eight attack scenarios mapped to threats, known limits. |

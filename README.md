@@ -42,6 +42,7 @@
 - [Overview](#overview)
 - [Demo](#demo)
 - [What makes Kitty different](#what-makes-kitty-different)
+- [The five evaluation pillars](#the-five-evaluation-pillars)
 - [Verify it yourself in five minutes](#verify-it-yourself-in-five-minutes)
 - [How a round settles](#how-a-round-settles)
 - [Attestcoin integration](#attestcoin-integration)
@@ -127,6 +128,18 @@ Most proof-of-history projects import a credit record that already exists on ano
 | Evidence | A demo transaction or two | Seven circles, 125 linked testnet transactions, eight attack scenarios on the live precompile, a Telegram bot in production |
 
 The score that results is not a claim about the past; it is a record that only proven payments and attested deadlines can write.
+
+## The five evaluation pillars
+
+The organisers judge on user base expansion, technical alignment, product vision, execution capability and proven models. [`docs/PILLARS.md`](docs/PILLARS.md) answers each with evidence; in one line each:
+
+| Pillar | Kitty |
+|---|---|
+| User base expansion | Savers who already run chit funds, susu, tandas and chamas become Creditcoin users the moment their circle settles; they arrive through the Telegram bot and Mini App, invite links and ordinary stablecoin payments, and their proof-derived history is readable by any Creditcoin lender. |
+| Technical alignment | The ledger acts only on what `0x0FD2` verified and `0x0FD3` attested: batch verification across circles, free preflight, batch proof-back, six ChainInfo functions, all exercised on the live precompile. |
+| Product vision | Mainnet circles under chain key 3, score-gated sizes and seat bidding, defaults feeding the score, lender integrations, then payouts through Attestcoin writability. |
+| Execution capability | 100 commits in six days by one builder: contracts, steward, dashboard, bot, documentation, four testnet deployments, 127 linked transactions, a recorded demo; every problem found live fixed the same day. |
+| Proven models | A centuries-old savings mechanism (regulated as chit funds in India), the credit-bureau score lenders already price against, and a fee priced against the chit-fund foreman's commission. |
 
 ## Verify it yourself in five minutes
 
@@ -487,6 +500,7 @@ Index with one line per file: [`docs/README.md`](docs/README.md).
 
 | Document | Description |
 |---|---|
+| [`docs/PILLARS.md`](docs/PILLARS.md) | The five evaluation pillars answered with evidence: users, alignment, vision and roadmap, execution record, proven models |
 | [`docs/TECH.md`](docs/TECH.md) | Technical note: the core insight, the nineteen checks from a Sepolia payment to Creditcoin state, the attestation clock, rotation, the score, the steward's three layers, batch policy, measured gas, Attestcoin coverage, limits |
 | [`docs/specs/PROTOCOL.md`](docs/specs/PROTOCOL.md) | Protocol specification: data model, state machines, the complete `KittyLedger` and `KittyVault` interfaces, event and error catalogues, query-id derivation, numbered invariants |
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Assets, actors, trust assumptions, threat table with the exact mitigating check and its test, the eight attack scenarios, known limits |

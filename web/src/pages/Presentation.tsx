@@ -189,8 +189,13 @@ const slides: ReactNode[] = [
         <tr key={t.hash}><td style={{ color: 'var(--ink)' }}>{t.action}</td><td>{t.chain}</td><td className="mono"><a href={`${t.chain === 'Sepolia' ? SEP : CC}${t.hash}`} target="_blank" rel="noreferrer">{t.hash.slice(0, 10)}…{t.hash.slice(-6)}</a></td><td className="mono">{t.gas.toLocaleString()}</td></tr>
       ))}
     </tbody></table></Slide>,
-  <Slide key={11} eyebrow="Roadmap · CEIP" title="From circles to credit lines">
-    <ul className="list-disc pl-5"><Li>Score-gated circle sizes and seat bidding.</Li><Li>Lender integrations on Creditcoin.</Li><Li>Attestcoin writability for payouts once audited; Ethereum mainnet chainKey on CC3 mainnet.</Li><Li>Pot cover through proven-event insurance.</Li></ul></Slide>,
+  <Slide key={11} eyebrow="Users · vision · execution" title="Who arrives, where this goes, how it gets built">
+    <table className="w-full text-[15px]"><tbody>
+      <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Users</td><td>Savers who already run chit funds, susu, tandas and chamas. They arrive through the Telegram bot and Mini App, invite links and ordinary stablecoin payments; their history is readable by any Creditcoin lender.</td></tr>
+      <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Roadmap</td><td>Mainnet circles under chain key 3 with a USDC vault; score-gated circle sizes and seat bidding; pot cover from proven events; defaults feeding the score; lender integrations; payouts through Attestcoin writability.</td></tr>
+      <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Execution</td><td>100 commits in six days by one builder: contracts, steward, dashboard, bot, documentation, four testnet deployments, 127 linked transactions, a recorded demo. Every problem found live was fixed and logged the same day.</td></tr>
+      <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Proven models</td><td>A centuries-old savings mechanism, regulated as chit funds in India; the credit-bureau score lenders already price against; a per-round fee priced against the foreman's commission, made cheap by batch proofs.</td></tr>
+    </tbody></table></Slide>,
   <Slide key={12} eyebrow="Team" title="Prashant · solo builder">
     <p>Foundry · TypeScript · React. Repo: {cfg.repo}. Contracts on Sepolia and Creditcoin CC3 Testnet; {COUNTS.forge} Foundry tests · {COUNTS.agent} agent tests · {COUNTS.scenarios} attack scenarios end to end in CI; verified against the live 0x0FD2.</p>
     <div className="mt-5 flex flex-wrap items-center gap-3"><Blockie address={SAMPLE_MEMBERS[0]} size={26} /><span className="mono text-sm">{short(SAMPLE_MEMBERS[0])}</span><Tag tone="mint">member 0 · first pot received</Tag><Tag tone="sky">KittyLedger {short(cfg.ledger)}</Tag></div></Slide>,
