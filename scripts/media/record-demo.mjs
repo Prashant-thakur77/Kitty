@@ -136,13 +136,35 @@ await segment('01_hook', async () => {
 await segment('05_live', async () => {
   await open(base + '/')
   await glide(1000, 480, 30)
-  await pace(5000, 0, async () => { await scrollTo(900, 1300) })
-  await pace(9000, 0, async () => { await scrollTo(0, 900); await clickText('button', /^Connect$/, 1500) })
+  await pace(4000, 0, async () => { await scrollTo(700, 1100) })
+  await pace(7000, 0, async () => { await scrollTo(0, 800); await clickText('button', /^Connect$/, 1500) })
 })
+
+// ── 5b · create a circle from the browser (real Creditcoin tx from the member wallet) ──
+let CIRCLE = process.env.DEMO_CIRCLE ?? ''
+const MEMBERS = keys.slice(0, 3).map((k) => new ethers.Wallet(k).address)
+await segment('05b_create', async () => {
+  await open(base + '/create')
+  const connect = page.getByRole('button', { name: /^Connect/ })
+  if (await connect.count()) await clickText('button', /^Connect/, 1200)
+  const type = async (loc, text) => { const bb = await loc.boundingBox(); if (bb) await glide(bb.x + 30, bb.y + bb.height / 2, 16); await loc.click(); await loc.fill(''); await page.keyboard.type(text, { delay: 28 }) }
+  await type(page.getByPlaceholder('Delhi Chit Circle'), 'Kolkata Chit Circle')
+  await type(page.locator('textarea').first(), MEMBERS.join('\n'))
+  await type(page.locator('label:has-text("Installment") input'), '100')
+  await type(page.locator('label:has-text("Round length") input'), '200')
+  await clickText('radio', /By proven score/, 500)
+  await pace(19000, 0, async () => {})
+  await clickText('button', /^Create circle/, 500)
+  await page.waitForURL(/\/circle\/\d+/, { timeout: 180000 }).catch(() => {})
+  CIRCLE = (page.url().match(/\/circle\/(\d+)/) || [])[1] ?? CIRCLE
+  console.log('   created circle', CIRCLE)
+  await sleep(2500)
+})
+const DEMO_CIRCLE_ID = () => CIRCLE
 
 // ── 6 · circle page (the member's circle) ──
 await segment('06_circle', async () => {
-  await open(`${base}/circle/${DEMO_CIRCLE}`)
+  await open(`${base}/circle/${DEMO_CIRCLE_ID()}`)
   await glide(700, 330, 30)
   await pace(4000, 0, async () => { await glide(300, 470, 20); await glide(1500, 470, 90) })   // run the cursor along the tick scale
   await pace(9000, 0, async () => { await scrollTo(620, 1200); await glide(520, 700, 40) })    // wheel + history
@@ -159,6 +181,8 @@ await segment('07_pay', async () => {
   const close = page.getByRole('button', { name: /Close|Done|OK/ }).first(); if (await close.count()) await close.click().catch(() => {})
   await sleep(1500)
 })
+// the other members pay off camera so the round can complete once the steward is back on
+if (!process.env.SKIP_OTHERS) try { sh(`pnpm -s demo contribute --circle ${DEMO_CIRCLE_ID()} --skip ${DEMO_MEMBER}`) ; console.log('   other members paid') } catch (e) { console.log('   background contribute failed:', String(e).slice(0, 120)) }
 
 // ── wait for the attestor network to cover the payment ──
 if (!done.has('08_prove')) {
@@ -167,7 +191,7 @@ if (!done.has('08_prove')) {
   if (page) { await page.close(); page = null }
   for (;;) {
     const ready = await (async () => {
-      const p = await ctx.newPage(); await p.goto(`${base}/circle/${DEMO_CIRCLE}`, { waitUntil: 'load', timeout: 90000 }); await sleep(6000)
+      const p = await ctx.newPage(); await p.goto(`${base}/circle/${DEMO_CIRCLE_ID()}`, { waitUntil: 'load', timeout: 90000 }); await sleep(6000)
       const ok = await p.getByRole('button', { name: /^Prove \d+ payment/ }).count()
       await p.close(); return ok > 0
     })()
@@ -180,7 +204,7 @@ if (!done.has('08_prove')) {
 
 // ── 8 · prove it yourself (real Creditcoin tx from the member wallet) ──
 await segment('08_prove', async () => {
-  await open(`${base}/circle/${DEMO_CIRCLE}`)
+  await open(`${base}/circle/${DEMO_CIRCLE_ID()}`)
   const connect = page.getByRole('button', { name: /^Connect$/ })
   if (await connect.count()) { await clickText('button', /^Connect$/, 1500) }   // a fresh session: connect the member first
   const panel = page.getByText('Prove it yourself').first(); await panel.scrollIntoViewIfNeeded(); await sleep(600)
@@ -217,7 +241,7 @@ await segment('11_credit', async () => {
 
 // ── 12 · telegram (the bot answering from the chain) ──
 await segment('12_telegram', async () => {
-  await terminal('kitty — telegram bot · dry run against CC3 Testnet', `BOT_SIMULATE="/circle ${DEMO_CIRCLE}; /score ${member.address}" pnpm bot:dry`, `BOT_SIMULATE="/circle ${DEMO_CIRCLE}; /score ${member.address}" pnpm -s bot:dry`, { lineDelay: 110, maxLines: 40, plain: true })
+  await terminal('kitty — telegram bot · dry run against CC3 Testnet', `BOT_SIMULATE="/circle ${DEMO_CIRCLE_ID()}; /score ${member.address}" pnpm bot:dry`, `BOT_SIMULATE="/circle ${DEMO_CIRCLE_ID()}; /score ${member.address}" pnpm -s bot:dry`, { lineDelay: 110, maxLines: 40, plain: true })
 })
 
 // ── 13 · depth (architecture flow scene) ──
@@ -236,7 +260,7 @@ await segment('14_close', async () => {
 if (page) await page.close()
 await ctx.close(); await browser.close()
 const merged = storyTimeline ? [timeline[0], ...storyTimeline, ...timeline.slice(1)] : timeline
-const order = ['01_hook','02_problem','03_split','04_enable','05_live','06_circle','07_pay','08_prove','09_steward','10_attack','11_credit','12_telegram','13_depth','14_close']
+const order = ['01_hook','02_problem','03_split','04_enable','05_live','05b_create','06_circle','07_pay','08_prove','09_steward','10_attack','11_credit','12_telegram','13_depth','14_close']
 merged.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name))
 fs.writeFileSync(path.join(OUT, 'timeline.json'), JSON.stringify(merged, null, 1))
 console.log('recorded', timeline.length, 'segments, total', timeline.reduce((a, t) => a + t.seconds, 0).toFixed(1) + 's')

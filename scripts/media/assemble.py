@@ -17,7 +17,7 @@ for t in timeline:
     offset[t['file']] = t['start'] + t['seconds']
 
 # segments that are mostly a page waiting on the steward may be compressed harder than the rest
-MAX_SPEED = {'08_miss': 1.8, '04_enable': 1.5}
+MAX_SPEED = {'08_miss': 1.8, '04_enable': 1.5, '05_live': 1.9, '05b_create': 2.05}
 # the 3D story chapters carry their own on-screen captions
 NO_CAPTIONS = {'02_problem', '03_split', '04_enable'}
 parts, srt, clock = [], [], 0.0

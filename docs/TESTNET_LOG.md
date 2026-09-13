@@ -114,6 +114,12 @@ Every transaction of the 12 September 2026 campaign, across four ledger deployme
 | 2026-09-12 | Creditcoin CC3 Testnet | closeRound circle 4 round 0 (everyone paid; by score) | [0x61484a17…2d3f27](https://creditcoin-testnet.blockscout.com/tx/0x61484a17627ac47fc1b8d66d23c15db797848675b6ff5a572199640efc2d3f27) | 354326 |
 | 2026-09-12 | Sepolia | payout circle 4 round 0 (300 tUSD) | [0x960e6d03…d56337](https://sepolia.etherscan.io/tx/0x960e6d03037fba930fd65888462749b3108dc7e6ca665df7e9912697e9d56337) | 64821 |
 | 2026-09-12 | Creditcoin CC3 Testnet | confirmPayout circle 4 round 0 (proven back through 0x0FD2) | [0x15336542…62c2e5](https://creditcoin-testnet.blockscout.com/tx/0x15336542bae64878f61b60e22576ba78da4cfe5ce5dd89cc6f7666065562c2e5) | 387478 |
+| 2026-09-13 | Creditcoin CC3 Testnet | createCircle 5 (Kolkata Chit Circle) from the browser, signed by a member wallet during the demo recording | [0x706c65e1…4b75e2](https://creditcoin-testnet.blockscout.com/tx/0x706c65e1e8756b5aee9b0f2390149217d01fb9ef1155bd99fea2c437404b75e2) | 358050 |
+| 2026-09-13 | Creditcoin CC3 Testnet | setRotation ByScore for circle 5 from the browser | [0x64942250…7038c6](https://creditcoin-testnet.blockscout.com/tx/0x64942250c927c2976278ffa46a909fc98154ed688e19d231ead076772b7038c6) | 328804 |
+| 2026-09-13 | Sepolia | contribute circle 5 round 0 member 2, signed in the browser during the demo recording | [0x3d1e32af…cc75ac](https://sepolia.etherscan.io/tx/0x3d1e32af4c85f52c669a40507ecac008d2446d8ca04500e7005fc55ba4cc75ac) | 105733 |
+| 2026-09-13 | Creditcoin CC3 Testnet | recordContributions circle 5 round 0 (the other two members, batch of 2) | [0x4685ebd9…cf509f](https://creditcoin-testnet.blockscout.com/tx/0x4685ebd9b2fb45990c838cc9a0aef803eb77ed05bd4d46ddc9dc5d314ecf509f) | 735401 |
+| 2026-09-13 | Creditcoin CC3 Testnet | closeRound circle 5 round 0 (everyone paid) | [0xefd81b95…a8352e](https://creditcoin-testnet.blockscout.com/tx/0xefd81b95ac38302f766156cea63851f956f79b2c51c0db60db34705e59a8352e) | 354326 |
+| 2026-09-13 | Sepolia | payout circle 5 round 0 (300 tUSD) | [0x9a509c16…e10c69](https://sepolia.etherscan.io/tx/0x9a509c16b3bc4b53dcdb9041560c40e3ee64db0629207e6225e1e691e8e10c69) | 64821 |
 
 ## Live precompile verification (no deployment needed)
 
