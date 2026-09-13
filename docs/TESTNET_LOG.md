@@ -120,6 +120,8 @@ Every transaction of the 12 September 2026 campaign, across four ledger deployme
 | 2026-09-13 | Creditcoin CC3 Testnet | recordContributions circle 5 round 0 (the other two members, batch of 2) | [0x4685ebd9…cf509f](https://creditcoin-testnet.blockscout.com/tx/0x4685ebd9b2fb45990c838cc9a0aef803eb77ed05bd4d46ddc9dc5d314ecf509f) | 735401 |
 | 2026-09-13 | Creditcoin CC3 Testnet | closeRound circle 5 round 0 (everyone paid) | [0xefd81b95…a8352e](https://creditcoin-testnet.blockscout.com/tx/0xefd81b95ac38302f766156cea63851f956f79b2c51c0db60db34705e59a8352e) | 354326 |
 | 2026-09-13 | Sepolia | payout circle 5 round 0 (300 tUSD) | [0x9a509c16…e10c69](https://sepolia.etherscan.io/tx/0x9a509c16b3bc4b53dcdb9041560c40e3ee64db0629207e6225e1e691e8e10c69) | 64821 |
+| 2026-09-13 | Sepolia | contribute circle 5 round 1 member 2, signed in the browser during the demo recording | [0x8c437bb3…5ee8e0](https://sepolia.etherscan.io/tx/0x8c437bb314fba3f57ee7c2a8917295113450e6efeee72254188c6799995ee8e0) | 51645 |
+| 2026-09-13 | Creditcoin CC3 Testnet | recordContributions circle 5 round 1: the whole round (3 payments) proven from the browser by a member wallet in one call | [0x37bc2a8c…3b143b](https://creditcoin-testnet.blockscout.com/tx/0x37bc2a8ce80c24803ec1880efda4e1a9fdfade1e2ae3ddf10c931b36223b143b) | 595117 |
 
 ## Live precompile verification (no deployment needed)
 

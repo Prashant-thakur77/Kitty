@@ -165,6 +165,7 @@ const DEMO_CIRCLE_ID = () => CIRCLE
 // ── 6 · circle page (the member's circle) ──
 await segment('06_circle', async () => {
   await open(`${base}/circle/${DEMO_CIRCLE_ID()}`)
+  if (await page.getByRole('button', { name: /^Connect$/ }).count()) await clickText('button', /^Connect$/, 1200)   // fresh session
   await glide(700, 330, 30)
   await pace(4000, 0, async () => { await glide(300, 470, 20); await glide(1500, 470, 90) })   // run the cursor along the tick scale
   await pace(9000, 0, async () => { await scrollTo(620, 1200); await glide(520, 700, 40) })    // wheel + history
@@ -192,8 +193,16 @@ if (!done.has('08_prove')) {
   for (;;) {
     const ready = await (async () => {
       const p = await ctx.newPage(); await p.goto(`${base}/circle/${DEMO_CIRCLE_ID()}`, { waitUntil: 'load', timeout: 90000 }); await sleep(6000)
-      const ok = await p.getByRole('button', { name: /^Prove \d+ payment/ }).count()
-      await p.close(); return ok > 0
+      const label = await p.getByRole('button', { name: /^Prove \d+ payment/ }).first().innerText().catch(() => '')
+      const panelText = await p.locator('section', { hasText: 'Prove it yourself' }).first().innerText().catch(() => '')
+      const maxPay = Math.max(0, ...[...panelText.matchAll(/block ([\d,]+)/g)].map((m) => Number(m[1].replace(/,/g, ''))))
+      await p.close()
+      const n = Number((label.match(/Prove (\d+) payment/) || [])[1] ?? 0)
+      if (n < Number(process.env.WANT_PAYMENTS ?? 1)) return false
+      // the Proof Builder's own frontier can lag the on-chain one by a few blocks; wait for it too
+      const ah = await fetch(`${env.PROOF_BUILDER_URL ?? 'https://prover.cc3-testnet.creditcoin.network'}/api/v1/attested-height/1`).then((r) => r.json()).catch(() => ({ attestedHeight: 0 }))
+      console.log(`   button: ${label} · proof builder attested ${ah.attestedHeight} · highest payment block ${maxPay}`)
+      return maxPay > 0 && Number(ah.attestedHeight) >= maxPay
     })()
     if (ready) break
     if (Date.now() - t0 > 30 * 60 * 1000) { console.log('gave up waiting for attestation'); break }
