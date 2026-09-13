@@ -134,7 +134,7 @@ One row per protocol function, with where Kitty calls it. Line numbers refer to 
 
 | Interface | Function | Where |
 |---|---|---|
-| `INativeQueryVerifier` (0x0FD2) | `verifyAndEmit` (batch) | `recordContributions`, `KittyLedger.sol:512`; `confirmPayouts`, `:557` |
+| `INativeQueryVerifier` (0x0FD2) | `verifyAndEmit` (batch) | `recordContributions`, `KittyLedger.sol:512`; `confirmPayouts`, `:557` (exercised live on 13 September 2026: the payouts of circles 6 and 7 proven back under one continuity proof, tx `0x5496258b…`; the steward batches proof-backs whenever several rounds pay out in the same tick) |
 | `INativeQueryVerifier` | `verifyAndEmit` (single) | `confirmPayout`, `KittyLedger.sol:538` |
 | `INativeQueryVerifier` | `verify` (both view overloads) | free preflight and re-verify: `worker/src/verifier.ts`, `web/src/lib/verifier.ts` |
 | `INativeQueryVerifier` | `calculateTxIndex` | query ids, `_computeQueryId`, `KittyLedger.sol:763` |
