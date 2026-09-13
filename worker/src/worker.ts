@@ -272,7 +272,7 @@ async function payouts() {
           const done = toConfirm.slice(0, proof.heights.length);
           for (const c of done) state.confirmed[c.payoutTx] = true;
           record({ kind: 'confirm', summary: `${done.length} payouts (${done.map((c) => `circle ${c.id} round ${c.r}`).join(', ')}) proven back to Creditcoin in one call`,
-            evidence: { payouts: done.length, circles: [...new Set(done.map((c) => String(c.id)))].join(','), heights: proof.heights.join(','), continuityRoots: proof.continuity.roots.length },
+            evidence: { payouts: done.length, circles: new Set(done.map((c) => c.id)).size, firstCircle: String(done[0].id), lastCircle: String(done[done.length - 1].id), fromHeight: Math.min(...proof.heights), toHeight: Math.max(...proof.heights), continuityRoots: proof.continuity.roots.length },
             txs: [{ chain: 'creditcoin', hash: crc.hash }, ...done.map((c) => ({ chain: 'source' as const, hash: c.payoutTx }))] });
           return;
         }

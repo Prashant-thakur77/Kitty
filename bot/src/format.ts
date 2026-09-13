@@ -19,8 +19,10 @@ export const ccTx = (l: Links, hash: string) => link(l.ccExplorer && `${l.ccExpl
 export const ccAddr = (l: Links, addr: string) => link(l.ccExplorer && `${l.ccExplorer}/address/${addr}`, short(addr));
 export const srcTx = (l: Links, hash: string) => link(l.sourceExplorer && `${l.sourceExplorer}/tx/${hash}`, `${hash.slice(0, 10)}…`);
 export const srcBlock = (l: Links, h: unknown) => link(l.sourceExplorer && `${l.sourceExplorer}/block/${h}`, num(h));
-export const circleUrl = (l: Links, id: unknown) => `${l.webAppUrl}circle/${id}`;
-export const scoreUrl = (l: Links, addr: string) => `${l.webAppUrl}score/${addr}`;
+/** Deep link into the dashboard: the Mini App URL may carry a query string (?tg=1), so the path goes before it. */
+export const pageUrl = (l: Links, path: string) => { const u = new URL(l.webAppUrl); u.pathname = u.pathname.replace(/\/?$/, '/') + path; return u.toString(); };
+export const circleUrl = (l: Links, id: unknown) => pageUrl(l, `circle/${id}`);
+export const scoreUrl = (l: Links, addr: string) => pageUrl(l, `score/${addr}`);
 
 export type EventArgs = Record<string, unknown>;
 export interface LedgerEvent { name: string; args: EventArgs; tx: string; block: number }
@@ -157,7 +159,7 @@ export function formatSteward(decisions: Decision[], l: Links): string {
     const tx = cc ? ccTx(l, cc.hash) : src ? srcTx(l, src.hash) : '';
     lines.push(`${KIND_ICON[d.kind] ?? '•'} <code>${when}</code> ${esc(d.summary)}${tx ? ` · ${tx}` : ''}`);
   }
-  lines.push(`<a href="${l.webAppUrl}steward">Full log and cited explanation</a>`);
+  lines.push(`<a href="${pageUrl(l, 'steward')}">Full log and cited explanation</a>`);
   return lines.join('\n');
 }
 

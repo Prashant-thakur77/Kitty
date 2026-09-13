@@ -500,6 +500,8 @@ Index with one line per file: [`docs/README.md`](docs/README.md).
 
 | Document | Description |
 |---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architecture: component diagram with the trust boundary, deployment diagram with the keys each process holds, sequence diagrams for proving, closing, payout and proof-back, invites and consent, the replay rejection and a Telegram push |
+| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | Every term a reviewer meets, one or two sentences each, linked to the code or document where it lives |
 | [`docs/PILLARS.md`](docs/PILLARS.md) | The five evaluation pillars answered with evidence: users, alignment, vision and roadmap, execution record, proven models |
 | [`docs/TECH.md`](docs/TECH.md) | Technical note: the core insight, the nineteen checks from a Sepolia payment to Creditcoin state, the attestation clock, rotation, the score, the steward's three layers, batch policy, measured gas, Attestcoin coverage, limits |
 | [`docs/specs/PROTOCOL.md`](docs/specs/PROTOCOL.md) | Protocol specification: data model, state machines, the complete `KittyLedger` and `KittyVault` interfaces, event and error catalogues, query-id derivation, numbered invariants |
@@ -508,6 +510,14 @@ Index with one line per file: [`docs/README.md`](docs/README.md).
 | [`docs/ATTESTCOIN_INTEGRATION.md`](docs/ATTESTCOIN_INTEGRATION.md) | The hackathon's required integration write-up: pipeline, precompile functions used, files, gas |
 | [`docs/SLITHER.md`](docs/SLITHER.md) | Static analysis (Slither, medium and high) with the triage of every finding |
 | [`docs/GAS.md`](docs/GAS.md) | Contract gas per operation, measured in Foundry, separate from the live precompile figures |
+| [`docs/reference/CONTRACTS.md`](docs/reference/CONTRACTS.md) | Contract reference: every function's access, preconditions, exact reverts, effects, events and measured gas, the internal helper algorithms, `IChainInfo` layouts, the mocks |
+| [`docs/reference/STORAGE_LAYOUT.md`](docs/reference/STORAGE_LAYOUT.md) | Storage layout from `forge inspect` for the ledger, vault and credit line, mapping key derivations, size and upgrade constraints |
+| [`docs/TESTING.md`](docs/TESTING.md) | Test architecture: mocked precompiles, fixtures, every suite and its count, the invariant handler and attacker with each invariant stated, fuzz bounds, gas method, worker and bot tests, scenario scripts, CI, how to add a test |
+| [`docs/reference/STEWARD.md`](docs/reference/STEWARD.md) | Worker reference: the tick loop, quarantine rules and log lines, the batch policy with worked examples, proof building, preflight and gas, every submission path, the decision log, the citation validator, the explain contract, recovery, environment variables |
+| [`docs/reference/DATA_FORMATS.md`](docs/reference/DATA_FORMATS.md) | JSON schemas with committed examples: worker state, steward log, lab recordings, proof bundles, `deployments.json`, web env keys, bot state, Proof Builder responses |
+| [`docs/reference/LAB_API.md`](docs/reference/LAB_API.md) | Lab API routes and SSE format, the eight scenarios step by step with the rejecting ledger check, `pnpm lab:record`, how the Lab page consumes them |
+| [`docs/reference/BOT.md`](docs/reference/BOT.md) | Telegram bot reference: modes, commands and exact replies, event watcher and cursor, reminder rule, state, Mini App button, environment variables, message formats |
+| [`docs/reference/WEB.md`](docs/reference/WEB.md) | Dashboard reference: stack and chunking, every `VITE_*` variable, routes and hooks, the browser proving flow, create, invite and join, components, the 3D system, the story API, the tour, the Telegram Mini App, accessibility, GitHub Pages |
 | [`docs/adr/0001-attestation-as-the-only-clock.md`](docs/adr/0001-attestation-as-the-only-clock.md) | ADR: block-height deadlines, `is_height_attested` as the only clock, the 64-block grace constant |
 | [`docs/adr/0002-money-and-rules-on-different-chains.md`](docs/adr/0002-money-and-rules-on-different-chains.md) | ADR: a dumb vault on Sepolia, a proof-only ledger on Creditcoin, the bounded operator, writability |
 | [`docs/adr/0003-batch-proofs-and-the-roundmate-hold.md`](docs/adr/0003-batch-proofs-and-the-roundmate-hold.md) | ADR: one continuity proof for up to ten payments, the batch policy, the hold rule |
