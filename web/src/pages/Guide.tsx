@@ -97,18 +97,18 @@ const ENTRIES: Entry[] = [
 export function Guide() {
   const tour = useTour()
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <Reveal className="flex flex-wrap items-end justify-between gap-3">
+    <main className="page">
+      <Reveal className="page-head">
         <div>
           <div className="eyebrow">Guide</div>
-          <h1 className="text-3xl">What each tab does</h1>
-          <p className="mt-1 max-w-[70ch] text-sm" style={{ color: 'var(--muted)' }}>
+          <h1>What each tab does</h1>
+          <p className="sub">
             Kitty keeps the money in a vault on Ethereum Sepolia and the rules in KittyLedger on Creditcoin, fed only by transactions the Attestcoin block prover (0x0FD2) verified and deadlines the ChainInfo precompile (0x0FD3) attested. Every page below reads that ledger; the chips say which source feeds it. The nav shows the latest Sepolia block against the latest attested block, the only clock Kitty uses.
           </p>
         </div>
-        <button type="button" className="btn btn-mint" onClick={() => tour.start()}><Compass size={15} /> Take the full tour</button>
+        <button type="button" className="btn btn-mint" onClick={() => tour.start()} title="Start the guided tour at step 1"><Compass size={15} /> Take the full tour</button>
       </Reveal>
-      <Stagger className="mt-6 grid gap-3 md:grid-cols-2">
+      <Stagger className="section-gap grid gap-3 md:grid-cols-2">
         {ENTRIES.map((e) => {
           const step = firstStepOfTab(e.tab)
           const count = STEPS.filter((s) => s.tab === e.tab).length
@@ -129,8 +129,8 @@ export function Guide() {
                   </div>
                 )}
                 <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
-                  <button type="button" className="btn" style={{ padding: '.45rem .9rem', fontSize: 14 }} onClick={() => tour.start(step)}><Compass size={14} /> Take the tour from here</button>
-                  <Link to={e.path} className="btn btn-ghost no-underline" style={{ padding: '.45rem .7rem', fontSize: 14 }}>Open <ArrowRight size={14} className="arrow" /></Link>
+                  <button type="button" className="btn btn-sm" onClick={() => tour.start(step)} title={`Start the tour at the ${e.name} step`}><Compass size={14} /> Take the tour from here</button>
+                  <Link to={e.path} className="btn btn-ghost btn-sm no-underline" title={`Go to ${e.path}`}>Open <ArrowRight size={14} className="arrow" /></Link>
                   <span className="mono ml-auto text-[11px]" style={{ color: 'var(--dim)' }}>{count} step{count === 1 ? '' : 's'}</span>
                 </div>
               </Spotlight>
@@ -138,7 +138,7 @@ export function Guide() {
           )
         })}
       </Stagger>
-      <p className="mt-6 text-xs" style={{ color: 'var(--dim)' }}>
+      <p className="section-gap text-xs" style={{ color: 'var(--muted)' }}>
         Add <span className="mono">?tour=1</span> to any address to start the tour there. Your progress is not stored on chain: finishing or skipping is remembered in this browser only.
       </p>
     </main>

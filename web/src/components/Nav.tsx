@@ -40,42 +40,48 @@ function Links({ group }: { group: string }) {
   )
 }
 
-function AttestationPill({ className = '', tour }: { className?: string; tour?: string }) {
+/** Sepolia head against the attested frontier. In the header the words show only from the `wide` breakpoint; the lag pill always
+ *  does, carrying the full sentence in its title. `full` (the sheet) shows everything. */
+function AttestationPill({ className = '', tour, full = false }: { className?: string; tour?: string; full?: boolean }) {
   const { head, attested, lag } = useAttestation()
+  const text = `Latest Sepolia block ${num(head)}, latest block attested on Creditcoin ${num(attested)}${lag !== undefined ? `, lag ${lag}` : ''}`
+  const words = full ? '' : 'hidden wide:inline'
   return (
-    <div className={`shrink-0 items-center gap-2 whitespace-nowrap text-xs mono ${className}`} data-tour={tour} title="Latest Sepolia block vs the latest block attested on Creditcoin by the attestor network">
-      <span style={{ color: 'var(--muted)' }}>Sepolia</span><span>{num(head)}</span>
-      <span style={{ color: 'var(--muted)' }}>→ attested</span><span style={{ color: 'var(--sky)' }}>{num(attested)}</span>
-      {lag !== undefined && <span className="pill sky">lag {lag}</span>}
+    <div className={`shrink-0 items-center gap-2 whitespace-nowrap text-xs mono ${className}`} data-tour={tour} title={`${text}. The attestor network's attestation is the only clock Kitty uses.`}>
+      <span className={words} style={{ color: 'var(--muted)' }}>Sepolia</span><span className={words}>{num(head)}</span>
+      <span className={words} style={{ color: 'var(--muted)' }}>→ attested</span><span className={words} style={{ color: 'var(--sky)' }}>{num(attested)}</span>
+      {lag !== undefined ? <span className="pill sky" title={text}>lag {lag}</span> : <span className="pill" title={text}>attesting…</span>}
     </div>
   )
 }
 
-/** Compact link to the Kitty bot: proofs, deadline reminders and the Mini App, in Telegram. Hidden inside Telegram itself. */
-function TelegramPill({ className = '', tour }: { className?: string; tour?: string }) {
+/** Link to the Kitty bot: proofs, deadline reminders and the Mini App, in Telegram. Hidden inside Telegram itself.
+ *  `compact` (the header) drops the word under the `tools` breakpoint and keeps the icon. */
+function TelegramPill({ className = '', tour, compact = false }: { className?: string; tour?: string; compact?: boolean }) {
   const { inTelegram } = useTelegram()
   if (inTelegram) return null
   return (
-    <a href={TELEGRAM_BOT_URL} target="_blank" rel="noreferrer" className={`pill sky no-underline ${className}`} data-tour={tour} title="Kitty on Telegram: /circle, /score, proof pushes and deadline reminders, and the Mini App">
-      <Send size={12} /> Telegram
+    <a href={TELEGRAM_BOT_URL} target="_blank" rel="noreferrer" className={`pill sky no-underline ${className}`} style={compact ? { minHeight: 28, padding: '.2rem .55rem' } : undefined} data-tour={tour} aria-label="Kitty on Telegram" title="Kitty on Telegram: /circle, /score, proof pushes and deadline reminders, and the Mini App">
+      <Send size={12} /><span className={compact ? 'hidden tools:inline' : ''}>Telegram</span>
     </a>
   )
 }
 
-function WalletControl({ full = false }: { full?: boolean }) {
+/** `full` stretches the control across the sheet; `compact` (the header) shortens the read-only pill under the `tools` breakpoint. */
+function WalletControl({ full = false, compact = false }: { full?: boolean; compact?: boolean }) {
   const { address, isConnected } = useAccount()
   const { connect, connectors, isPending, error } = useConnect()
   const noWallet = connectors.length === 0 || typeof window.ethereum === 'undefined'
   const { disconnect } = useDisconnect()
   const { inTelegram } = useTelegram()
-  const w = full ? ' w-full justify-center' : ''
-  if (isConnected) return <button className={`btn${w}`} onClick={() => disconnect()} aria-label={`Disconnect wallet ${short(address)}`}><LogOut size={15} /> {short(address)}</button>
+  const w = full ? ' w-full' : ''
+  if (isConnected) return <button className={`btn${w}`} onClick={() => disconnect()} title={`Connected as ${address}. Click to disconnect.`} aria-label={`Disconnect wallet ${short(address)}`}><LogOut size={15} /> <span className="mono text-sm">{short(address)}</span></button>
   // Telegram Mini Apps have no injected wallet (no MetaMask): read everything here, pay from a wallet browser.
-  if (inTelegram && noWallet) return <span className={`pill sky${full ? ' wrap' : ''}`} title="Telegram Mini Apps cannot inject a wallet. Open this page in MetaMask, Rabby or any wallet browser to pay or prove.">open in a wallet browser to pay</span>
-  if (noWallet) return <span className="pill amber" title="Proving from the browser needs any EVM wallet holding a little tCTC on Creditcoin Testnet">no wallet · read-only</span>
+  if (inTelegram && noWallet) return <span className={`pill sky${full ? ' wrap' : ''}`} title="Telegram Mini Apps cannot inject a wallet. Open this page in MetaMask, Rabby or any wallet browser to pay or prove.">{compact ? 'read-only' : 'open in a wallet browser to pay'}</span>
+  if (noWallet) return <span className="pill amber" title="No wallet detected. Proving from the browser needs any EVM wallet holding a little tCTC on Creditcoin Testnet; everything else is readable without one."><span className={compact ? 'hidden tools:inline' : ''}>no wallet ·</span>read-only</span>
   return (
     <>
-      <button className={`btn btn-mint${w}`} disabled={isPending} onClick={() => connect({ connector: connectors[0] })}><Wallet size={15} /> Connect</button>
+      <button className={`btn btn-mint${w}`} disabled={isPending} onClick={() => connect({ connector: connectors[0] })} title="Connect an EVM wallet to pay, prove and create"><Wallet size={15} /> Connect</button>
       {error && <span className="max-w-[26ch] text-xs leading-tight" style={{ color: 'var(--amber)' }}>{(error as { shortMessage?: string }).shortMessage ?? error.message}</span>}
     </>
   )
@@ -92,23 +98,24 @@ export function Nav() {
 
   return (
     <header className="nav noprint sticky top-0 z-30" data-scrolled={scrolled}>
-      <div className="mx-auto max-w-6xl px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 no-underline" style={{ color: 'var(--ink)' }} aria-label="Kitty home">
+      <div className="mx-auto max-w-[1720px] px-5 py-3 md:px-8 lg:px-10">
+        {/* logo at the far left, links 24px after it, tools at the far right; every part is `shrink-0` so the row never wraps */}
+        <div className="flex min-h-10 items-center gap-3">
+          <Link to="/" className="flex shrink-0 items-center gap-2 no-underline" style={{ color: 'var(--ink)' }} aria-label="Kitty home">
             <img src={`${import.meta.env.BASE_URL}kitty.svg`} alt="" width={28} height={28} />
             <span className="display text-2xl" style={{ letterSpacing: '-.01em' }}>Kitty</span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex md:ml-4" aria-label="Primary" data-tour="nav"><Links group="desktop" /></nav>
-          <div className="ml-auto flex items-center gap-3">
-            <AttestationPill className="hidden lg:flex" tour="attestation" />
+          <nav className="hidden shrink-0 items-center gap-1 nav:ml-6 nav:flex" aria-label="Primary" data-tour="nav"><Links group="desktop" /></nav>
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-3">
+            <AttestationPill className="hidden md:flex" tour="attestation" />
             {/* wrapped: `.pill` and `.btn` set display outside Tailwind's layers, so `hidden` on them would never win */}
-            <span className="hidden md:inline-flex"><TelegramPill tour="telegram" /></span>
-            <span className="hidden md:inline-flex"><button type="button" className="btn btn-ghost" style={{ padding: '.4rem .5rem' }} onClick={startTour} title="Take the tour: two minutes, every tab" aria-label="Take the tour"><Compass size={16} /></button></span>
-            <div className="hidden items-center gap-3 md:flex"><WalletControl /></div>
+            <span className="hidden md:inline-flex"><TelegramPill tour="telegram" compact /></span>
+            <span className="hidden md:inline-flex"><button type="button" className="btn btn-ghost btn-icon" onClick={startTour} title="Take the tour: two minutes, every tab" aria-label="Take the tour"><Compass size={16} /></button></span>
+            <div className="hidden items-center gap-3 md:flex"><WalletControl compact /></div>
             <Dialog.Root open={open} onOpenChange={setOpen}>
-              <div className="md:hidden">
+              <div className="nav:hidden">
                 <Dialog.Trigger asChild>
-                  <button className="btn btn-ghost" aria-label="Open menu" aria-expanded={open} style={{ padding: '.5rem' }} data-tour="nav-menu"><Menu size={20} /></button>
+                  <button className="btn btn-ghost btn-icon" aria-label="Open menu" aria-expanded={open} title="Menu" data-tour="nav-menu"><Menu size={20} /></button>
                 </Dialog.Trigger>
               </div>
               <AnimatePresence>
@@ -127,7 +134,7 @@ export function Nav() {
                       >
                         <div className="flex items-center justify-between">
                           <Dialog.Title className="display text-2xl" style={{ letterSpacing: '-.01em' }}>Kitty</Dialog.Title>
-                          <Dialog.Close asChild><button className="btn btn-ghost" aria-label="Close menu" style={{ padding: '.5rem' }}><X size={18} /></button></Dialog.Close>
+                          <Dialog.Close asChild><button className="btn btn-ghost btn-icon" aria-label="Close menu"><X size={18} /></button></Dialog.Close>
                         </div>
                         <motion.nav
                           className="mt-5 grid gap-1" aria-label="Primary"
@@ -153,8 +160,8 @@ export function Nav() {
                         </div>
                         <div className="sheet-foot">
                           <div className="eyebrow mb-2">Attestation</div>
-                          <AttestationPill className="flex flex-wrap" />
-                          <div className="mt-3 flex flex-col gap-2"><WalletControl full /><Link to="/create" className="btn w-full justify-center no-underline">Create a circle</Link><TelegramPill className="justify-center" /></div>
+                          <AttestationPill className="flex flex-wrap" full />
+                          <div className="mt-3 flex flex-col gap-2"><WalletControl full /><Link to="/create" className="btn w-full no-underline" title="Open the create form: one Creditcoin transaction opens a circle">Create a circle</Link><TelegramPill className="justify-center" /></div>
                         </div>
                       </motion.div>
                     </Dialog.Content>

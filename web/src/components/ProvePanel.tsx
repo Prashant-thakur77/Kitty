@@ -165,7 +165,7 @@ export function ProvePanel({ members, contributions, payments, attested, chainKe
       </ul>
       <Stepper done={shownDone} failed={failed} busy={busy} waiting={waiting} />
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button className={`btn ${ready.length > 0 ? 'btn-mint' : ''}`} style={{ textAlign: 'left' }} disabled={busy || ready.length === 0 || !address} onClick={prove} aria-busy={busy}><ShieldCheck size={15} style={{ flex: 'none' }} /> <span>{buttonText}</span></button>
+        <button className={`btn ${ready.length > 0 ? 'btn-mint' : ''}`} style={{ textAlign: 'left', justifyContent: 'flex-start' }} disabled={busy || ready.length === 0 || !address} onClick={prove} aria-busy={busy}><ShieldCheck size={15} style={{ flex: 'none' }} /> <span>{buttonText}</span></button>
         {!address && ready.length > 0 && <span className="text-xs" style={{ color: 'var(--muted)' }}>Connect any wallet with a little tCTC.</span>}
         {waiting && <span className="text-xs" style={{ color: 'var(--muted)' }}>{provable.length} payment{provable.length === 1 ? '' : 's'} mined on Sepolia; the attestor network attests roughly every 8 minutes.</span>}
       </div>

@@ -33,26 +33,30 @@ export function Architecture() {
   const { items } = useLedgerEvents()
   const proven = items.filter((i) => i.kind === 'ContributionRecorded').length
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flow-scene mb-8" data-tour="arch-scene" aria-label="Proof flow: KittyVault on Ethereum, through the 0x0FD2 block prover, into KittyLedger on Creditcoin; 0x0FD3 ChainInfo attests the clock">
+    <main className="page">
+      <div className="flow-scene" data-tour="arch-scene" aria-label="Proof flow: KittyVault on Ethereum, through the 0x0FD2 block prover, into KittyLedger on Creditcoin; 0x0FD3 ChainInfo attests the clock">
         <Canvas3D scene={flowScene} sceneProps={{ attested, items, proven }} camera={FLOW_CAMERA} fallback={<FlowFallback />} />
         <div className="flow-caption eyebrow">Proof flow · vault → 0x0FD2 → ledger · 0x0FD3 attests the clock</div>
       </div>
-      <div className="eyebrow">Architecture</div>
-      <h1 className="text-3xl">Verify → decode → bind → clock → score</h1>
-      <p className="mt-1 max-w-[72ch] text-sm" style={{ color: 'var(--muted)' }}>Two chains, one worker, two precompiles. Every arrow that changes money or reputation is a proven transaction or an attested block. Click a node to open the source.</p>
-      <ol className="mt-6 grid gap-0" data-tour="arch-flow">
+      <div className="page-head section-gap">
+        <div>
+          <div className="eyebrow">Architecture</div>
+          <h1>Verify → decode → bind → clock → score</h1>
+          <p className="sub">Two chains, one worker, two precompiles. Every arrow that changes money or reputation is a proven transaction or an attested block. Click a node to open the source.</p>
+        </div>
+      </div>
+      <ol className="section-gap grid gap-0" data-tour="arch-flow">
         {NODES.map((n, i) => (
           <li key={n.k} className="grid grid-cols-[28px_1fr] gap-3">
             <div className="flex flex-col items-center"><span className="dot" style={{ background: `var(--${n.tone === 'muted' ? 'muted' : n.tone})`, width: 12, height: 12 }} />{i < NODES.length - 1 && <span style={{ width: 2, flex: 1, background: 'var(--line)' }} />}</div>
-            <a href={`${cfg.repo}/blob/main/${n.file}`} target="_blank" rel="noreferrer" className="panel mb-3 block p-4 no-underline" style={{ color: 'var(--ink)' }}>
+            <a href={`${cfg.repo}/blob/main/${n.file}`} target="_blank" rel="noreferrer" className="panel card-hover mb-3 block p-4 no-underline" style={{ color: 'var(--ink)' }} title={`Open ${n.file} on GitHub`}>
               <div className="flex flex-wrap items-center gap-2"><span className="display text-lg">{n.t}</span><Tag tone={n.tone as 'mint'}>{n.chain}</Tag><span className="mono ml-auto text-[11px]" style={{ color: 'var(--muted)' }}>{n.file}</span></div>
               <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>{n.d}</p>
             </a>
           </li>
         ))}
       </ol>
-      <section className="panel mt-6 p-5">
+      <section className="panel section-gap p-5">
         <h2 className="text-xl">Why not inherit ASCBase?</h2>
         <p className="mt-2 max-w-[75ch] text-sm" style={{ color: 'var(--muted)' }}>The stock base contract’s <span className="mono">execute</span> drops <span className="mono">chainKey</span> and the source block height before calling app logic. Kitty needs both — chain binding and height-based deadlines — and needs the batch overload of the precompile. So KittyLedger re-implements the same verify → dedupe → act pipeline with identical query-id derivation and adds <span className="mono">recordContributions</span>.</p>
         <div className="mt-4 grid gap-2 md:grid-cols-3 text-sm">

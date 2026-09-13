@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Wallet } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { isAddress } from 'viem'
 import { useScore, useLedgerEvents } from '../hooks'
 import { Blockie, Section, Tag } from '../components/ui'
+import { Empty } from '../components/Skeleton'
 import { short } from '../lib/format'
 import { cfg, CHAIN_INFO_PRECOMPILE, VERIFIER_PRECOMPILE } from '../config'
 import { BadgeCard } from '../components/BadgeCard'
@@ -47,9 +48,9 @@ export function ScorePage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><div className="eyebrow">Kitty Score</div><h1 className="text-3xl">What a lender sees</h1></div>
+    <main className="page">
+      <div className="page-head">
+        <div><div className="eyebrow">Kitty Score</div><h1>What a lender sees</h1><p className="sub">The score, the counters behind it, and the proof behind every counter, for any address.</p></div>
         <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); if (isAddress(input)) { setFormErr(''); nav(`/score/${input}`) } else setFormErr('Not an address') }}>
           <div className="grid gap-1">
             <input value={input} onChange={(e) => { setInput(e.target.value); if (formErr) setFormErr('') }} placeholder="0x… member address" className="mono panel-2 px-3 py-2 text-sm" style={{ width: 'min(300px, 100%)', color: 'var(--ink)' }} />
@@ -63,13 +64,13 @@ export function ScorePage() {
           {!cfg.ledger ? 'ledger not deployed yet' : error ? 'could not read KittyLedger' : 'reading…'}
         </p>
       )}
-      {!addr && <div className="panel mt-5 p-5 text-sm" style={{ color: 'var(--muted)' }}>Connect a wallet or paste a member address.</div>}
+      {!addr && <div className="section-gap"><Empty icon={<Wallet size={22} />} title="No address yet" body="Connect a wallet, or paste any member address above, to read its Kitty Score straight from the ledger." action={{ label: 'Browse the circles instead', to: '/circles' }} /></div>}
       {addr && (
-        <div className="mt-5 grid gap-4 lg:grid-cols-[420px_1fr]">
+        <div className="section-gap grid gap-4 lg:grid-cols-[420px_1fr]">
           <div className="grid content-start gap-4">
             <Reveal as="section" className="panel p-5" tour="score-dial">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2"><Blockie address={addr} size={28} /><span className="mono">{short(addr)}</span></div>
+                <div className="flex items-center gap-2"><Blockie address={addr} size={28} /><span className="mono" title={addr}>{short(addr)}</span></div>
                 {connected && connected.toLowerCase() === addr.toLowerCase() && <Tag tone="muted">you</Tag>}
               </div>
               <div className="mt-3"><ScoreRing value={value} tier={tier} loading={isLoading} /></div>
@@ -93,7 +94,7 @@ export function ScorePage() {
               </Section>
             </Reveal>
             <Reveal i={2}>
-            <Section tour="score-lender" title="Lender view · readable by any Creditcoin contract" right={<div className="flex items-center gap-2"><button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: 13 }} disabled={value === undefined} title={value === undefined ? 'No score read from the ledger yet' : undefined} onClick={exportBundle}><Download size={13} /> Proof bundle</button><Tag tone="sky">creditScore(address)</Tag></div>}>
+            <Section tour="score-lender" title="Lender view · readable by any Creditcoin contract" right={<div className="flex items-center gap-2"><button className="btn btn-ghost btn-sm" disabled={value === undefined} title={value === undefined ? 'No score read from the ledger yet' : undefined} onClick={exportBundle}><Download size={13} /> Proof bundle</button><Tag tone="sky">creditScore(address)</Tag></div>}>
               <p className="mb-2 text-xs" style={{ color: 'var(--muted)' }}>Download the proof bundle to hand a lender a self-verifying history: every entry names the Creditcoin transaction that carried its Attestcoin proof, so they can re-check it themselves.</p>
               <pre className="log panel-2 p-3">{JSON.stringify({ member: addr, score: value ?? null, tier: tier ?? null, onTime: record?.onTime ?? 0, late: record?.late ?? 0, missed: record?.missed ?? 0, received: record?.received ?? 0, volume_tUSD: record ? Number(record.volume) / 1e6 : 0, source: 'KittyLedger on Creditcoin CC3 Testnet · inputs are Attestcoin-proven Sepolia txs and attested deadlines' }, null, 2)}</pre>
             </Section>
@@ -117,7 +118,7 @@ export function ScorePage() {
                               <span className="pill mono ml-2" style={{ padding: '0 .4rem', fontSize: 10, fontWeight: 500, verticalAlign: '1px' }} title={`Attestation that proved the deadline had passed: block ${String(h.args.attestedHeight)} · hash ${String(h.args.attestedHash ?? '')}`}>attested @ {String(h.args.attestedHeight)}</span>
                             )}
                           </td>
-                          <td className="mono"><a href={`${cfg.creditcoinExplorer}/tx/${h.tx}`} target="_blank" rel="noreferrer">{h.tx.slice(0, 12)}…</a></td>
+                          <td className="mono"><a href={`${cfg.creditcoinExplorer}/tx/${h.tx}`} target="_blank" rel="noreferrer" title={h.tx}>{h.tx.slice(0, 12)}…</a></td>
                         </tr>
                       ))}
                     </tbody>

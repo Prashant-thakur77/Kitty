@@ -55,7 +55,7 @@ export default function App() {
       <RouteProgress active={busy} />
       <Nav />
       {!cfg.ledger && (
-        <div className="mx-auto mt-4 max-w-6xl px-4">
+        <div className="page-col mt-4">
           <div className="panel p-4 text-sm" style={{ color: 'var(--amber)' }}>
             KittyLedger is not configured yet: <code className="mono">VITE_KITTY_LEDGER_ADDRESS</code> is empty. Sepolia contracts are set; the Creditcoin side deploys with <code className="mono">scripts/deploy.sh</code> once the deployer holds tCTC.
           </div>

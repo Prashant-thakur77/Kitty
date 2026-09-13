@@ -39,25 +39,25 @@ export function Circles() {
   const countPending = !!cfg.ledger && (counting || count === undefined)
   const loading = countPending || (n > 0 && !q.data)
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="page">
       <Reveal>
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="page-head">
           <div>
             <div className="eyebrow">Ledger</div>
-            <h1 className="text-3xl">Circles on Creditcoin</h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
+            <h1>Circles on Creditcoin</h1>
+            <p className="sub">
               {countPending ? <Skeleton w={120} h={12} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : <>{n} circle{n === 1 ? '' : 's'} · newest last</>}
             </p>
           </div>
-          <Link to="/create" className="btn btn-mint no-underline" data-tour="create-button"><Plus size={15} /> Create a circle</Link>
+          <Link to="/create" className="btn btn-mint no-underline" data-tour="create-button" title="Open the create form: one Creditcoin transaction opens a circle"><Plus size={15} /> Create a circle</Link>
         </div>
       </Reveal>
       {loading ? (
-        <div className="mt-5 grid gap-3 md:grid-cols-2" aria-busy="true" aria-label="Loading circles">
+        <div className="section-gap grid gap-3 md:grid-cols-2" aria-busy="true" aria-label="Loading circles">
           {Array.from({ length: Math.max(2, Math.min(n, 4)) }, (_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : n === 0 ? (
-        <Reveal i={1} className="mt-5" tour="circles-list">
+        <Reveal i={1} className="section-gap" tour="circles-list">
           <Empty
             icon={<CircleDashed size={22} />}
             title="No circles yet"
@@ -66,13 +66,13 @@ export function Circles() {
           />
         </Reveal>
       ) : (
-        <Stagger className="mt-5 grid gap-3 md:grid-cols-2" tour="circles-list">
+        <Stagger className="section-gap grid gap-3 md:grid-cols-2" tour="circles-list">
           {q.data?.map((r, i) => {
             const c = r.result as Circle | undefined
             if (!c) return null
             return (
               <Item key={i}>
-                <Link to={`/circle/${i + 1}`} className="panel card-hover block p-5 no-underline" style={{ color: 'var(--ink)' }}>
+                <Link to={`/circle/${i + 1}`} className="panel card-hover block p-5 no-underline" style={{ color: 'var(--ink)' }} title={`Open circle #${i + 1}: ${c.name}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div><div className="eyebrow">#{i + 1}</div><div className="display text-xl">{c.name}</div></div>
                     <Tag tone={c.status === 0 ? 'mint' : 'muted'}>{c.status === 0 ? 'active' : 'completed'}</Tag>

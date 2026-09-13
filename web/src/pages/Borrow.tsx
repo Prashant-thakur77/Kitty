@@ -85,12 +85,12 @@ export function Borrow() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <Reveal className="flex flex-wrap items-end justify-between gap-3">
+    <main className="page">
+      <Reveal className="page-head">
         <div>
           <div className="eyebrow">Credit line</div>
-          <h1 className="text-3xl">Borrow against proven history</h1>
-          <p className="mt-1 max-w-[70ch] text-sm" style={{ color: 'var(--muted)' }}>KittyCreditLine is a demo lender on Creditcoin that underwrites from nothing but the Kitty Score: tier A unlocks 100% of your proven contribution volume, B 50%, C 20%, D nothing. Every input is an Attestcoin-proven payment or an attested deadline.</p>
+          <h1>Borrow against proven history</h1>
+          <p className="sub">KittyCreditLine is a demo lender on Creditcoin that underwrites from nothing but the Kitty Score: tier A unlocks 100% of your proven contribution volume, B 50%, C 20%, D nothing. Every input is an Attestcoin-proven payment or an attested deadline.</p>
         </div>
         {cfg.credit && (
           <form className="flex flex-wrap gap-2" onSubmit={lookup} aria-label="Look up any address">
@@ -102,9 +102,9 @@ export function Borrow() {
           </form>
         )}
       </Reveal>
-      {!cfg.credit && <Reveal i={1} className="mt-5"><Empty icon={<Landmark size={22} />} title="Credit line not deployed" body={<>Set <code className="mono">VITE_KITTY_CREDIT_ADDRESS</code> after <code className="mono">scripts/deploy.sh</code> runs on Creditcoin.</>} /></Reveal>}
+      {!cfg.credit && <Reveal i={1} className="section-gap"><Empty icon={<Landmark size={22} />} title="Credit line not deployed" body={<>Set <code className="mono">VITE_KITTY_CREDIT_ADDRESS</code> after <code className="mono">scripts/deploy.sh</code> runs on Creditcoin.</>} /></Reveal>}
       {cfg.credit && (
-        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <div className="section-gap grid gap-4 lg:grid-cols-[1fr_1fr]">
           <Reveal i={1}>
             <Section tour="borrow-underwrite" title="Underwriting · read live from KittyLedger" right={<Tag tone="sky">underwrite(address)</Tag>}>
               {!subject && (
@@ -125,7 +125,7 @@ export function Borrow() {
                 <motion.div initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, ease: EASE_OUT }}>
                   <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
                     <Blockie address={subject} size={22} />
-                    <span className="mono">{short(subject)}</span>
+                    <span className="mono" title={subject}>{short(subject)}</span>
                     {readOnly ? <Tag tone="muted">read-only lookup{!explicit && fallback && subject === fallback ? ' · latest circle\'s recipient' : ''}</Tag> : <Tag tone="mint">your wallet</Tag>}
                     {d && <Tag tone={d[1] === 'A' ? 'mint' : d[1] === 'D' ? 'rose' : 'sky'}>tier {d[1]} · limit {k(limit)}</Tag>}
                   </div>
@@ -138,7 +138,7 @@ export function Borrow() {
                   <p className="mt-3 text-sm" style={{ color: 'var(--muted)' }}><Landmark size={14} style={{ display: 'inline' }} /> {d?.[3] ?? (uw.error ? 'could not read underwriting' : '…')} · member {short(subject)}</p>
                   {readOnly && (
                     <p className="mt-2 text-xs" style={{ color: 'var(--muted)' }}>
-                      {noWallet ? 'Connect this wallet to borrow.' : <>Connect this wallet to borrow. <button type="button" className="btn btn-ghost" style={{ padding: '.15rem .5rem', fontSize: 12 }} onClick={() => connect({ connector: connectors[0] })} disabled={connecting}><Wallet size={12} /> {connecting ? 'Connecting…' : address ? 'Switch wallet' : 'Connect wallet'}</button></>}
+                      {noWallet ? 'Connect this wallet to borrow.' : <>Connect this wallet to borrow. <button type="button" className="btn btn-ghost btn-sm" onClick={() => connect({ connector: connectors[0] })} disabled={connecting}><Wallet size={12} /> {connecting ? 'Connecting…' : address ? 'Switch wallet' : 'Connect wallet'}</button></>}
                     </p>
                   )}
                 </motion.div>

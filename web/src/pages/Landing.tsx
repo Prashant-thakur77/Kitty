@@ -50,7 +50,7 @@ export function Landing() {
     <main>
       {/* ── hero ── */}
       <section ref={heroRef} className={`hero${can3D ? ' hero-3d' : ''}`} data-tour="hero">
-        <div className="mx-auto max-w-6xl px-5 pb-20 pt-16 md:pt-24 lg:grid lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-8">
+        <div className="page-col pb-16 pt-14 md:pb-24 md:pt-24 lg:grid lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-8">
           <div>
             <Reveal i={0}>
               <Link to="/lab" className="pill mint live no-underline" style={{ fontSize: 13, padding: '.3rem .8rem .3rem .7rem' }}>
@@ -101,7 +101,7 @@ export function Landing() {
       )}
 
       {/* ── numbers ── */}
-      <section className="mx-auto max-w-6xl px-5 py-16">
+      <section className="page-col section">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="stats">
           {[
             { label: 'Payments proven', v: st.proven, tone: 'var(--mint)', sub: 'each one verified by 0x0FD2' },
@@ -123,8 +123,8 @@ export function Landing() {
       </section>
 
       {/* ── statement ── */}
-      <section className="mx-auto max-w-6xl px-5 pb-8">
-        <div className="eyebrow mb-5">Why Creditcoin, why Attestcoin</div>
+      <section className="page-col pb-2">
+        <div className="eyebrow mb-4">Why Creditcoin, why Attestcoin</div>
         <p className="statement max-w-[34ch]">
           Every number on a Kitty Score is a proven transaction or an attested deadline.
           <span className="dim"> That is credit history a lender can underwrite against, for people the banking system has never seen.</span>
@@ -132,13 +132,13 @@ export function Landing() {
       </section>
 
       {/* ── how it works: a rail with the block-tick motif ── */}
-      <section className="mx-auto max-w-6xl px-5 py-16">
+      <section className="page-col section">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <div className="eyebrow">How a round settles</div>
             <h2 className="mt-2 text-3xl md:text-4xl">Four steps. Two chains. Zero trust in people.</h2>
           </div>
-          <Link to="/architecture" className="btn btn-ghost no-underline hidden sm:inline-flex">Architecture <ArrowUpRight size={15} /></Link>
+          <span className="hidden sm:inline-flex"><Link to="/architecture" className="btn btn-ghost no-underline" title="How a payment becomes a proof, node by node">Architecture <ArrowUpRight size={15} /></Link></span>
         </div>
         <ol className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s, i) => (
@@ -146,7 +146,7 @@ export function Landing() {
               <Spotlight className="panel flex h-full flex-col p-5">
                 <div className="flex items-center justify-between">
                   <span className="mono text-sm" style={{ color: 'var(--mint)' }}>{s.n}</span>
-                  <span className="eyebrow" style={{ fontSize: 10 }}>{s.k}</span>
+                  <span className="eyebrow">{s.k}</span>
                 </div>
                 <h3 className="mt-4 text-xl">{s.t}</h3>
                 <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{s.d}</p>
@@ -160,7 +160,7 @@ export function Landing() {
       </section>
 
       {/* ── who you trust ── */}
-      <section className="mx-auto max-w-6xl px-5 pb-16">
+      <section className="page-col section pt-0">
         <div className="eyebrow mb-2">Who you have to trust</div>
         <h2 className="text-3xl md:text-4xl">The treasurer, or the proof.</h2>
         <div className="panel mt-6 overflow-x-auto">
@@ -181,8 +181,8 @@ export function Landing() {
       </section>
 
       {/* ── score → credit ── */}
-      <section className="mx-auto max-w-6xl px-5 pb-24">
-        <Spotlight className="inset grid gap-6 p-8 md:grid-cols-[1.3fr_1fr] md:items-center md:p-10">
+      <section className="page-col pb-16 md:pb-24">
+        <Spotlight className="inset grid gap-6 p-6 md:grid-cols-[1.3fr_1fr] md:items-center md:p-10">
           <div>
             <div className="eyebrow">Kitty Score</div>
             <h2 className="mt-2 text-3xl md:text-4xl">The score is used, not just displayed.</h2>

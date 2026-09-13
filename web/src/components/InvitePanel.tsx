@@ -104,8 +104,8 @@ export function InvitePanel({ circleId, circle, onChange }: { circleId: bigint; 
                   {joined ? <Tag tone="mint">joined</Tag> : <Tag tone="muted">not redeemed</Tag>}
                 </span>
                 <span className="flex gap-1">
-                  <a className="btn btn-ghost" style={{ padding: '.2rem .55rem', fontSize: 12 }} href={linkFor(i)} target="_blank" rel="noreferrer">open</a>
-                  <button type="button" className="btn" style={{ padding: '.2rem .6rem', fontSize: 12 }} onClick={() => copy(i)} aria-label={`Copy invite link for ${i.invitee}`}>{copied === i.nonce ? <><Check size={12} /> copied</> : <><Copy size={12} /> copy link</>}</button>
+                  <a className="btn btn-ghost btn-sm" href={linkFor(i)} target="_blank" rel="noreferrer">open</a>
+                  <button type="button" className="btn btn-sm" onClick={() => copy(i)} aria-label={`Copy invite link for ${i.invitee}`}>{copied === i.nonce ? <><Check size={12} /> copied</> : <><Copy size={12} /> copy link</>}</button>
                 </span>
               </li>
             )

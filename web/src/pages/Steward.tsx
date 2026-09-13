@@ -82,16 +82,16 @@ export function Steward() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <Reveal className="flex flex-wrap items-end justify-between gap-3">
-        <div><div className="eyebrow">Kitty Steward</div><h1 className="text-3xl">The decision log</h1>
-          <p className="mt-1 max-w-[70ch] text-sm" style={{ color: 'var(--muted)' }}>The worker is an agent in three layers, and authority decreases as you move toward the model. Every decision below carries the chain state it saw and the transactions it produced, so any line can be checked against the chain. Layer 3 may only cite figures from this log.{offline && mode === 'testnet' && ' This is the steward\'s real CC3 Testnet log; every hash below resolves on the explorer.'}</p></div>
+    <main className="page">
+      <Reveal className="page-head">
+        <div><div className="eyebrow">Kitty Steward</div><h1>The decision log</h1>
+          <p className="sub">The worker is an agent in three layers, and authority decreases as you move toward the model. Every decision below carries the chain state it saw and the transactions it produced, so any line can be checked against the chain. Layer 3 may only cite figures from this log.{offline && mode === 'testnet' && ' This is the steward\'s real CC3 Testnet log; every hash below resolves on the explorer.'}</p></div>
         <div className="text-xs mono" style={{ color: 'var(--muted)' }} aria-live="polite">
           {offline ? <Tag tone={mode === 'testnet' ? 'mint' : 'sky'} wrap>{mode === 'testnet' ? 'recorded on CC3 Testnet' : 'sample log · local world'}</Tag> : loaded ? <span className="pill live wrap">live · {cfg.labApi.replace(/^https?:\/\//, '')}{mode ? ` · mode ${mode}` : ''}</span> : <span aria-label="Connecting to the lab API"><Skeleton w={190} h={22} r={999} /></span>}
         </div>
       </Reveal>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+      <div className="section-gap grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <Reveal i={1} className="min-w-0">
           <Section tour="steward-log" title="Decisions · newest first" right={loaded ? <span className="mono text-xs" style={{ color: 'var(--muted)' }}>{entries.length} entries</span> : <Skeleton w={64} h={12} />}>
             {!loaded && <div aria-busy="true" aria-label="Loading the decision log"><SkeletonRows n={5} /></div>}
@@ -105,7 +105,7 @@ export function Steward() {
             )}
             <Stagger as="ol" className="grid gap-2">
               {entries.map((d, i) => (
-                <Item as="li" key={`${d.at}-${i}`} className="panel-2 px-3 py-2.5 text-sm">
+                <Item as="li" key={`${d.at}-${i}`} className="panel-2 row-hover px-3 py-2.5 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
                     <Tag tone={KIND_TONE[d.kind] ?? 'muted'}>{d.kind}</Tag>
                     <span className="mono text-[11px]" style={{ color: 'var(--muted)' }} title={d.at}>{fmtAt(d.at)}</span>

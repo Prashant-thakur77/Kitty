@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAccount, useConnect, usePublicClient, useReadContract, useSwitchChain, useWriteContract } from 'wagmi'
 import { waitForTransactionReceipt } from 'wagmi/actions'
 import { isAddress, isHex, recoverMessageAddress } from 'viem'
-import { Wallet, ArrowRight } from 'lucide-react'
+import { Wallet, ArrowRight, CircleDashed } from 'lucide-react'
 import { cfg } from '../config'
 import { ledgerAbi } from '../lib/abi'
 import { creditcoinTestnet, wagmiConfig } from '../lib/wagmi'
@@ -13,6 +13,7 @@ import { chainName } from '../lib/verifier'
 import { useCircle } from '../hooks'
 import { Blockie, Section, Stat, Tag } from '../components/ui'
 import { Reveal } from '../components/motion'
+import { Skeleton, SkeletonStat, Empty } from '../components/Skeleton'
 import { useToast } from '../components/Toast'
 
 export function Join() {
@@ -82,22 +83,25 @@ export function Join() {
     } catch (err) { fail('Transaction failed', revertReason(err)) } finally { setBusy(false) }
   }
 
-  if (!cfg.ledger) return <main className="mx-auto max-w-6xl px-4 py-8"><div className="panel p-5" style={{ color: 'var(--muted)' }}>Ledger not deployed yet.</div></main>
-  if (isLoading || (!circle && !error)) return <main className="mx-auto max-w-6xl px-4 py-8"><div className="panel p-5" style={{ color: 'var(--muted)' }}>Loading circle #{String(circleId)} from Creditcoin…</div></main>
-  if (!circle) return <main className="mx-auto max-w-6xl px-4 py-8"><div className="panel p-5" style={{ color: 'var(--muted)' }}>Circle #{String(circleId)} not found. <Link to="/circles">All circles</Link>.</div></main>
+  if (!cfg.ledger) return <main className="page"><div className="panel p-5" style={{ color: 'var(--muted)' }}>Ledger not deployed yet.</div></main>
+  if (isLoading || (!circle && !error)) return <main className="page" aria-busy="true" aria-label={`Loading circle #${String(circleId)}`}><Skeleton w={90} h={11} /><Skeleton w="60%" h={34} className="mt-2" /><Skeleton w="80%" h={12} className="mt-3" /><div className="section-gap grid grid-cols-2 gap-3 md:grid-cols-4"><SkeletonStat /><SkeletonStat /><SkeletonStat /><SkeletonStat /></div></main>
+  if (!circle) return <main className="page"><Empty icon={<CircleDashed size={22} />} title={`Circle #${String(circleId)} not found`} body="The ledger has no circle with this id. The invite link may point at another ledger." action={{ label: 'All circles', to: '/circles' }} /></main>
 
   const n = circle.members.length
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
-      <Reveal>
+    <main className="page">
+      <div className="max-w-3xl">
+      <Reveal className="page-head">
+        <div>
         <div className="eyebrow">Invitation</div>
-        <h1 className="text-3xl">Join #{String(circleId)} · {circle.name}</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
+        <h1>Join #{String(circleId)} · {circle.name}</h1>
+        <p className="sub">
           {circle.open ? <>Organiser <span className="mono">{short(circle.organiser)}</span> invited <span className="mono">{invitee ? short(invitee) : '—'}</span>. Redeeming adds the wallet as a consenting member on Creditcoin.</> : 'Invites for this circle are closed.'}
         </p>
+        </div>
       </Reveal>
 
-      <Reveal i={1} className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <Reveal i={1} className="section-gap grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Installment" value={usd(circle.contribution)} />
         <Stat label="Round length" value={num(circle.roundBlocks)} sub={`${blocksToHuman(Number(circle.roundBlocks))} · source-chain blocks`} />
         <Stat label="Members" value={`${n} / ${circle.maxMembers}`} sub="rotation order = join order" tone="sky" />
@@ -130,8 +134,8 @@ export function Join() {
         <Section title={`Members · ${n} of ${circle.maxMembers}`}>
           <div className="grid gap-2">
             {circle.members.map((m, i) => (
-              <div key={m} className="panel-2 flex items-center justify-between gap-2 px-3 py-2">
-                <span className="flex items-center gap-2"><Blockie address={m} /><Link to={`/score/${m}`} className="mono text-sm no-underline" style={{ color: 'var(--ink)' }}>{short(m)}</Link></span>
+              <div key={m} className="panel-2 row-hover flex items-center justify-between gap-2 px-3 py-2">
+                <span className="flex items-center gap-2"><Blockie address={m} /><Link to={`/score/${m}`} className="mono text-sm no-underline" style={{ color: 'var(--ink)' }} title={`${m} · open the score`}>{short(m)}</Link></span>
                 <span className="flex gap-1">{i === 0 && <Tag tone="muted">organiser</Tag>}{address && m.toLowerCase() === address.toLowerCase() && <Tag tone="mint">you</Tag>}</span>
               </div>
             ))}
@@ -139,6 +143,7 @@ export function Join() {
           </div>
         </Section>
       </Reveal>
+      </div>
     </main>
   )
 }

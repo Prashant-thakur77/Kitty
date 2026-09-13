@@ -115,15 +115,15 @@ export function Lab() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <Reveal className="flex flex-wrap items-end justify-between gap-3">
-        <div><div className="eyebrow">Attack lab</div><h1 className="text-3xl">Try to cheat the ledger</h1>
-          <p className="mt-1 max-w-[70ch] text-sm" style={{ color: 'var(--muted)' }}>Each button runs a real transaction through the real pipeline: source chain → proof → KittyLedger on Creditcoin. The ledger answers with a decoded custom error, or accepts and flags.</p></div>
+    <main className="page">
+      <Reveal className="page-head">
+        <div><div className="eyebrow">Attack lab</div><h1>Try to cheat the ledger</h1>
+          <p className="sub">Each button runs a real transaction through the real pipeline: source chain → proof → KittyLedger on Creditcoin. The ledger answers with a decoded custom error, or accepts and flags.</p></div>
         <div className="text-xs mono" style={{ color: 'var(--muted)' }} aria-live="polite">
-          {offline ? (recorded ? <Tag tone={recorded.mode === 'testnet' ? 'mint' : 'sky'}>{recorded.mode === 'testnet' ? 'recorded on Sepolia + CC3 Testnet' : 'recorded run'} · {recorded.date.slice(0, 10)} · {recorded.commit.slice(0, 7)}</Tag> : <Tag tone="amber">lab api offline · run `pnpm lab:api`</Tag>) : status ? <span>mode {String(status.mode)} · source head {String(status.sourceHead)} · attested {String(status.attestedHeight ?? 'n/a')}</span> : <span className="flex items-center gap-2" aria-label="Connecting to the lab API"><Skeleton w={200} h={12} /><Skeleton w={54} h={22} r={999} /></span>}
+          {offline ? (recorded ? <Tag wrap tone={recorded.mode === 'testnet' ? 'mint' : 'sky'}>{recorded.mode === 'testnet' ? 'recorded on Sepolia + CC3 Testnet' : 'recorded run'} · {recorded.date.slice(0, 10)} · {recorded.commit.slice(0, 7)}</Tag> : <Tag tone="amber">lab api offline · run `pnpm lab:api`</Tag>) : status ? <span>mode {String(status.mode)} · source head {String(status.sourceHead)} · attested {String(status.attestedHeight ?? 'n/a')}</span> : <span className="flex items-center gap-2" aria-label="Connecting to the lab API"><Skeleton w={200} h={12} /><Skeleton w={54} h={22} r={999} /></span>}
         </div>
       </Reveal>
-      <Stagger className="mt-5 grid gap-3 md:grid-cols-2" tour="lab-grid">
+      <Stagger className="section-gap grid gap-3 md:grid-cols-2" tour="lab-grid">
         {scenarios.map((s) => {
           const r = results[s.name]; const lines = logs[s.name] ?? []
           const live = running === s.name
@@ -133,7 +133,7 @@ export function Lab() {
                 <div><div className="flex items-center gap-2"><ShieldAlert size={16} style={{ color: 'var(--rose)' }} /><span className="font-semibold">{s.title}</span></div>
                   <div className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>{WHY[s.name] ?? s.description}</div>
                   <div className="mt-2 text-xs">expects <span className="mono" style={{ color: 'var(--amber)' }}>{s.expected}</span></div></div>
-                <button className="btn" disabled={offline || !!running} aria-busy={live} title={offline ? 'Start the local lab API with `pnpm lab:api` to run this live' : undefined} onClick={() => run(s.name)}>{live ? <Loader2 size={14} className="spin" /> : <Play size={14} />} {live ? 'Running…' : offline ? 'Run live (needs pnpm lab:api)' : 'Run'}</button>
+                <button className="btn btn-sm shrink-0 whitespace-nowrap" disabled={offline || !!running} aria-busy={live} title={offline ? 'Start the local lab API with `pnpm lab:api` to run this live' : undefined} onClick={() => run(s.name)}>{live ? <Loader2 size={14} className="spin" /> : <Play size={14} />} {live ? 'Running…' : offline ? 'Run live' : 'Run'}</button>
               </div>
               <AnimatePresence initial={false}>
                 {(lines.length > 0 || r || live) && (

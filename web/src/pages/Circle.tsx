@@ -4,7 +4,7 @@ import { useAccount, usePublicClient, useReadContract, useSwitchChain, useWriteC
 import { waitForTransactionReceipt } from 'wagmi/actions'
 import { wagmiConfig } from '../lib/wagmi'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, ExternalLink } from 'lucide-react'
+import { X, ExternalLink, CircleDashed } from 'lucide-react'
 import { cfg } from '../config'
 import { ledgerAbi, usdAbi, vaultAbi } from '../lib/abi'
 import { creditcoinTestnet, sepolia } from '../lib/wagmi'
@@ -18,6 +18,7 @@ import { chainName } from '../lib/verifier'
 import { ProofFeed } from '../components/ProofFeed'
 import { RotationWheel, RoundTimeline, WheelLegend } from '../components/RotationWheel'
 import { Reveal } from '../components/motion'
+import { Skeleton, SkeletonStat, Empty } from '../components/Skeleton'
 import { InvitePanel } from '../components/InvitePanel'
 import { useToast } from '../components/Toast'
 import { revertReason, simulateLedger } from '../lib/tx'
@@ -53,8 +54,15 @@ export function CirclePage() {
   const accepted = useReadContract({ chainId: creditcoinTestnet.id, address: cfg.ledger, abi: ledgerAbi, functionName: 'accepted', args: [circleId, address ?? zero], query: { enabled: !!address && !!cfg.ledger } })
 
   const myIdx = useMemo(() => (address && circle ? circle.members.findIndex((m) => m.toLowerCase() === address.toLowerCase()) : -1), [address, circle])
-  if (!cfg.ledger) return <main className="mx-auto max-w-6xl px-4 py-8"><div className="panel p-5" style={{ color: 'var(--muted)' }}>Ledger not deployed yet.</div></main>
-  if (isLoading || !circle) return <main className="mx-auto max-w-6xl px-4 py-8"><div className="panel p-5" style={{ color: 'var(--muted)' }}>{error ? `Circle #${String(circleId)} not found.` : `Loading circle #${String(circleId)} from Creditcoin…`}</div></main>
+  if (!cfg.ledger) return <main className="page"><div className="panel p-5" style={{ color: 'var(--muted)' }}>Ledger not deployed yet.</div></main>
+  if (error && !circle) return <main className="page"><Empty icon={<CircleDashed size={22} />} title={`Circle #${String(circleId)} not found`} body="KittyLedger has no circle with this id. It may belong to another deployment, or the id is past the last circle created." action={{ label: 'All circles', to: '/circles', primary: true }} /></main>
+  if (isLoading || !circle) return (
+    <main className="page" aria-busy="true" aria-label={`Loading circle #${String(circleId)} from Creditcoin`}>
+      <div className="page-head"><div><Skeleton w={60} h={11} /><Skeleton w={280} h={34} className="mt-2" /></div><Skeleton w={200} h={22} r={999} /></div>
+      <div className="band calm mt-4"><Skeleton w={200} h={11} /><Skeleton w="50%" h={56} className="mt-3" /><Skeleton w="70%" h={12} className="mt-3" /><Skeleton w="100%" h={26} className="mt-5" /></div>
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4"><SkeletonStat /><SkeletonStat /><SkeletonStat /><SkeletonStat /></div>
+    </main>
+  )
 
   const n = circle.members.length
   const active = circle.status === 0
@@ -129,14 +137,14 @@ export function CirclePage() {
   const sub = !active ? 'Every member has received a pot.' : circle.open ? 'Invites are open. No payment can be recorded until the organiser closes invites; the member list and rotation order are fixed then.' : paidUnattested > 0 && !deadlineAttested && !iProved && !iPaidOnSepolia && myIdx < 0 ? `${paidUnattested} payment${paidUnattested === 1 ? '' : 's'} mined on Sepolia, waiting for the attestor network${blocksToAttested !== undefined ? ` · ${blocksToAttested} blocks until the deadline is attested` : ''}` : deadlineAttested ? 'The deadline plus the 64-block grace window is attested on Creditcoin. Anyone can close the round; missing members are recorded.' : deadlinePassed ? `Deadline passed; payments now count as late. ${blocksToClose} blocks of grace before the round can close.` : blocksToAttested !== undefined ? `${blocksToAttested} Sepolia blocks until the deadline is attested` : 'Waiting for attestation data…'
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <div><Link to="/circles" className="eyebrow no-underline">← circles</Link><h1 className="text-3xl">#{String(circleId)} · {circle.name}</h1></div>
-        <div className="flex gap-2">{circle.open && <Tag tone="amber">open for invites · {n}/{circle.maxMembers}</Tag>}<Tag tone={active ? 'mint' : 'muted'}>{active ? 'active' : 'completed'}</Tag><Tag tone="sky">round {circle.currentRound + 1} of {n}</Tag><Tag tone="muted" title={`Proofs for this circle are only accepted from Attestcoin chain key ${circle.chainKey}`}>{chainName(circle.chainKey)}</Tag></div>
+    <main className="page">
+      <div className="page-head">
+        <div><Link to="/circles" className="eyebrow block w-fit no-underline" title="Back to every circle on the ledger">← circles</Link><h1>#{String(circleId)} · {circle.name}</h1></div>
+        <div className="flex flex-wrap gap-2">{circle.open && <Tag tone="amber">open for invites · {n}/{circle.maxMembers}</Tag>}<Tag tone={active ? 'mint' : 'muted'}>{active ? 'active' : 'completed'}</Tag><Tag tone="sky">round {circle.currentRound + 1} of {n}</Tag><Tag tone="muted" title={`Proofs for this circle are only accepted from Attestcoin chain key ${circle.chainKey}`}>{chainName(circle.chainKey)}</Tag></div>
       </div>
 
       {/* Round header — urgency band (Saving Circles pattern, re-implemented; blocks not seconds) */}
-      <section className={`band ${urgency}`} data-tour="circle-band">
+      <section className={`band mt-4 ${urgency}`} data-tour="circle-band">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="eyebrow">ROUND {circle.currentRound + 1} OF {n} · CONTRIBUTION</div>
@@ -165,9 +173,9 @@ export function CirclePage() {
       </div>
 
       {circle.open && isOrganiser && <Reveal i={1} className="mt-4"><InvitePanel circleId={circleId} circle={circle} onChange={() => setTimeout(refetch, 1500)} /></Reveal>}
-      {circle.open && !isOrganiser && <div className="mt-4 panel p-4 text-sm" style={{ color: 'var(--muted)' }}>This circle is open for invites ({n} of {circle.maxMembers} seats taken). The organiser <span className="mono">{short(circle.organiser)}</span> signs invite links; a link is redeemed at <span className="mono">/join/{String(circleId)}</span> by the invited wallet. No payment can be recorded until invites are closed.</div>}
+      {circle.open && !isOrganiser && <div className="mt-4 panel p-4 text-sm" style={{ color: 'var(--muted)' }}>This circle is open for invites ({n} of {circle.maxMembers} seats taken). The organiser <span className="mono" title={circle.organiser}>{short(circle.organiser)}</span> signs invite links; a link is redeemed at <span className="mono">/join/{String(circleId)}</span> by the invited wallet. No payment can be recorded until invites are closed.</div>}
 
-      <Reveal i={1} className="mt-4 grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start">
+      <Reveal i={1} className="section-gap grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start">
         <Section tour="circle-wheel" title={byScore ? 'Rotation · by Kitty Score' : 'Rotation · fixed order'} right={byScore ? <Tag tone="mint">best record first</Tag> : <Tag tone="muted">hover a member</Tag>}>
           <RotationWheel members={circle.members} currentRound={circle.currentRound} active={active} byScore={byScore} recipient={recipient} rounds={rounds} roundStatus={round?.status}
             contributions={detail.contributions} scores={detail.scores} records={detail.records} payments={payments} pot={round?.pot} you={address} deadlineAttested={deadlineAttested} loading={!round || !detail.contributions} />
@@ -184,17 +192,17 @@ export function CirclePage() {
               const rec = detail.records?.[i]
               const isRecipient = m.toLowerCase() === recipient?.toLowerCase()
               return (
-                <div key={m} className="panel-2 flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                <div key={m} className="panel-2 row-hover flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Blockie address={m} />
-                    <Link to={`/score/${m}`} className="mono text-sm no-underline" style={{ color: 'var(--ink)' }}>{short(m)}</Link>
+                    <Link to={`/score/${m}`} className="mono text-sm no-underline" style={{ color: 'var(--ink)' }} title={`${m} · open the score`}>{short(m)}</Link>
                     {isRecipient && active && <Tag tone="sky">{byScore ? 'leading this round' : 'receives this round'}</Tag>}
                     {address && m.toLowerCase() === address.toLowerCase() && <Tag tone="muted">you</Tag>}
                   </div>
                   <div className="flex items-center gap-3 text-xs">
                     {rec && <Spark rec={rec} />}
                     {proven && payments.find((p) => p.member.toLowerCase() === m.toLowerCase()) && (
-                      <button className="btn btn-ghost" style={{ padding: '.15rem .5rem', fontSize: 12 }} onClick={() => setReverify({ tx: payments.find((p) => p.member.toLowerCase() === m.toLowerCase())!.tx, member: m })}>re-verify</button>
+                      <button className="btn btn-ghost btn-sm" title="Re-check this payment against the 0x0FD2 block prover in the browser" onClick={() => setReverify({ tx: payments.find((p) => p.member.toLowerCase() === m.toLowerCase())!.tx, member: m })}>re-verify</button>
                     )}
                     {proven ? <Tag tone={c!.onTime ? 'mint' : 'amber'}>{c!.onTime ? 'proven · on time' : 'proven · late'} @ {num(c!.height)}</Tag>
                       : round && round.status !== 0 ? <Tag tone="rose">missed</Tag>
@@ -207,7 +215,7 @@ export function CirclePage() {
           </div>
         </Section>
         <div>
-        <Section tour="circle-history" title={`Round history · ${n} rounds`} right={<button className="btn btn-ghost" style={{ padding: '.2rem .55rem', fontSize: 12 }} onClick={() => setShowList((v) => !v)} aria-expanded={showList}>{showList ? 'hide list' : 'show as list'}</button>}>
+        <Section tour="circle-history" title={`Round history · ${n} rounds`} right={<button className="btn btn-ghost btn-sm" onClick={() => setShowList((v) => !v)} aria-expanded={showList}>{showList ? 'hide list' : 'show as list'}</button>}>
           <RoundTimeline members={circle.members} currentRound={circle.currentRound} active={active} byScore={byScore} recipient={recipient} rounds={rounds} />
           {showList && <div className="mt-4">
           <ol className="grid gap-2">
@@ -218,8 +226,8 @@ export function CirclePage() {
               const tone = st === 'Paid' ? 'mint' : st === 'Closed' ? 'amber' : r === circle.currentRound && active ? 'sky' : 'muted'
               const who = byScore ? (rd && rd.status !== 0 ? rd.recipient : r === circle.currentRound && active ? recipient : undefined) : m
               return (
-                <li key={r} className="panel-2 flex items-center justify-between px-3 py-2 text-sm" style={r === circle.currentRound && active ? { borderColor: 'var(--sky)' } : {}}>
-                  <span>round {r + 1} <span className="pill mono" style={{ padding: '0 .4rem', fontSize: 10, fontWeight: 500 }}>r{r}</span> → <span className="mono">{who ? short(who) : 'decided at close by score'}</span>{byScore && r === circle.currentRound && active && who && <span className="text-xs" style={{ color: 'var(--muted)' }}> (leading)</span>}</span>
+                <li key={r} className="panel-2 row-hover flex items-center justify-between px-3 py-2 text-sm" style={r === circle.currentRound && active ? { borderColor: 'var(--sky)' } : {}}>
+                  <span>round {r + 1} <span className="pill mono" style={{ padding: '0 .4rem', fontSize: 10, fontWeight: 500 }}>r{r}</span> → <span className="mono" title={who}>{who ? short(who) : 'decided at close by score'}</span>{byScore && r === circle.currentRound && active && who && <span className="text-xs" style={{ color: 'var(--muted)' }}> (leading)</span>}</span>
                   <span className="flex items-center gap-2">{rd && rd.pot > 0n && <span className="mono text-xs">{usd(rd.pot)}</span>}<Tag tone={tone}>{upcoming ? 'upcoming' : st}</Tag></span>
                 </li>
               )
@@ -236,15 +244,15 @@ export function CirclePage() {
       </Reveal>
 
 
-      {active && round?.status === 0 && <div className="mt-4"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} chainKey={circle.chainKey} contribution={circle.contribution} onDone={refetch} /></div>}
-      <div className="mt-4" data-tour="circle-feed"><ProofFeed items={feed} /></div>
+      {active && round?.status === 0 && <div className="section-gap"><ProvePanel members={circle.members} contributions={detail.contributions} payments={payments} attested={attested} chainKey={circle.chainKey} contribution={circle.contribution} onDone={refetch} /></div>}
+      <div className="section-gap" data-tour="circle-feed"><ProofFeed items={feed} /></div>
 
       {reverify && <ReverifyModal tx={reverify.tx} member={reverify.member} onClose={() => setReverify(null)} />}
       <Dialog.Root open={modal !== 'closed'} onOpenChange={(o) => !o && setModal('closed')}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40" style={{ background: 'rgba(5,10,8,.8)' }} />
           <Dialog.Content className="panel fixed left-1/2 top-1/2 z-50 w-[min(92vw,440px)] -translate-x-1/2 -translate-y-1/2 p-6">
-            <div className="flex items-start justify-between"><Dialog.Title className="display text-xl">{modal === 'confirm' ? 'Confirm payment' : 'Payment sent'}</Dialog.Title><Dialog.Close className="btn btn-ghost" aria-label="Close"><X size={16} /></Dialog.Close></div>
+            <div className="flex items-start justify-between"><Dialog.Title className="display text-xl">{modal === 'confirm' ? 'Confirm payment' : 'Payment sent'}</Dialog.Title><Dialog.Close className="btn btn-ghost btn-icon" aria-label="Close"><X size={16} /></Dialog.Close></div>
             {modal === 'confirm' && (
               <div className="mt-4 grid gap-4">
                 <div><div className="eyebrow">Round {circle.currentRound + 1} of {n} installment</div><div className="mono text-4xl">{usd(circle.contribution)}</div></div>
@@ -256,18 +264,18 @@ export function CirclePage() {
                 </div>
                 <Dialog.Description className="text-xs" style={{ color: 'var(--muted)' }}>Your wallet signs a normal ERC-20 escrow deposit on Sepolia. Nothing else is required from you: the worker proves it to Creditcoin after the block is attested (about 8 minutes).</Dialog.Description>
                 {msg && <p className="text-xs" style={{ color: 'var(--amber)' }}>{msg}</p>}
-                <button className="btn btn-mint justify-center" disabled={isPending} onClick={contribute}>{isPending ? 'Waiting for wallet…' : `Pay ${usd(circle.contribution)}`}</button>
+                <button className="btn btn-mint" disabled={isPending} onClick={contribute}>{isPending ? 'Waiting for wallet…' : `Pay ${usd(circle.contribution)}`}</button>
               </div>
             )}
             {modal === 'sent' && (
               <div className="mt-4 grid gap-3">
                 <div className="band proven"><div className="eyebrow">Sepolia</div><div className="display text-2xl">{receipt.isSuccess ? 'Mined' : 'Broadcast'}</div>
-                  {txHash && <a className="mono text-xs" href={`${cfg.sepoliaExplorer}/tx/${txHash}`} target="_blank" rel="noreferrer">{txHash.slice(0, 22)}… <ExternalLink size={11} style={{ display: 'inline' }} /></a>}</div>
+                  {txHash && <a className="mono text-xs" href={`${cfg.sepoliaExplorer}/tx/${txHash}`} target="_blank" rel="noreferrer" title={txHash}>{txHash.slice(0, 22)}… <ExternalLink size={11} style={{ display: 'inline' }} /></a>}</div>
                 <div className="panel-2 p-3 text-sm">
                   <div className="flex justify-between"><span style={{ color: 'var(--muted)' }}>Proof pending</span><span className="mono">attested head {num(attested)}</span></div>
                   <p className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>When the attestor network attests block {receipt.data ? String(receipt.data.blockNumber) : '…'}, the worker fetches one batch proof for the round and calls <span className="mono">recordContributions</span>. Watch the proof feed below; your row turns mint.</p>
                 </div>
-                <Dialog.Close className="btn justify-center">Done</Dialog.Close>
+                <Dialog.Close className="btn">Done</Dialog.Close>
               </div>
             )}
           </Dialog.Content>

@@ -36,9 +36,9 @@ export function ReverifyModal({ tx, member, onClose }: { tx: `0x${string}`; memb
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40" style={{ background: 'rgba(5,10,8,.8)' }} />
         <Dialog.Content className="panel fixed left-1/2 top-1/2 z-50 w-[min(92vw,560px)] -translate-x-1/2 -translate-y-1/2 p-6">
-          <div className="flex items-start justify-between"><Dialog.Title className="display text-xl">Re-verify this payment now</Dialog.Title><Dialog.Close className="btn btn-ghost" aria-label="Close"><X size={16} /></Dialog.Close></div>
+          <div className="flex items-start justify-between"><Dialog.Title className="display text-xl">Re-verify this payment now</Dialog.Title><Dialog.Close className="btn btn-ghost btn-icon" aria-label="Close"><X size={16} /></Dialog.Close></div>
           <Dialog.Description className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
-            Payment by <span className="mono">{short(member)}</span>, Sepolia tx <a className="mono" href={`${cfg.sepoliaExplorer}/tx/${tx}`} target="_blank" rel="noreferrer">{tx.slice(0, 14)}…</a>.
+            Payment by <span className="mono" title={member}>{short(member)}</span>, Sepolia tx <a className="mono" href={`${cfg.sepoliaExplorer}/tx/${tx}`} target="_blank" rel="noreferrer" title={tx}>{tx.slice(0, 14)}…</a>.
             The browser refetches its proof and asks the live block-prover precompile on Creditcoin to verify it again. Nothing is cached, nothing is trusted.
           </Dialog.Description>
           <button className="btn btn-mint mt-4" disabled={busy} onClick={run}><ShieldCheck size={15} /> {busy ? 'Verifying…' : 'Ask 0x0FD2'}</button>

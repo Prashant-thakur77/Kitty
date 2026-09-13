@@ -137,13 +137,13 @@ export function Create() {
     : !address ? 'Connect a wallet to create. Until then the form is a read-only preview.' : undefined
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="page">
       <Reveal>
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="page-head">
           <div>
             <div className="eyebrow">Ledger</div>
-            <h1 className="text-3xl">Create a circle</h1>
-            <p className="mt-1 max-w-[62ch] text-sm" style={{ color: 'var(--muted)' }}>
+            <h1>Create a circle</h1>
+            <p className="sub">
               One transaction on Creditcoin opens the circle; money never touches the ledger. Members pay the vault on the source chain and every payment is proven back through 0x0FD2.
             </p>
           </div>
@@ -172,7 +172,7 @@ export function Create() {
         </Reveal>
       )}
 
-      <form onSubmit={submit} className="mt-5 grid gap-4 lg:grid-cols-[3fr_2fr] lg:items-start" aria-label="Create a circle">
+      <form onSubmit={submit} className="section-gap grid gap-4 lg:grid-cols-[3fr_2fr] lg:items-start" aria-label="Create a circle">
         <Reveal i={2} className="grid gap-4">
           <Section tour="create-circle" title="Circle" right={<Tag tone="muted">{mode === 'listed' ? 'listed members' : 'open · invites'}</Tag>}>
             <div className="grid gap-4">
@@ -260,7 +260,7 @@ export function Create() {
                 <input value={startHeight} onChange={(e) => { setStartTouched(true); setStartHeight(e.target.value) }} inputMode="numeric" className={fieldCls} style={ink} />
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-xs" style={{ color: 'var(--dim)' }}>
                   <span>default: latest attested + {String(START_LEAD)}</span>
-                  {startTouched && attested !== undefined && <button type="button" className="btn btn-ghost" style={{ padding: '.1rem .45rem', fontSize: 11 }} onClick={() => { setStartTouched(false); setStartHeight(String(attested + START_LEAD)) }}>reset</button>}
+                  {startTouched && attested !== undefined && <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setStartTouched(false); setStartHeight(String(attested + START_LEAD)) }}>reset</button>}
                 </span>
               </label>
               <p className="text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
