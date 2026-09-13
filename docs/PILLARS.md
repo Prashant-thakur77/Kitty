@@ -10,7 +10,17 @@ The organisers evaluate BUIDL CTC entries on five pillars: user base expansion, 
 
 **What Creditcoin gains.** Every settled round writes proof-derived state to Creditcoin: contributions, deadlines, misses with the attestation that proved them, payouts proven back, and a Kitty Score. `KittyCreditLine` and `KittyBadge` show that other Creditcoin contracts can consume that state today; any Creditcoin lender can call `creditScore(address)` and `getRecord(address)`. The user base Kitty brings is the group of savers whose history is worth underwriting and who, until now, had nowhere to record it.
 
-**Evidence so far.** Seven circles run on testnet by simulated members (128 linked transactions, [`TESTNET_LOG.md`](TESTNET_LOG.md)); the bot is live; a 33-step guided tour and a [`/guide`](https://prashant-thakur77.github.io/Kitty/guide) page onboard a first-time visitor without documentation.
+**Evidence so far.** Seven circles run on testnet by simulated members (128 linked transactions in [`TESTNET_LOG.md`](TESTNET_LOG.md), every one re-verified against its receipt by CI and on the dashboard's [evidence page](https://prashant-thakur77.github.io/Kitty/evidence)); the bot runs with one command and is shown live in the demo; a 33-step guided tour and a [`/guide`](https://prashant-thakur77.github.io/Kitty/guide) page onboard a first-time visitor without documentation.
+
+**The first hundred users, concretely.** Three pilots, each measured the same way (circles opened, members with at least one proven payment, on-time rate by attested height, gas per proven payment, bot reminders that were followed by a payment before the deadline):
+
+| Pilot | Who | Size | Weeks | What it proves |
+|---|---|---|---|---|
+| 1. Campus circles | Hostel and mess groups at NIT Hamirpur, organised by the builder | 3 circles, 5 to 10 members, 100 tUSD a round on Sepolia | 1 to 4 | Onboarding through a group chat and an invite link works without a wallet tutorial; the bot's reminders move the on-time rate |
+| 2. Shadow chit | One registered chit-fund foreman in Himachal or Punjab runs a circle on Kitty alongside the paper one | 1 circle, 10 members, real installments mirrored in tUSD | 5 to 12 | A foreman can read the ledger, the rotation and the score, and the record matches the books |
+| 3. First mainnet circle | The best-scoring members of pilots 1 and 2, on Ethereum mainnet under chain key 3 with a USDC vault | 1 circle, 5 members, 20 USDC a round | 9 to 12 | Real money, real deadlines, and the first Kitty Scores a lender could underwrite |
+
+The pilots need nothing that does not exist today except the mainnet vault deployment; the bot, the invite links, the score and the credit line are the ones in this repository. Each pilot's circle ids and transactions will be appended to [`TESTNET_LOG.md`](TESTNET_LOG.md) and re-verified by the same `evidence` workflow.
 
 ## 2. Technical alignment
 
@@ -29,9 +39,9 @@ Kitty starts where credit starts for most of the world: a group that saves toget
 | Horizon | Milestone | What it needs |
 |---|---|---|
 | Now | Circles on Sepolia settled on CC3 Testnet; score, credit line, badge; Telegram bot; browser proving | Shipped (this repository) |
-| Next 30 days | Ethereum mainnet circles under chain key 3 with a USDC vault; score-gated circle sizes; seat bidding for early payout; pot cover funded by proven events | Mainnet vault deployment; the chain key path is already verified live |
-| 60 to 90 days | Loan defaults on `KittyCreditLine` feeding the score; lender integrations on Creditcoin reading `creditScore`; organiser tooling in Telegram (open a circle from the group) | Partner lenders; bot write paths |
-| Writability | Payouts sent by the ledger itself through Attestcoin writability, removing the last operator key | Writability audited and live on Creditcoin |
+| Next 30 days | Ethereum mainnet circles under chain key 3 with a USDC vault; score-gated circle sizes; seat bidding for early payout; pot cover funded by proven events | Mainnet vault deployment; the chain key path is already verified live · [milestone 1](https://github.com/Prashant-thakur77/Kitty/milestone/1) |
+| 60 to 90 days | Loan defaults on `KittyCreditLine` feeding the score; lender integrations on Creditcoin reading `creditScore`; organiser tooling in Telegram (open a circle from the group) | Partner lenders; bot write paths · [milestone 2](https://github.com/Prashant-thakur77/Kitty/milestone/2) |
+| Writability | Payouts sent by the ledger itself through Attestcoin writability, removing the last operator key | Writability audited and live on Creditcoin · [milestone 3](https://github.com/Prashant-thakur77/Kitty/milestone/3) |
 | CC3 mainnet | Circles settling from Ethereum mainnet and other attested chains into a mainnet ledger | CC3 mainnet Attestcoin availability |
 
 The one constant across every horizon: a number on a Kitty Score is never an operator's word. Features that would need one are not on the roadmap.

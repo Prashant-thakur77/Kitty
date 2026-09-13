@@ -564,7 +564,7 @@ Known limits, stated plainly: the vault operator *sends* payouts, and the stewar
 
 ## Roadmap
 
-Score-gated circle sizes · seat bidding for early payout · loan defaults feeding the score · Attestcoin writability for payouts once audited · Ethereum mainnet chain key on CC3 mainnet · pot cover through proven-event insurance.
+Tracked as [issues](https://github.com/Prashant-thakur77/Kitty/issues) under three [milestones](https://github.com/Prashant-thakur77/Kitty/milestones): **Next 30 days** (three campus pilot circles, a shadow chit with a registered foreman, a USDC vault on Ethereum mainnet under chain key 3, score-gated circle sizes, seat bidding for early payout, pot cover funded by proven events), **60 to 90 days** (the first mainnet circle, loan defaults feeding the score, a lender integration guide with a reference consumer, opening a circle from a Telegram group) and **Writability** (payouts sent by the ledger itself once Attestcoin writability is live, removing the last operator key). The pilots and their metrics are in [`docs/PILLARS.md`](docs/PILLARS.md).
 
 ## License
 
