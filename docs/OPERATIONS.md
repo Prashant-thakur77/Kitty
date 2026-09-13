@@ -12,6 +12,7 @@ How to deploy, seed, run and recover Kitty on Ethereum Sepolia and Creditcoin CC
 - [The lab API: `pnpm lab:api`](#the-lab-api-pnpm-labapi)
 - [Recording the lab: `pnpm lab:record`](#recording-the-lab-pnpm-labrecord)
 - [Logging transactions: `pnpm txlog`](#logging-transactions-pnpm-txlog)
+- [Re-verifying the log: `pnpm verify:log`](#re-verifying-the-log-pnpm-verifylog)
 - [Other commands](#other-commands)
 - [Recovery procedures](#recovery-procedures)
 - [Local world scripts](#local-world-scripts)
@@ -164,6 +165,15 @@ pnpm txlog <sepolia|creditcoin> <0xtxhash> "<action>"
 ```
 
 `worker/src/txlog.ts` fetches the receipt, and inserts a row `| date | chain | action | link | gasUsed |` at the end of the main five-column table in `docs/TESTNET_LOG.md` (not at end of file, where later three-column tables would swallow the cells). A reverted transaction gets ` (reverted)` appended to the action.
+
+## Re-verifying the log: `pnpm verify:log`
+
+```bash
+pnpm verify:log                                      # exit 1 on any mismatch
+pnpm verify:log --json web/public/testnet-log.json   # also refresh the dashboard's copy (the /evidence page)
+```
+
+`worker/src/verify-log.ts` parses every row of the main table, fetches the receipt from the chain the row names (Sepolia rows fall back to `SEPOLIA_FALLBACK_RPC_URLS`, default Tenderly and 1RPC, because the public balancer does not hold every receipt on every node), and passes the row only when the receipt exists, its status matches (rows ending in `(reverted)` expect 0), its gas equals the logged gas, and, on Creditcoin, the transaction created a contract or went to an address that appears in the log or in `deployments.json`. `.github/workflows/evidence.yml` runs it weekly, on demand, and on every change to the log; the JSON it writes is what `/evidence` renders and what "Verify in this browser" compares against.
 
 ## Other commands
 

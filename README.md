@@ -6,6 +6,7 @@
   <a href="https://github.com/Prashant-thakur77/Kitty/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Prashant-thakur77/Kitty/ci.yml?branch=main&style=flat-square&label=ci&color=4FD1A3"></a>
   <img alt="Foundry tests" src="https://img.shields.io/badge/foundry_tests-162_passing-4FD1A3?style=flat-square">
   <img alt="Attack scenarios" src="https://img.shields.io/badge/attack_scenarios-8_%2F_8_passing-4FD1A3?style=flat-square">
+  <a href="https://github.com/Prashant-thakur77/Kitty/actions/workflows/evidence.yml"><img alt="Testnet evidence" src="https://img.shields.io/github/actions/workflow/status/Prashant-thakur77/Kitty/evidence.yml?branch=main&style=flat-square&label=128_testnet_txs_re--verified&color=4FD1A3"></a>
   <img alt="Creditcoin" src="https://img.shields.io/badge/Creditcoin-CC3_Testnet-7DB6E8?style=flat-square">
   <img alt="Attestcoin" src="https://img.shields.io/badge/Attestcoin-0x0FD2_%C2%B7_0x0FD3-7DB6E8?style=flat-square">
   <img alt="Solidity" src="https://img.shields.io/badge/solidity-0.8.30-E2B15C?style=flat-square">
@@ -16,7 +17,7 @@
   <b>Kitty</b> is a rotating savings circle — a chit fund, a susu, a tanda — where the money stays in stablecoins on Ethereum and the rules live on Creditcoin, fed only by transactions the <b>Attestcoin Protocol</b> has cryptographically verified. No treasurer. No oracle operator. No bridge. The output is a credit history a lender can underwrite against, for people the banking system has never seen.
 </p>
 
-<p align="center"><b>Live on Creditcoin CC3 Testnet and Ethereum Sepolia since 12 September 2026</b> · seven circles run, 125 linked transactions · <a href="https://prashant-thakur77.github.io/Kitty/">dashboard</a> · <a href="https://t.me/KittyCirclesBot">@KittyCirclesBot</a></p>
+<p align="center"><b>Live on Creditcoin CC3 Testnet and Ethereum Sepolia since 12 September 2026</b> · seven circles run, 128 linked transactions · <a href="https://prashant-thakur77.github.io/Kitty/">dashboard</a> · <a href="https://t.me/KittyCirclesBot">@KittyCirclesBot</a></p>
 
 **Three properties that follow from the design**
 
@@ -102,7 +103,7 @@ Chapters: 0:00 Hook · 0:10 The problem (3D) · 0:45 The split, money on Ethereu
 
 ### On-chain evidence
 
-Every claim in this README is backed by a transaction on the public testnets. A few of the hundred-plus rows in [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md):
+Every claim in this README is backed by a transaction on the public testnets. All 128 rows of [`docs/TESTNET_LOG.md`](docs/TESTNET_LOG.md) are re-verified against their receipts by the [`evidence`](.github/workflows/evidence.yml) workflow (`pnpm verify:log`: receipt present on the named chain, status and gas equal to the row, Creditcoin rows addressed to a Kitty contract) and can be re-verified from your browser on the [evidence page](https://prashant-thakur77.github.io/Kitty/evidence). A few of them:
 
 | What happened | Transaction |
 |---|---|
@@ -125,7 +126,7 @@ Most proof-of-history projects import a credit record that already exists on ano
 | Time | Usually none: the record is read once | The attested source-chain height is the only clock; a miss carries the attestation that proved it |
 | Money movement | Read-only | Stablecoins settle every round; the payout on Ethereum is proven back before the round shows *Paid* |
 | Operator | An indexer or relayer submits proofs | An agent whose only power is a proof; a member can prove a whole round from the browser, and the ledger never checks who submits |
-| Evidence | A demo transaction or two | Seven circles, 125 linked testnet transactions, eight attack scenarios on the live precompile, a Telegram bot in production |
+| Evidence | A demo transaction or two | Seven circles, 128 linked testnet transactions, eight attack scenarios on the live precompile, a Telegram bot in production |
 
 The score that results is not a claim about the past; it is a record that only proven payments and attested deadlines can write.
 
@@ -138,7 +139,7 @@ The organisers judge on user base expansion, technical alignment, product vision
 | User base expansion | Savers who already run chit funds, susu, tandas and chamas become Creditcoin users the moment their circle settles; they arrive through the Telegram bot and Mini App, invite links and ordinary stablecoin payments, and their proof-derived history is readable by any Creditcoin lender. |
 | Technical alignment | The ledger acts only on what `0x0FD2` verified and `0x0FD3` attested: batch verification across circles, free preflight, batch proof-back, six ChainInfo functions, all exercised on the live precompile. |
 | Product vision | Mainnet circles under chain key 3, score-gated sizes and seat bidding, defaults feeding the score, lender integrations, then payouts through Attestcoin writability. |
-| Execution capability | 100 commits in six days by one builder: contracts, steward, dashboard, bot, documentation, four testnet deployments, 127 linked transactions, a recorded demo; every problem found live fixed the same day. |
+| Execution capability | 100 commits in six days by one builder: contracts, steward, dashboard, bot, documentation, four testnet deployments, 128 linked transactions, a recorded demo; every problem found live fixed the same day. |
 | Proven models | A centuries-old savings mechanism (regulated as chit funds in India), the credit-bureau score lenders already price against, and a fee priced against the chit-fund foreman's commission. |
 
 ## Verify it yourself in five minutes
@@ -149,7 +150,8 @@ No wallet or funds are needed for any of these.
 2. Open [circle 4](https://prashant-thakur77.github.io/Kitty/circle/4) (Accra Susu, live). Every proven payment in the members table links to the Creditcoin transaction that carried its Attestcoin proof; click one and find the `BatchVerified` event emitted by the precompile call.
 3. Open a member's [score](https://prashant-thakur77.github.io/Kitty/score/0x8fFb6727EaE2F3C5Ef9F68Ac0ac2dA0caEc2d1Da). The history lists a real missed payment with the attestation that proved the deadline; the score is replayed from ledger events through the on-chain formula.
 4. Open the [attack lab](https://prashant-thakur77.github.io/Kitty/lab). The eight scenarios shown were run against the live precompile; every transaction hash links to an explorer.
-5. Run one proof yourself against the live precompile, from any machine:
+5. Open the [evidence page](https://prashant-thakur77.github.io/Kitty/evidence) and press *Verify in this browser*: all 128 logged transactions are re-fetched from the public RPCs of both chains and checked against the log in front of you.
+6. Run one proof yourself against the live precompile, from any machine:
 
    ```bash
    git clone https://github.com/Prashant-thakur77/Kitty && cd Kitty && pnpm install
@@ -158,7 +160,7 @@ No wallet or funds are needed for any of these.
 
    It fetches the Proof Builder proof for that Sepolia payment, asks `0x0FD2` on CC3 Testnet whether it verifies (`true`), then shows the tampered-bytes and wrong-chain-key negatives reverting.
 
-6. Run the Telegram bot against the same ledger with `BOT_TOKEN=<your BotFather token> pnpm bot` and send it `/circle 4`; the answer is assembled from chain reads only. The demo video shows this exchange with [@KittyCirclesBot](https://t.me/KittyCirclesBot) at 4:28.
+7. Run the Telegram bot against the same ledger with `BOT_TOKEN=<your BotFather token> pnpm bot` and send it `/circle 4`; the answer is assembled from chain reads only. The demo video shows this exchange with [@KittyCirclesBot](https://t.me/KittyCirclesBot) at 4:28.
 
 ## How a round settles
 

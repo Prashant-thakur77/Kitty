@@ -1,0 +1,27 @@
+# Re-verifies every transaction in docs/TESTNET_LOG.md against the live chains: the receipt must exist on the
+# chain the row names, its status and gas must match the row, and Creditcoin rows must go to a Kitty contract.
+# Runs on a schedule, on demand, and whenever the log or the verifier changes; refreshes the dashboard's copy.
+name: evidence
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+  push:
+    paths: ['docs/TESTNET_LOG.md', 'worker/src/verify-log.ts', '.github/workflows/evidence.yml']
+jobs:
+  verify-log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:log --json web/public/testnet-log.json
+        env:
+          SEPOLIA_RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
+          CREDITCOIN_RPC_URL: https://rpc.cc3-testnet.creditcoin.network
+          KITTY_LEDGER_ADDRESS: '0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276'
+          KITTY_VAULT_ADDRESS: '0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84'
+      - uses: actions/upload-artifact@v4
+        with: { name: testnet-log, path: web/public/testnet-log.json }

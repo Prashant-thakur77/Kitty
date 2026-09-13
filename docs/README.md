@@ -44,7 +44,7 @@ An index of everything under `docs/`, one line each. Start with the architecture
 
 | Document | Description |
 |---|---|
-| [`OPERATIONS.md`](OPERATIONS.md) | Runbook: prerequisites, every `.env` and worker variable, `scripts/deploy.sh` and `FORCE_REDEPLOY`, seeding, the worker's loop and state files, the lab API routes, recording the lab, `txlog`, recovery procedures, local world scripts, CI, GitHub Pages. |
+| [`OPERATIONS.md`](OPERATIONS.md) | Runbook: prerequisites, every `.env` and worker variable, `scripts/deploy.sh` and `FORCE_REDEPLOY`, seeding, the worker's loop and state files, the lab API routes, recording the lab, `txlog`, `verify:log`, recovery procedures, local world scripts, CI, GitHub Pages. |
 | [`USER_SCENARIOS.md`](USER_SCENARIOS.md) | Every dashboard flow for visitors, members, organisers, lenders and reviewers, with preconditions, steps, the UI states rendered and the on-chain effects. |
 | [`TELEGRAM.md`](TELEGRAM.md) | The Telegram bot and Mini App: setup with BotFather, commands, event pushes and reminders. |
 
@@ -52,7 +52,7 @@ An index of everything under `docs/`, one line each. Start with the architecture
 
 | Document | Description |
 |---|---|
-| [`TESTNET_LOG.md`](TESTNET_LOG.md) | Every testnet transaction with explorer link and gas, in order, plus the live precompile verifications and the Sepolia deployments. |
+| [`TESTNET_LOG.md`](TESTNET_LOG.md) | Every testnet transaction with explorer link and gas, in order (128 rows, each re-verified against its receipt by the `evidence` workflow and on the dashboard's `/evidence` page), plus the live precompile verifications and the Sepolia deployments. |
 | [`SUBMISSION.md`](SUBMISSION.md) | The DoraHacks submission fields: description, Attestcoin usage, links, team. |
 | [`Kitty-deck.pdf`](Kitty-deck.pdf) | The deck, printed from `/presentation`. |
 | [`assets/`](assets/) | Banner, architecture diagram, screenshots and demo GIFs used by the README. |

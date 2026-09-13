@@ -18,7 +18,7 @@ export type TourStep = {
   placement: Placement
   mobileTarget?: string
   /** Tab the step belongs to; the Guide page starts the tour at the first step of each tab. */
-  tab: 'nav' | 'landing' | 'circles' | 'circle' | 'create' | 'score' | 'borrow' | 'steward' | 'lab' | 'architecture' | 'present' | 'telegram' | 'story'
+  tab: 'nav' | 'landing' | 'circles' | 'circle' | 'create' | 'score' | 'borrow' | 'steward' | 'lab' | 'evidence' | 'architecture' | 'present' | 'telegram' | 'story'
 }
 
 export const STEPS: TourStep[] = [
@@ -156,6 +156,11 @@ export const STEPS: TourStep[] = [
     id: 'lab', tab: 'lab', route: '/lab', target: 'lab-grid', placement: 'auto',
     title: 'Eight ways to cheat',
     body: 'Each card pushes a real transaction through proof, precompile and ledger: a replayed proof, a spoofed emitter, a wrong chain key, a reverted source transaction, a stolen steward key, a stranger submitting the proof, poisoned reasoning and a late payment. On the hosted build the cards show the run recorded on Sepolia and CC3 Testnet, and every transaction hash links to an explorer. With the local lab API each card runs live.',
+  },
+  {
+    id: 'evidence', tab: 'evidence', route: '/evidence', target: 'evidence-table', placement: 'top',
+    title: 'Every transaction, re-verified',
+    body: 'All 128 on-chain steps of the testnet campaign, from docs/TESTNET_LOG.md: deployments, payments, batch proofs, closes, payouts and the attack scenarios, on both chains. CI re-reads every receipt and compares status and gas with the log; "Verify in this browser" does the same from your machine against the public RPCs. Filter by chain or kind, open any hash on an explorer.',
   },
   {
     id: 'arch-scene', tab: 'architecture', route: '/architecture', target: 'arch-scene', placement: 'bottom',

@@ -4,8 +4,8 @@
    compact under `tools`, the attestation text shows only from `wide`. Used as `nav:flex`, `tools:inline`, `wide:inline`. */
 @theme {
   --breakpoint-nav: 68.75rem;
-  --breakpoint-tools: 75rem;
-  --breakpoint-wide: 93.75rem;
+  --breakpoint-tools: 80rem;
+  --breakpoint-wide: 97.5rem;
 }
 
 /* ───────────────────────────── tokens ───────────────────────────── */

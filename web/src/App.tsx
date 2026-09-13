@@ -10,6 +10,7 @@ import { Create } from './pages/Create'
 import { Join } from './pages/Join'
 import { ScorePage } from './pages/Score'
 import { Lab } from './pages/Lab'
+import { Evidence } from './pages/Evidence'
 import { Steward } from './pages/Steward'
 import { Borrow } from './pages/Borrow'
 import { Architecture } from './pages/Architecture'
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="/borrow/:address" element={<Borrow />} />
             <Route path="/steward" element={<Steward />} />
             <Route path="/lab" element={<Lab />} />
+            <Route path="/evidence" element={<Evidence />} />
             <Route path="/architecture" element={<Architecture />} />
             <Route path="/presentation" element={<Presentation />} />
             <Route path="/story" element={<Story />} />

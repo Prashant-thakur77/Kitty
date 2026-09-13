@@ -17,6 +17,7 @@ const LINKS = [
   { to: '/borrow', label: 'Borrow' },
   { to: '/steward', label: 'Steward' },
   { to: '/lab', label: 'Attack lab' },
+  { to: '/evidence', label: 'Evidence' },
   { to: '/architecture', label: 'Architecture' },
   { to: '/presentation', label: 'Present' },
 ]

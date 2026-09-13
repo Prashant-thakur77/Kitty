@@ -11,7 +11,7 @@ Kitty is a rotating savings circle (a chit fund, a susu, a tanda, a chama) where
 ## What is live on testnet
 
 - KittyLedger `0xC2A1583F9a469EE98f2A1acF6297a0d6A073F276` on Creditcoin CC3 Testnet, paired with KittyVault `0xa27eD42Ce06AaBe1D5924272fDb913b4CBC0DA84` on Ethereum Sepolia.
-- Seven circles opened, five run to completion, **127 linked transactions** in [docs/TESTNET_LOG.md](https://github.com/Prashant-thakur77/Kitty/blob/main/docs/TESTNET_LOG.md).
+- Seven circles opened, five run to completion, **128 linked transactions** in [docs/TESTNET_LOG.md](https://github.com/Prashant-thakur77/Kitty/blob/main/docs/TESTNET_LOG.md).
 - A whole round verified in **one `verifyAndEmit` call**; eight payments from two circles pooled into one call; two circles' payouts proven back in one `confirmPayouts` call.
 - A member **creating a circle, paying and proving the entire round from the browser** during the demo recording.
 - A **real missed payment** closed on the attested deadline, with the attestation that proved it stored on chain.
@@ -55,7 +55,7 @@ The worker has three layers with decreasing authority: the ledger has the final 
 
 ![A circle](https://raw.githubusercontent.com/Prashant-thakur77/Kitty/main/docs/assets/circle.png)
 
-Create a circle in one Creditcoin transaction, invite members with signed links, pay on Sepolia, prove from the browser, follow the rotation wheel and the proof feed, read a score dial replayed from ledger events, borrow against the score, ask the steward, run the attack lab, and get every proof and deadline pushed to Telegram. A 32-step guided tour explains every tab (`?tour=1`).
+Create a circle in one Creditcoin transaction, invite members with signed links, pay on Sepolia, prove from the browser, follow the rotation wheel and the proof feed, read a score dial replayed from ledger events, borrow against the score, ask the steward, run the attack lab, and get every proof and deadline pushed to Telegram. A 33-step guided tour explains every tab (`?tour=1`).
 
 ![What a lender sees](https://raw.githubusercontent.com/Prashant-thakur77/Kitty/main/docs/assets/score.png)
 
@@ -64,7 +64,7 @@ Create a circle in one Creditcoin transaction, invite members with signed links,
 - **User base expansion.** Savers who already run chit funds, susu, tandas and chamas become Creditcoin users the moment their circle settles through Kitty. They arrive through the Telegram bot and Mini App, signed invite links and ordinary stablecoin payments; their proof-derived history is readable by any Creditcoin lender via `creditScore(address)`.
 - **Technical alignment.** The ledger acts only on what 0x0FD2 verified and 0x0FD3 attested: batch verification across circles, free preflight, batch proof-back, six ChainInfo functions, browser-side proving, the mainnet chain key, all exercised on the live precompile.
 - **Product vision.** Next: mainnet circles under chain key 3 with a USDC vault, score-gated circle sizes, seat bidding, pot cover, loan defaults feeding the score, lender integrations, then payouts through Attestcoin writability so the last operator key disappears.
-- **Execution capability.** 100 commits in six days by one builder: contracts with 162 tests, steward, dashboard, bot, full documentation, four testnet deployments, 127 linked transactions, a recorded demo; every problem found live was fixed and logged the same day.
+- **Execution capability.** 100 commits in six days by one builder: contracts with 162 tests, steward, dashboard, bot, full documentation, four testnet deployments, 128 linked transactions, a recorded demo; every problem found live was fixed and logged the same day.
 - **Proven models.** A centuries-old savings mechanism (regulated as chit funds in India), the credit-bureau score lenders already price against, and a per-round fee priced against the chit-fund foreman's commission, made cheap by batch proofs. Full treatment: [docs/PILLARS.md](https://github.com/Prashant-thakur77/Kitty/blob/main/docs/PILLARS.md).
 
 ## Verify it yourself

@@ -10,7 +10,7 @@ The organisers evaluate BUIDL CTC entries on five pillars: user base expansion, 
 
 **What Creditcoin gains.** Every settled round writes proof-derived state to Creditcoin: contributions, deadlines, misses with the attestation that proved them, payouts proven back, and a Kitty Score. `KittyCreditLine` and `KittyBadge` show that other Creditcoin contracts can consume that state today; any Creditcoin lender can call `creditScore(address)` and `getRecord(address)`. The user base Kitty brings is the group of savers whose history is worth underwriting and who, until now, had nowhere to record it.
 
-**Evidence so far.** Seven circles run on testnet by simulated members (127 linked transactions, [`TESTNET_LOG.md`](TESTNET_LOG.md)); the bot is live; a 32-step guided tour and a [`/guide`](https://prashant-thakur77.github.io/Kitty/guide) page onboard a first-time visitor without documentation.
+**Evidence so far.** Seven circles run on testnet by simulated members (128 linked transactions, [`TESTNET_LOG.md`](TESTNET_LOG.md)); the bot is live; a 33-step guided tour and a [`/guide`](https://prashant-thakur77.github.io/Kitty/guide) page onboard a first-time visitor without documentation.
 
 ## 2. Technical alignment
 
@@ -38,7 +38,7 @@ The one constant across every horizon: a number on a Kitty Score is never an ope
 
 ## 4. Execution capability
 
-**What shipped, and when.** The repository has 100 commits between 8 and 13 September 2026 by one builder. In that window: the vault and ledger with 162 Foundry tests including stateful invariants; the steward with a batch policy, decision log and citation validator; a dashboard with browser-side proving, circle creation, invites, a rotation wheel, a score dial, a guided tour and 3D scenes; a Telegram bot; a technical note, protocol specification, threat model, five ADRs, an operations runbook, user scenarios, an audit checklist, a static-analysis report and gas measurements; four ledger deployments on CC3 Testnet with 127 linked transactions; a 5:27 demo recorded against the live testnets. Every claim in the README links to a transaction or a file.
+**What shipped, and when.** The repository has 100 commits between 8 and 13 September 2026 by one builder. In that window: the vault and ledger with 162 Foundry tests including stateful invariants; the steward with a batch policy, decision log and citation validator; a dashboard with browser-side proving, circle creation, invites, a rotation wheel, a score dial, a guided tour and 3D scenes; a Telegram bot; a technical note, protocol specification, threat model, five ADRs, an operations runbook, user scenarios, an audit checklist, a static-analysis report and gas measurements; four ledger deployments on CC3 Testnet with 128 linked transactions; a 5:27 demo recorded against the live testnets. Every claim in the README links to a transaction or a file.
 
 **How the work is run.** Each ledger change lands with tests first (`forge test`, invariants, fuzz), then a local two-chain rehearsal with the precompiles mocked at their real addresses (`pnpm e2e:local`, `pnpm scenarios`), then testnet, then the log. Problems found live were fixed the same day and recorded: the nonce clash when two processes shared the operator key, the lost payout hash, the shared vault across ledger deployments, the roundmate hold that turns two proofs into one. [`OPERATIONS.md`](OPERATIONS.md) is the runbook for all of it.
 

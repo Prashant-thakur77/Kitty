@@ -69,6 +69,12 @@ const ENTRIES: Entry[] = [
     sources: [RECORD, LABAPI, FD2],
   },
   {
+    tab: 'evidence', name: 'Evidence', route: '/evidence', path: '/evidence',
+    summary: 'The whole testnet campaign as a table: 128 transactions on Sepolia and Creditcoin, each re-verified against its receipt by CI and, on demand, by your browser.',
+    can: ['Filter by chain or by kind of step (deployments, payments, proofs, closes, payouts, attack scenarios)', 'Re-fetch every receipt from the public RPCs and compare status and gas with the log', 'Open any transaction on Etherscan or Blockscout'],
+    sources: [RECORD],
+  },
+  {
     tab: 'architecture', name: 'Architecture', route: '/architecture', path: '/architecture',
     summary: 'The proof flow as a scene and as seven nodes: pay, attest, prove, verify, decode and bind, clock, score and payout proof.',
     can: ['Watch packets for proven payments and ticks when the attested frontier moves', 'Open the source file behind each node on GitHub', 'See which precompile functions and Proof Builder endpoints the app uses'],

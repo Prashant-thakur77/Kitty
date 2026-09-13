@@ -17,6 +17,7 @@
     "lab:record": "tsx worker/src/record-lab.ts",
     "scenario": "tsx worker/src/scenarios.ts",
     "txlog": "tsx worker/src/txlog.ts",
+    "verify:log": "tsx worker/src/verify-log.ts",
     "verify:live": "tsx worker/src/verify-live.ts",
     "judge": "bash scripts/judge.sh",
     "receipts": "tsx worker/src/receipts.ts",

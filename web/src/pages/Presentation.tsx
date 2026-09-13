@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ArrowLeft, ArrowRight, Printer } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { cfg } from '../config'
 import { EASE_OUT } from '../components/motion'
 import { RotationWheel, WheelLegend } from '../components/RotationWheel'
@@ -188,12 +189,13 @@ const slides: ReactNode[] = [
       {TXS.map((t) => (
         <tr key={t.hash}><td style={{ color: 'var(--ink)' }}>{t.action}</td><td>{t.chain}</td><td className="mono"><a href={`${t.chain === 'Sepolia' ? SEP : CC}${t.hash}`} target="_blank" rel="noreferrer">{t.hash.slice(0, 10)}…{t.hash.slice(-6)}</a></td><td className="mono">{t.gas.toLocaleString()}</td></tr>
       ))}
-    </tbody></table></Slide>,
+    </tbody></table>
+    <p className="mt-2 text-[13px]" style={{ color: 'var(--muted)' }}>All 128 logged transactions, both chains, are re-verified against their receipts by CI and on <Link to="/evidence">/evidence</Link>, where a button does the same from your browser.</p></Slide>,
   <Slide key={11} eyebrow="Users · vision · execution" title="Who arrives, where this goes, how it gets built">
     <table className="w-full text-[15px]"><tbody>
       <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Users</td><td>Savers who already run chit funds, susu, tandas and chamas. They arrive through the Telegram bot and Mini App, invite links and ordinary stablecoin payments; their history is readable by any Creditcoin lender.</td></tr>
       <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Roadmap</td><td>Mainnet circles under chain key 3 with a USDC vault; score-gated circle sizes and seat bidding; pot cover from proven events; defaults feeding the score; lender integrations; payouts through Attestcoin writability.</td></tr>
-      <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Execution</td><td>100 commits in six days by one builder: contracts, steward, dashboard, bot, documentation, four testnet deployments, 127 linked transactions, a recorded demo. Every problem found live was fixed and logged the same day.</td></tr>
+      <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Execution</td><td>100 commits in six days by one builder: contracts, steward, dashboard, bot, documentation, four testnet deployments, 128 linked transactions, a recorded demo. Every problem found live was fixed and logged the same day.</td></tr>
       <tr><td className="pr-4 align-top" style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>Proven models</td><td>A centuries-old savings mechanism, regulated as chit funds in India; the credit-bureau score lenders already price against; a per-round fee priced against the foreman's commission, made cheap by batch proofs.</td></tr>
     </tbody></table></Slide>,
   <Slide key={12} eyebrow="Team" title="Prashant · solo builder">

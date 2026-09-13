@@ -18,7 +18,7 @@ type Saved = { completed?: string; skipped?: string; promptDismissed?: string }
 function load(): Saved { try { return JSON.parse(localStorage.getItem(TOUR_STORAGE_KEY) ?? '{}') as Saved } catch { return {} } }
 function save(patch: Partial<Saved>) { try { localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify({ ...load(), ...patch })) } catch { /* private mode or blocked storage: the tour still runs, it just does not remember */ } }
 
-const TAB_LABEL: Record<TourStep['tab'], string> = { nav: 'Navigation', landing: 'Home', circles: 'Circles', circle: 'A circle', create: 'Create', score: 'Score', borrow: 'Borrow', steward: 'Steward', lab: 'Attack lab', architecture: 'Architecture', present: 'Present', telegram: 'Telegram', story: 'Story' }
+const TAB_LABEL: Record<TourStep['tab'], string> = { nav: 'Navigation', landing: 'Home', circles: 'Circles', circle: 'A circle', create: 'Create', score: 'Score', borrow: 'Borrow', steward: 'Steward', lab: 'Attack lab', evidence: 'Evidence', architecture: 'Architecture', present: 'Present', telegram: 'Telegram', story: 'Story' }
 
 type Ctx = { active: boolean; index: number; step?: TourStep; start: (at?: string | number) => void; stop: () => void; next: () => void; back: () => void }
 const TourCtx = createContext<Ctx | null>(null)

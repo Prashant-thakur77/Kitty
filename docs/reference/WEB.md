@@ -129,6 +129,7 @@ The lab API holds the operator key and has no authentication (see [`OPERATIONS.m
 | `/borrow`, `/borrow/:address` | [`Borrow`](../../web/src/pages/Borrow.tsx) | Underwriting card and the pool card. Subject is the route or `?address=` param, else the wallet, else the latest circle's current recipient. | `useCircleCount`, `useCircle`; `underwrite`, `outstanding`, `totalDeposits` on `KittyCreditLine`; `balanceOf`, `allowance` on `KittyUSD`. Writes `borrow`, `approve`, `repay`. |
 | `/steward` | [`Steward`](../../web/src/pages/Steward.tsx) | The decision log and the "ask the steward" panel. | No chain reads; lab API or the committed samples. |
 | `/lab` | [`Lab`](../../web/src/pages/Lab.tsx) | Eight scenario cards with logs and results. | No chain reads; lab API or the recorded run. |
+| `/evidence` | [`Evidence`](../../web/src/pages/Evidence.tsx) | Four stats and the full table of `public/testnet-log.json` (written by `pnpm verify:log --json`), chain and kind filters, search, explorer links, and *Verify in this browser*, which re-fetches every receipt with viem (four in flight per chain; Sepolia falls back to Tenderly and 1RPC on a null) and compares status and gas with the row. | `getTransactionReceipt` on both chains, on demand only. |
 | `/architecture` | [`Architecture`](../../web/src/pages/Architecture.tsx) | The flow stage (or a text fallback), seven nodes linking to source files, the "why not ASCBase" panel. | `useAttestation`, `useLedgerEvents()`. |
 | `/presentation` | [`Presentation`](../../web/src/pages/Presentation.tsx) | Thirteen slides. Arrow keys, Space, Enter and Backspace move; `Print to PDF` prints every slide via `@media print`. The live-circle slide reads circle 1 and degrades to the recorded testnet figures. | `useCircleCount`, `useCircle(1n)`, `useRoundDetail`, `useRounds`, `useVaultPayments`, `useGlobalStats`, `useAttestation`. |
 | `/story` | [`Story`](../../web/src/pages/Story.tsx) | The three-chapter 3D explainer; captions as text without WebGL. | None. |
@@ -357,7 +358,7 @@ It is installed while `/story` is mounted and deleted on unmount. `StoryStage` (
 
 ## The guided tour
 
-[`tour/steps.ts`](../../web/src/tour/steps.ts) is the content: 32 `TourStep`s in order. The schema:
+[`tour/steps.ts`](../../web/src/tour/steps.ts) is the content: 33 `TourStep`s in order. The schema:
 
 ```ts
 type TourStep = {
@@ -368,7 +369,7 @@ type TourStep = {
   body: string
   placement: 'top' | 'bottom' | 'left' | 'right' | 'auto'
   mobileTarget?: string      // replaces target under 640 px
-  tab: 'nav' | 'landing' | 'circles' | 'circle' | 'create' | 'score' | 'borrow' | 'steward' | 'lab' | 'architecture' | 'present' | 'telegram' | 'story'
+  tab: 'nav' | 'landing' | 'circles' | 'circle' | 'create' | 'score' | 'borrow' | 'steward' | 'lab' | 'evidence' | 'architecture' | 'present' | 'telegram' | 'story'
 }
 ```
 
