@@ -31,7 +31,11 @@ for i, t in enumerate(timeline):
     cap = MAX_SPEED.get(name, 1.35)
     target = max(dur[name] + 0.5, sec / cap)
     speed = sec / target
-    vf = f"trim=start={t['start']:.3f}:duration={sec:.3f},setpts=PTS-STARTPTS,setpts=PTS/{speed:.4f},scale=1920:1080:flags=lanczos,fps=30,format=yuv420p"
+    # the browser's video can start a beat after the page is created, so a segment's file may be a little shorter
+    # than its wall-clock length: hold the last frame for the difference instead of letting audio and video drift
+    vf = (f"trim=start={t['start']:.3f}:duration={sec:.3f},setpts=PTS-STARTPTS,setpts=PTS/{speed:.4f},"
+          f"tpad=stop_mode=clone:stop_duration=8,trim=duration={target:.3f},setpts=PTS-STARTPTS,"
+          f"scale=1920:1080:flags=lanczos,fps=30,format=yuv420p")
     sec = target
     if card: vf += f",fade=t=in:st=0:d=0.6,fade=t=out:st={max(0, sec-0.8):.2f}:d=0.8"
     af = f"aresample=48000,apad=whole_dur={sec:.3f},atrim=0:{sec:.3f},afade=t=in:st=0:d=0.05"

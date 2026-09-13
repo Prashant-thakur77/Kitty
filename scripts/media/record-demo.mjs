@@ -92,7 +92,9 @@ async function open(url, wait = 'networkidle') {
 async function segment(name, action) {
   if (done.has(name)) { console.log(name.padEnd(14), 'reused from', process.env.RESUME_TIMELINE); return }
   segStart = Date.now()
+  const pageBefore = page
   await action()
+  if (pageBefore && page !== pageBefore && pageBefore.video()) console.log(`   note: ${name} switched pages mid-segment; only the last page's video is kept`)
   const want = (dur[name] + 0.5) * 1000
   const spent = Date.now() - segStart
   if (spent < want) await sleep(want - spent)
@@ -245,7 +247,7 @@ await segment('11_credit', async () => {
   await open(`${base}/score/${member.address}`)
   await glide(420, 520, 30)
   await pace(7000, 0, async () => { await scrollTo(600, 1100) })
-  await pace(12000, 0, async () => { await open(base + '/borrow'); await glide(520, 520, 30) })
+  await pace(12000, 0, async () => { await page.goto(base + '/borrow', { waitUntil: 'load', timeout: 90000 }); await sleep(600); await glide(520, 520, 30) })   // same page: one video file per segment
 })
 
 // ── 12 · telegram (the bot answering from the chain) ──
